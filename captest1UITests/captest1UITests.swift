@@ -23,12 +23,29 @@ final class captest1UITests: XCTestCase {
     }
 
     @MainActor
-    func testExample() throws {
-        // UI tests must launch the application that they test.
+    func testTabNavigation() throws {
         let app = XCUIApplication()
         app.launch()
 
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
+        // 홈 탭이 기본으로 표시되는지 확인
+        XCTAssertTrue(app.navigationBars["홈"].exists)
+        XCTAssertTrue(app.staticTexts["오늘의 카페인"].exists)
+        XCTAssertTrue(app.staticTexts["0 mg"].exists)
+
+        // 수면 분석 탭 전환
+        app.tabBars.buttons["수면 분석"].tap()
+        XCTAssertTrue(app.navigationBars["수면 분석"].exists)
+        XCTAssertTrue(app.staticTexts["수면 분석"].exists)
+
+        // 설정 탭 전환
+        app.tabBars.buttons["설정"].tap()
+        XCTAssertTrue(app.navigationBars["설정"].exists)
+        XCTAssertTrue(app.staticTexts["HealthKit 연동"].exists)
+        XCTAssertTrue(app.staticTexts["카페인 알림 설정"].exists)
+
+        // 홈 탭으로 복귀
+        app.tabBars.buttons["홈"].tap()
+        XCTAssertTrue(app.navigationBars["홈"].exists)
     }
 
     @MainActor

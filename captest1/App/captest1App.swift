@@ -10,9 +10,11 @@ import SwiftData
 
 @main
 struct captest1App: App {
+    @State private var healthKitManager = HealthKitManager()
+
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
-            Item.self,
+            CaffeineRecord.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
@@ -26,6 +28,7 @@ struct captest1App: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environment(healthKitManager)
         }
         .modelContainer(sharedModelContainer)
     }
