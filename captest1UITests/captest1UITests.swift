@@ -40,6 +40,7 @@ final class captest1UITests: XCTestCase {
         // 설정 탭 전환
         app.tabBars.buttons["설정"].tap()
         XCTAssertTrue(app.navigationBars["설정"].exists)
+        XCTAssertTrue(app.staticTexts["취침 시간"].exists)
         XCTAssertTrue(app.staticTexts["HealthKit 연동"].exists)
         XCTAssertTrue(app.staticTexts["카페인 알림 설정"].exists)
 

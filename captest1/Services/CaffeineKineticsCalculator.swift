@@ -83,4 +83,10 @@ struct CaffeineKineticsCalculator {
             DataPoint(index: $0.offset, time: $0.element.time, concentrationMg: $0.element.concentrationMg)
         }
     }
+
+    static func nearestConcentration(at time: Date, in dataPoints: [DataPoint]) -> Double {
+        dataPoints.min(by: {
+            abs($0.time.timeIntervalSince(time)) < abs($1.time.timeIntervalSince(time))
+        })?.concentrationMg ?? 0
+    }
 }

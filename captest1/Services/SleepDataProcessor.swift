@@ -4,6 +4,7 @@
 //
 
 import Foundation
+import HealthKit
 
 protocol SleepSampleProtocol {
     var startDate: Date { get }
@@ -66,4 +67,8 @@ struct SleepDataProcessor {
 
         return merged
     }
+}
+
+extension HKCategorySample: SleepSampleProtocol {
+    public var sleepValue: Int { value }
 }

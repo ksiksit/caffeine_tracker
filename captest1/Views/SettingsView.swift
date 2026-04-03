@@ -9,6 +9,9 @@ import SwiftUI
 
 struct SettingsView: View {
     @AppStorage("caffeineHalfLife") private var halfLife: Double = AppConstants.Pharmacokinetics.defaultHalfLifeHours
+    @AppStorage("bedtimeHour") private var bedtimeHour: Int = 23
+    @AppStorage("bedtimeMinute") private var bedtimeMinute: Int = 0
+    @State private var bedtimeDate = Date()
 
     var body: some View {
         List {
@@ -34,6 +37,26 @@ struct SettingsView: View {
                 }
             }
 
+            Section("수면") {
+                VStack(alignment: .leading, spacing: 8) {
+                    DatePicker(
+                        selection: $bedtimeDate,
+                        displayedComponents: .hourAndMinute
+                    ) {
+                        Label("취침 시간", systemImage: "moon.fill")
+                    }
+                    .onChange(of: bedtimeDate) {
+                        let components = Calendar.current.dateComponents([.hour, .minute], from: bedtimeDate)
+                        bedtimeHour = components.hour ?? 23
+                        bedtimeMinute = components.minute ?? 0
+                    }
+
+                    Text("취침 시간을 설정하면 카페인 차트에 표시됩니다.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
             Section("건강 데이터") {
                 Label("HealthKit 연동", systemImage: "heart.fill")
             }
@@ -47,6 +70,12 @@ struct SettingsView: View {
             }
         }
         .navigationTitle("설정")
+        .onAppear {
+            var components = DateComponents()
+            components.hour = bedtimeHour
+            components.minute = bedtimeMinute
+            bedtimeDate = Calendar.current.date(from: components) ?? Date()
+        }
     }
 }
 

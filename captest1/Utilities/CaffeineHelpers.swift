@@ -24,3 +24,29 @@ func toDoses(_ records: [CaffeineRecord]) -> [CaffeineKineticsCalculator.Dose] {
         CaffeineKineticsCalculator.Dose(timestamp: $0.timestamp, amountMg: Double($0.amount))
     }
 }
+
+func koreanTimeLabel(for date: Date) -> String {
+    let hour = Calendar.current.component(.hour, from: date)
+    switch hour {
+    case 0: return "자정"
+    case 6: return "오전 6시"
+    case 12: return "정오"
+    case 18: return "오후 6시"
+    default: return "\(hour)시"
+    }
+}
+
+func resolvedBedtimeDate(hour: Int, minute: Int) -> Date? {
+    let calendar = Calendar.current
+    let now = Date()
+    var components = calendar.dateComponents([.year, .month, .day], from: now)
+    components.hour = hour
+    components.minute = minute
+
+    guard let bedtime = calendar.date(from: components) else { return nil }
+
+    if hour < AppConstants.Pharmacokinetics.chartStartHour {
+        return calendar.date(byAdding: .day, value: 1, to: bedtime)
+    }
+    return bedtime
+}

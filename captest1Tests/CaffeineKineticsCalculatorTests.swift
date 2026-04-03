@@ -121,4 +121,34 @@ struct CaffeineKineticsCalculatorTests {
         #expect(abs(short - 50.0) < 0.01)
         #expect(long > short)
     }
+
+    // MARK: - nearestConcentration
+
+    @Test func nearestConcentration_exactMatch() {
+        let now = Date()
+        let points = [
+            CaffeineKineticsCalculator.DataPoint(index: 0, time: now, concentrationMg: 100),
+            CaffeineKineticsCalculator.DataPoint(index: 1, time: now.addingTimeInterval(900), concentrationMg: 80),
+        ]
+        let result = CaffeineKineticsCalculator.nearestConcentration(at: now, in: points)
+        #expect(abs(result - 100.0) < 0.01)
+    }
+
+    @Test func nearestConcentration_betweenPoints() {
+        let now = Date()
+        let points = [
+            CaffeineKineticsCalculator.DataPoint(index: 0, time: now, concentrationMg: 100),
+            CaffeineKineticsCalculator.DataPoint(index: 1, time: now.addingTimeInterval(900), concentrationMg: 80),
+        ]
+        // 600초 후 → 첫 번째 포인트(0초)보다 두 번째 포인트(900초)에 더 가까움
+        let result = CaffeineKineticsCalculator.nearestConcentration(
+            at: now.addingTimeInterval(600), in: points
+        )
+        #expect(abs(result - 80.0) < 0.01)
+    }
+
+    @Test func nearestConcentration_emptyArray() {
+        let result = CaffeineKineticsCalculator.nearestConcentration(at: Date(), in: [])
+        #expect(result == 0)
+    }
 }

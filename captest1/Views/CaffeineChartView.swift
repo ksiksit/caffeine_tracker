@@ -10,6 +10,8 @@ struct CaffeineChartView: View {
     let dataPoints: [CaffeineKineticsCalculator.DataPoint]
     let doses: [CaffeineKineticsCalculator.Dose]
     let currentTime: Date
+    var bedtimeHour: Int = 23
+    var bedtimeMinute: Int = 0
 
     private let espressoBrown = Color("EspressoBrown")
 
@@ -39,6 +41,7 @@ struct CaffeineChartView: View {
             caffeineLineSeries
             doseMarkers
             currentTimeRule
+            bedtimeRule
         }
         .chartXAxis {
             // Minor gridlines every 3 hours (no labels)
@@ -105,7 +108,7 @@ struct CaffeineChartView: View {
         ForEach(doses, id: \.timestamp) { dose in
             PointMark(
                 x: .value("시간", dose.timestamp),
-                y: .value("mg", concentrationAt(dose.timestamp))
+                y: .value("mg", CaffeineKineticsCalculator.nearestConcentration(at: dose.timestamp, in: dataPoints))
             )
             .foregroundStyle(espressoBrown)
             .symbolSize(60)
@@ -146,20 +149,21 @@ struct CaffeineChartView: View {
             }
     }
 
-    private func concentrationAt(_ time: Date) -> Double {
-        dataPoints.min(by: {
-            abs($0.time.timeIntervalSince(time)) < abs($1.time.timeIntervalSince(time))
-        })?.concentrationMg ?? 0
-    }
-
-    private func koreanTimeLabel(for date: Date) -> String {
-        let hour = Calendar.current.component(.hour, from: date)
-        switch hour {
-        case 0: return "자정"
-        case 6: return "오전 6시"
-        case 12: return "정오"
-        case 18: return "오후 6시"
-        default: return "\(hour)시"
+    @ChartContentBuilder
+    private var bedtimeRule: some ChartContent {
+        if let bedtime = resolvedBedtimeDate(hour: bedtimeHour, minute: bedtimeMinute) {
+            RuleMark(x: .value("취침", bedtime))
+                .foregroundStyle(.indigo.opacity(0.7))
+                .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [6, 4]))
+                .annotation(position: .top, alignment: .leading, spacing: 4) {
+                    Text("취침")
+                        .font(.system(size: 9, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(.indigo, in: Capsule())
+                }
         }
     }
+
 }

@@ -14,6 +14,8 @@ struct HomeView: View {
     private var allRecords: [CaffeineRecord]
 
     @AppStorage("caffeineHalfLife") private var halfLife: Double = AppConstants.Pharmacokinetics.defaultHalfLifeHours
+    @AppStorage("bedtimeHour") private var bedtimeHour: Int = 23
+    @AppStorage("bedtimeMinute") private var bedtimeMinute: Int = 0
     @State private var viewModel = HomeViewModel()
 
     var body: some View {
@@ -54,7 +56,9 @@ struct HomeView: View {
                     CaffeineChartView(
                         dataPoints: viewModel.chartDataPoints,
                         doses: viewModel.chartDoses,
-                        currentTime: viewModel.currentTime
+                        currentTime: viewModel.currentTime,
+                        bedtimeHour: bedtimeHour,
+                        bedtimeMinute: bedtimeMinute
                     )
                 }
 
