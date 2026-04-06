@@ -14,9 +14,15 @@ struct HomeView: View {
     private var allRecords: [CaffeineRecord]
 
     @AppStorage("caffeineHalfLife") private var halfLife: Double = AppConstants.Pharmacokinetics.defaultHalfLifeHours
+    @AppStorage("caffeineCondition") private var conditionRawValue: Int = CaffeineCondition.none.rawValue
     @AppStorage("bedtimeHour") private var bedtimeHour: Int = 23
     @AppStorage("bedtimeMinute") private var bedtimeMinute: Int = 0
     @State private var viewModel = HomeViewModel()
+
+    private var effectiveHL: Double {
+        let condition = CaffeineCondition(rawValue: conditionRawValue) ?? .none
+        return effectiveHalfLife(base: halfLife, condition: condition)
+    }
 
     var body: some View {
         ScrollView {
@@ -73,12 +79,16 @@ struct HomeView: View {
             AddCaffeineView()
         }
         .task(id: allRecords.count) {
-            viewModel.halfLife = halfLife
+            viewModel.halfLife = effectiveHL
             viewModel.updateRecords(allRecords)
             await viewModel.updateChartData()
         }
         .onChange(of: halfLife) {
-            viewModel.halfLife = halfLife
+            viewModel.halfLife = effectiveHL
+            Task { await viewModel.updateChartData() }
+        }
+        .onChange(of: conditionRawValue) {
+            viewModel.halfLife = effectiveHL
             Task { await viewModel.updateChartData() }
         }
     }

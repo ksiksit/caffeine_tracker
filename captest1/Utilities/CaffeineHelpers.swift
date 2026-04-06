@@ -36,6 +36,10 @@ func koreanTimeLabel(for date: Date) -> String {
     }
 }
 
+func effectiveHalfLife(base: Double, condition: CaffeineCondition) -> Double {
+    base * condition.multiplier
+}
+
 func resolvedBedtimeDate(hour: Int, minute: Int) -> Date? {
     let calendar = Calendar.current
     let now = Date()

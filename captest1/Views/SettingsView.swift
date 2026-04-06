@@ -9,9 +9,14 @@ import SwiftUI
 
 struct SettingsView: View {
     @AppStorage("caffeineHalfLife") private var halfLife: Double = AppConstants.Pharmacokinetics.defaultHalfLifeHours
+    @AppStorage("caffeineCondition") private var conditionRawValue: Int = CaffeineCondition.none.rawValue
     @AppStorage("bedtimeHour") private var bedtimeHour: Int = 23
     @AppStorage("bedtimeMinute") private var bedtimeMinute: Int = 0
     @State private var bedtimeDate = Date()
+
+    private var condition: CaffeineCondition {
+        CaffeineCondition(rawValue: conditionRawValue) ?? .none
+    }
 
     var body: some View {
         List {
@@ -31,9 +36,38 @@ struct SettingsView: View {
                     )
                     .tint(.brown)
 
-                    Text("일반 성인 평균 5시간. 흡연자는 더 짧고, 임산부는 더 길 수 있습니다.")
+                    Text("일반 성인 평균 5시간")
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                }
+
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Label("건강 상태", systemImage: "heart.text.square")
+                        Spacer()
+                        Picker("건강 상태", selection: $conditionRawValue) {
+                            ForEach(CaffeineCondition.allCases) { c in
+                                Text(c.label).tag(c.rawValue)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                    }
+
+                    if condition != .none {
+                        Text(condition.description)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+
+                        HStack {
+                            Text("적용된 반감기")
+                                .font(.subheadline)
+                            Spacer()
+                            Text(String(format: "%.1f시간", effectiveHalfLife(base: halfLife, condition: condition)))
+                                .font(.subheadline)
+                                .fontWeight(.semibold)
+                                .foregroundStyle(.brown)
+                        }
+                    }
                 }
             }
 
