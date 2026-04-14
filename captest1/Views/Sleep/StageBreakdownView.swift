@@ -9,26 +9,28 @@ struct StageBreakdownView: View {
     let summary: SleepSummary
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("수면 단계")
-                .font(.headline)
-                .padding(.bottom, 4)
-
-            ForEach(summary.stageBreakdown, id: \.stage) { item in
-                HStack {
-                    Circle()
-                        .fill(item.stage.color)
-                        .frame(width: 10, height: 10)
-                    Text(item.stage.displayName)
-                        .font(.subheadline)
-                    Spacer()
-                    Text(SleepSummary.formatDuration(item.duration))
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+        HealthCard("수면 단계", symbol: "chart.bar.fill", tint: .indigo) {
+            VStack(spacing: 0) {
+                ForEach(Array(summary.stageBreakdown.enumerated()), id: \.element.stage) { index, item in
+                    if index > 0 {
+                        Divider().padding(.leading, 22)
+                    }
+                    HStack(spacing: 12) {
+                        Circle()
+                            .fill(item.stage.color)
+                            .frame(width: 10, height: 10)
+                        Text(item.stage.displayName)
+                            .font(.subheadline)
+                            .foregroundStyle(.primary)
+                        Spacer()
+                        Text(SleepSummary.formatDuration(item.duration))
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .monospacedDigit()
+                    }
+                    .padding(.vertical, 10)
                 }
             }
         }
-        .padding()
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
     }
 }

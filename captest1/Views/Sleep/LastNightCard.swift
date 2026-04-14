@@ -9,43 +9,67 @@ struct LastNightCard: View {
     let summary: SleepSummary
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Image(systemName: "moon.zzz.fill")
-                    .foregroundStyle(.indigo)
-                Text("지난밤 수면")
-                    .font(.headline)
-                Spacer()
+        HealthCard(
+            "지난밤 수면",
+            symbol: "bed.double.fill",
+            tint: .indigo,
+            trailing: AnyView(
                 Text(summary.date, style: .date)
                     .font(.caption)
                     .foregroundStyle(.secondary)
-            }
+            )
+        ) {
+            VStack(alignment: .leading, spacing: 16) {
+                HStack(alignment: .firstTextBaseline, spacing: 4) {
+                    Text("\(totalMinutes / 60)")
+                        .font(.system(size: 34, weight: .bold, design: .rounded))
+                        .monospacedDigit()
+                    Text("시간")
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .padding(.trailing, 4)
+                    Text(String(format: "%02d", totalMinutes % 60))
+                        .font(.system(size: 34, weight: .bold, design: .rounded))
+                        .monospacedDigit()
+                    Text("분")
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                }
 
-            Text(SleepSummary.formatDuration(summary.totalSleepDuration))
-                .font(.system(size: 36, weight: .bold))
+                HStack(alignment: .top, spacing: 16) {
+                    metricColumn(
+                        label: "침대에서",
+                        value: SleepSummary.formatDuration(summary.timeInBed)
+                    )
+                    Divider().frame(height: 36)
+                    metricColumn(
+                        label: "수면 효율",
+                        value: "\(Int(summary.sleepEfficiency * 100))%"
+                    )
+                }
 
-            HStack(spacing: 16) {
-                Label(
-                    "침대 \(SleepSummary.formatDuration(summary.timeInBed))",
-                    systemImage: "bed.double"
-                )
-                .font(.caption)
-                .foregroundStyle(.secondary)
-
-                Label(
-                    "효율 \(Int(summary.sleepEfficiency * 100))%",
-                    systemImage: "chart.bar"
-                )
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            }
-
-            if !summary.stageBreakdown.isEmpty {
-                stageColorBar
+                if !summary.stageBreakdown.isEmpty {
+                    stageColorBar
+                }
             }
         }
-        .padding()
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+    }
+
+    private var totalMinutes: Int {
+        Int(summary.totalSleepDuration / 60)
+    }
+
+    private func metricColumn(label: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(label)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Text(value)
+                .font(.body.weight(.semibold))
+                .foregroundStyle(.primary)
+                .monospacedDigit()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var stageColorBar: some View {
@@ -53,12 +77,12 @@ struct LastNightCard: View {
             HStack(spacing: 2) {
                 ForEach(summary.stageBreakdown, id: \.stage) { item in
                     let ratio = item.duration / summary.timeInBed
-                    RoundedRectangle(cornerRadius: 4)
+                    RoundedRectangle(cornerRadius: 2)
                         .fill(item.stage.color)
-                        .frame(width: max(4, geometry.size.width * ratio - 2))
+                        .frame(width: max(3, geometry.size.width * ratio - 2))
                 }
             }
         }
-        .frame(height: 12)
+        .frame(height: 4)
     }
 }

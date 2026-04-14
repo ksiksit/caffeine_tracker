@@ -9,6 +9,8 @@ enum AppConstants {
     enum Caffeine {
         static let dailyRecommendedLimitMg = 400
         static let maxCustomAmountMg = 10_000
+        static let bedtimeSafeThresholdMg: Double = 50
+        static let defaultReferenceDoseMg: Int = 75
     }
 
     enum Sleep {

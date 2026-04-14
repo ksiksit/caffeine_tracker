@@ -15,6 +15,10 @@ final class AddCaffeineViewModel {
     var isCustomMode: Bool = false
     var showingSaveError: Bool = false
 
+    // MARK: - 편집 모드
+    var editingRecord: CaffeineRecord?
+    var selectedDate: Date = .now
+
     // MARK: - 유효성 검증
     var parsedAmount: Int? {
         guard let value = Int(customAmount), value > 0,
@@ -57,18 +61,45 @@ final class AddCaffeineViewModel {
         if filtered != newValue { customAmount = filtered }
     }
 
+    func loadForEdit(_ record: CaffeineRecord) {
+        editingRecord = record
+        customName = record.drinkName
+        customAmount = String(record.amount)
+        selectedDate = record.timestamp
+        if let preset = DrinkPreset.all.first(where: {
+            $0.name == record.drinkName && $0.caffeineAmount == record.amount
+        }) {
+            selectedPreset = preset
+            isCustomMode = false
+        } else {
+            selectedPreset = nil
+            isCustomMode = true
+        }
+    }
+
     /// - Returns: 저장 성공 시 true
     func save(into modelContext: ModelContext) -> Bool {
-        let record: CaffeineRecord
-        if let preset = selectedPreset, !isCustomMode {
-            record = CaffeineRecord(amount: preset.caffeineAmount, drinkName: preset.name)
+        if let editing = editingRecord {
+            if let preset = selectedPreset, !isCustomMode {
+                editing.drinkName = preset.name
+                editing.amount = preset.caffeineAmount
+            } else {
+                guard let amount = parsedAmount else { return false }
+                editing.drinkName = customName.isEmpty ? "직접 입력" : customName
+                editing.amount = amount
+            }
+            editing.timestamp = selectedDate
         } else {
-            guard let amount = parsedAmount else { return false }
-            let name = customName.isEmpty ? "직접 입력" : customName
-            record = CaffeineRecord(amount: amount, drinkName: name)
+            let record: CaffeineRecord
+            if let preset = selectedPreset, !isCustomMode {
+                record = CaffeineRecord(amount: preset.caffeineAmount, drinkName: preset.name)
+            } else {
+                guard let amount = parsedAmount else { return false }
+                let name = customName.isEmpty ? "직접 입력" : customName
+                record = CaffeineRecord(amount: amount, drinkName: name)
+            }
+            modelContext.insert(record)
         }
-
-        modelContext.insert(record)
 
         do {
             try modelContext.save()
