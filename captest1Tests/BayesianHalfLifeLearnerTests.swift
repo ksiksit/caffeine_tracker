@@ -110,6 +110,31 @@ struct BayesianHalfLifeLearnerTests {
         #expect(result == nil)
     }
 
+    @Test func usesConfiguredBedtimeWhenInBedMissing() throws {
+        let ctx = try makeContext()
+        let s = freshSettings()
+        s.bedtimeHour = 23
+        s.bedtimeMinute = 0
+        let learner = BayesianHalfLifeLearner(settings: s, context: ctx)
+        let calendar = Calendar(identifier: .gregorian)
+        let bedtime = calendar.date(
+            from: DateComponents(year: 2026, month: 4, day: 20, hour: 23)
+        )!
+        let asleepStart = bedtime.addingTimeInterval(30 * 60)
+        let asleepEnd = asleepStart.addingTimeInterval(8 * 3600)
+        let summaryNoInBed = SleepSummary(date: asleepEnd, records: [
+            SleepRecord(startDate: asleepStart, endDate: asleepEnd, stage: .asleepCore)
+        ])
+
+        let result = learner.updateIfNewObservation(
+            yesterdaySummary: summaryNoInBed,
+            allCaffeineRecords: [record(amount: 200, at: bedtime.addingTimeInterval(-4 * 3600))]
+        )
+
+        #expect(result != nil)
+        #expect(result?.observation.observedSOLMinutes == 30)
+    }
+
     @Test func skipsWhenSOLTooLarge() throws {
         let ctx = try makeContext()
         let s = freshSettings()

@@ -231,16 +231,13 @@ struct BayesianHalfLifeLearner {
         from summary: SleepSummary
     ) -> (bedtime: Date, solMinutes: Double)? {
         guard summary.totalSleepDuration >= Self.minSleepDurationSeconds else { return nil }
-        guard let solSeconds = summary.sleepOnsetLatency,
-              solSeconds.isFinite, solSeconds >= 0
+        guard let firstAsleep = firstAsleepStart(from: summary),
+              let bedtime = bedtimeStart(from: summary, firstAsleep: firstAsleep)
         else { return nil }
+        let solSeconds = firstAsleep.timeIntervalSince(bedtime)
+        guard solSeconds.isFinite, solSeconds >= 0 else { return nil }
         let solMinutes = solSeconds / 60
         guard solMinutes <= Self.maxAcceptableSOLMinutes else { return nil }
-        guard let bedtime = summary.bedtimeStart ?? summary.records
-            .filter({ $0.stage == .inBed })
-            .map(\.startDate)
-            .min()
-        else { return nil }
         return (bedtime, solMinutes)
     }
 
@@ -248,16 +245,52 @@ struct BayesianHalfLifeLearner {
         guard summary.totalSleepDuration >= Self.minSleepDurationSeconds else {
             return .sleepTooShort
         }
-        guard let solSeconds = summary.sleepOnsetLatency else {
+        guard let firstAsleep = firstAsleepStart(from: summary),
+              let bedtime = bedtimeStart(from: summary, firstAsleep: firstAsleep)
+        else {
             return .missingBedtime
         }
+        let solSeconds = firstAsleep.timeIntervalSince(bedtime)
         guard solSeconds.isFinite, solSeconds >= 0,
               solSeconds / 60 <= Self.maxAcceptableSOLMinutes
         else { return .invalidSOL }
-        guard summary.bedtimeStart != nil || summary.records.contains(where: { $0.stage == .inBed }) else {
-            return .missingBedtime
-        }
         return .invalidSOL
+    }
+
+    private func firstAsleepStart(from summary: SleepSummary) -> Date? {
+        summary.records
+            .filter { $0.stage.isAsleep }
+            .map(\.startDate)
+            .min()
+    }
+
+    private func bedtimeStart(from summary: SleepSummary, firstAsleep: Date) -> Date? {
+        let recordedBedtime = summary.bedtimeStart ?? summary.records
+            .filter { $0.stage == .inBed }
+            .map(\.startDate)
+            .min()
+        if let recordedBedtime { return recordedBedtime }
+        return configuredBedtime(for: summary.date, firstAsleep: firstAsleep)
+    }
+
+    private func configuredBedtime(for summaryDate: Date, firstAsleep: Date) -> Date? {
+        let calendar = Calendar.current
+        let baseDate = settings.bedtimeHour >= AppConstants.Sleep.windowStartHour
+            ? calendar.date(byAdding: .day, value: -1, to: summaryDate)
+            : summaryDate
+        guard let baseDate,
+              let bedtime = calendar.date(
+                bySettingHour: settings.bedtimeHour,
+                minute: settings.bedtimeMinute,
+                second: 0,
+                of: baseDate
+              )
+        else { return nil }
+        let solSeconds = firstAsleep.timeIntervalSince(bedtime)
+        guard solSeconds.isFinite, solSeconds >= 0,
+              solSeconds / 60 <= Self.maxAcceptableSOLMinutes
+        else { return nil }
+        return bedtime
     }
 
     /// 같은 날짜의 학습 이력이 이미 존재하는지 확인 (날짜 범위 쿼리로 정밀도 이슈 회피).
