@@ -6,9 +6,13 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct SettingsView: View {
+    @Environment(\.modelContext) private var modelContext
     @Environment(SettingsManager.self) private var settings
+    @Environment(HealthKitManager.self) private var healthKit
+    @Query private var allCaffeineRecords: [CaffeineRecord]
     @State private var bedtimeDate = Date()
 
     var body: some View {
@@ -33,6 +37,12 @@ struct SettingsView: View {
                     Text("일반 성인 평균 5시간")
                         .font(.caption)
                         .foregroundStyle(.secondary)
+
+                    if settings.isLearningEnabled {
+                        Text("슬라이더를 조작하면 자동 학습이 초기화됩니다.")
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
+                    }
                 }
 
                 VStack(alignment: .leading, spacing: 8) {
@@ -62,6 +72,39 @@ struct SettingsView: View {
                                 .foregroundStyle(Color("EspressoBrown"))
                         }
                     }
+                }
+            }
+
+            Section("개인화 학습") {
+                Toggle(isOn: $settings.isLearningEnabled) {
+                    Label("자동 학습", systemImage: "brain.head.profile")
+                }
+                .tint(Color("EspressoBrown"))
+
+                if settings.isLearningEnabled {
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack {
+                            Text("현재 추정 반감기")
+                            Spacer()
+                            Text(String(format: "%.2f h", settings.learnedHalfLifeMean))
+                                .fontWeight(.semibold)
+                                .foregroundStyle(Color("EspressoBrown"))
+                        }
+                        Text(String(format: "95%% CI: ± %.2f h",
+                                    settings.halfLifeCredibleIntervalHalfWidth))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        if let last = settings.lastLearnedDate {
+                            Text("마지막 학습: \(last, format: .dateTime.month().day())")
+                                .font(.caption2)
+                                .foregroundStyle(.tertiary)
+                        } else {
+                            Text("아직 학습된 데이터가 없어요. 수면 기록이 쌓이면 자동으로 갱신됩니다.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+
                 }
             }
 
@@ -101,7 +144,31 @@ struct SettingsView: View {
             }
 
             Section("건강 데이터") {
-                Label("HealthKit 연동", systemImage: "heart.fill")
+                if healthKit.hasRequestedAuthorization {
+                    Label("HealthKit 연동됨", systemImage: "heart.fill")
+                        .foregroundStyle(.primary)
+                } else {
+                    Button {
+                        Task {
+                            await healthKit.requestAuthorization()
+                            await healthKit.loadData()
+                            // 권한 부여 직후 학습 1회 트리거
+                            let learner = BayesianHalfLifeLearner(
+                                settings: settings, context: modelContext
+                            )
+                            let summaries = healthKit.recentSummaries.isEmpty
+                                ? healthKit.lastNightSummary.map { [$0] } ?? []
+                                : healthKit.recentSummaries
+                            let result = learner.updateMissingObservations(
+                                summaries: summaries,
+                                allCaffeineRecords: allCaffeineRecords
+                            )
+                            settings.lastLearningSkipReason = result.displayReason
+                        }
+                    } label: {
+                        Label("HealthKit 연동", systemImage: "heart.fill")
+                    }
+                }
             }
 
             Section("알림") {
@@ -123,8 +190,11 @@ struct SettingsView: View {
 }
 
 #Preview {
-    NavigationStack {
+    let s = SettingsManager()
+    return NavigationStack {
         SettingsView()
     }
-    .environment(SettingsManager())
+    .environment(s)
+    .environment(HealthKitManager(settings: s))
+    .modelContainer(for: [CaffeineRecord.self, HalfLifeObservation.self], inMemory: true)
 }

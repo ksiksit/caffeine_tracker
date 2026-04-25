@@ -13,6 +13,10 @@ xcodebuild -scheme captest1 -destination 'platform=iOS Simulator,name=iPhone 17 
 
 # UI 테스트
 xcodebuild -scheme captest1UITests -destination 'platform=iOS Simulator,name=iPhone 17 Pro' test
+
+# 특정 테스트만 실행
+xcodebuild -scheme captest1 -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
+  -only-testing:captest1Tests/<클래스명>/<메서드명> test
 ```
 
 ## 프로젝트 개요

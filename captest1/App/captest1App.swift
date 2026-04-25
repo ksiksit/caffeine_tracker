@@ -22,6 +22,7 @@ struct captest1App: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             CaffeineRecord.self,
+            HalfLifeObservation.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 

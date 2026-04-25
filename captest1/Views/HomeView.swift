@@ -91,6 +91,14 @@ struct HomeView: View {
             viewModel.halfLife = settings.effectiveHalfLifeHours
             Task { await viewModel.updateChartData() }
         }
+        .onChange(of: settings.learnedHalfLifeMean) {
+            viewModel.halfLife = settings.effectiveHalfLifeHours
+            Task { await viewModel.updateChartData() }
+        }
+        .onChange(of: settings.isLearningEnabled) {
+            viewModel.halfLife = settings.effectiveHalfLifeHours
+            Task { await viewModel.updateChartData() }
+        }
         .onChange(of: settings.conditionRawValue) {
             viewModel.halfLife = settings.effectiveHalfLifeHours
             Task { await viewModel.updateChartData() }

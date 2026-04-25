@@ -78,6 +78,13 @@ struct SleepSummary: Identifiable {
     let id = UUID()
     let date: Date
     let records: [SleepRecord]
+    let bedtimeStart: Date?
+
+    init(date: Date, records: [SleepRecord], bedtimeStart: Date? = nil) {
+        self.date = date
+        self.records = records
+        self.bedtimeStart = bedtimeStart
+    }
 
     var totalSleepDuration: TimeInterval {
         records.filter { $0.stage.isAsleep }.reduce(0) { $0 + $1.duration }
@@ -92,6 +99,22 @@ struct SleepSummary: Identifiable {
     var sleepEfficiency: Double {
         guard timeInBed > 0 else { return 0 }
         return totalSleepDuration / timeInBed
+    }
+
+    /// 첫 inBed 시작 ~ 첫 asleep* 시작 사이의 잠복 시간(초).
+    /// inBed 기록이 없거나 음수면 nil. BayesianHalfLifeLearner의 학습 정책과 통일.
+    var sleepOnsetLatency: TimeInterval? {
+        let fallbackInBedStart = records
+            .filter { $0.stage == .inBed }
+            .map(\.startDate)
+            .min()
+        guard let inBedStart = bedtimeStart ?? fallbackInBedStart,
+              let firstAsleep = records
+                .filter({ $0.stage.isAsleep })
+                .map(\.startDate).min()
+        else { return nil }
+        let latency = firstAsleep.timeIntervalSince(inBedStart)
+        return latency >= 0 ? latency : nil
     }
 
     var stageBreakdown: [(stage: SleepStage, duration: TimeInterval)] {

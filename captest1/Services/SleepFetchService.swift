@@ -16,6 +16,7 @@ struct SleepFetchService {
     func fetchSleepSummary(for date: Date) async throws -> SleepSummary? {
         let samples = try await fetchSleepSamples(for: date)
         guard !samples.isEmpty else { return nil }
+        let bedtimeStart = earliestInBedStart(in: samples)
 
         let records = SleepDataProcessor.mergeSamples(samples).map { interval in
             SleepRecord(
@@ -25,7 +26,7 @@ struct SleepFetchService {
             )
         }
 
-        return SleepSummary(date: date, records: records)
+        return SleepSummary(date: date, records: records, bedtimeStart: bedtimeStart)
     }
 
     func fetchRecentSummaries(days: Int) async throws -> [SleepSummary] {
@@ -43,6 +44,13 @@ struct SleepFetchService {
     }
 
     // MARK: - Private
+
+    private func earliestInBedStart(in samples: [HKCategorySample]) -> Date? {
+        samples
+            .filter { $0.value == HKCategoryValueSleepAnalysis.inBed.rawValue }
+            .map(\.startDate)
+            .min()
+    }
 
     private func fetchSleepSamples(for date: Date) async throws -> [HKCategorySample] {
         let calendar = Calendar.current
