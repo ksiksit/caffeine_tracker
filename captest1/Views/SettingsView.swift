@@ -144,8 +144,11 @@ struct SettingsView: View {
             }
 
             Section("건강 데이터") {
-                if healthKit.hasRequestedAuthorization {
-                    Label("HealthKit 연동됨", systemImage: "heart.fill")
+                if healthKit.accessState == .requestCompleted {
+                    Label("HealthKit 접근 요청 완료", systemImage: "heart.fill")
+                        .foregroundStyle(.primary)
+                } else if healthKit.accessState == .unavailable {
+                    Label("건강 데이터 사용 불가", systemImage: "exclamationmark.triangle.fill")
                         .foregroundStyle(.primary)
                 } else {
                     Button {
@@ -180,6 +183,9 @@ struct SettingsView: View {
             }
         }
         .navigationTitle("설정")
+        .task {
+            await healthKit.refreshAccessState()
+        }
         .onAppear {
             var components = DateComponents()
             components.hour = settings.bedtimeHour

@@ -11,9 +11,9 @@ struct SleepAnalysisView: View {
 
     var body: some View {
         Group {
-            if !manager.isAvailable {
+            if manager.accessState == .unavailable {
                 unavailableView
-            } else if !manager.hasRequestedAuthorization {
+            } else if manager.accessState == .needsRequest {
                 authorizationView
             } else if manager.isLoading {
                 ProgressView("수면 데이터를 불러오는 중...")
@@ -25,7 +25,8 @@ struct SleepAnalysisView: View {
         }
         .navigationTitle("수면 분석")
         .task {
-            if manager.isAvailable && manager.hasRequestedAuthorization {
+            await manager.refreshAccessState()
+            if manager.canAttemptDataLoad {
                 await manager.loadDataIfNeeded()
             }
         }

@@ -16,6 +16,10 @@ struct BayesianHalfLifeLearnerTests {
 
     // MARK: - 테스트 환경 헬퍼
 
+    private enum TestSaveError: Error {
+        case forced
+    }
+
     private func makeContext() throws -> ModelContext {
         let schema = Schema([CaffeineRecord.self, HalfLifeObservation.self])
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
@@ -221,6 +225,32 @@ struct BayesianHalfLifeLearnerTests {
 
         #expect(result.updated.isEmpty)
         #expect(result.displayReason == .insufficientCaffeineResidual)
+    }
+
+    @Test func batchReportsStorageFailureWithoutChangingSettings() throws {
+        let ctx = try makeContext()
+        let s = freshSettings()
+        let initialMean = s.learnedHalfLifeMean
+        let initialVariance = s.learnedHalfLifeVariance
+        let initialLastLearnedDate = s.lastLearnedDate
+        let learner = BayesianHalfLifeLearner(
+            settings: s,
+            context: ctx,
+            saveContext: { throw TestSaveError.forced }
+        )
+        let bedtime = Date()
+
+        let result = learner.updateMissingObservations(
+            summaries: [summary(bedtime: bedtime, sleepDurationHours: 8, solMinutes: 30)],
+            allCaffeineRecords: [record(amount: 200, at: bedtime.addingTimeInterval(-4 * 3600))]
+        )
+
+        #expect(result.updated.isEmpty)
+        #expect(result.displayReason == .storageFailed)
+        #expect(s.learnedHalfLifeMean == initialMean)
+        #expect(s.learnedHalfLifeVariance == initialVariance)
+        #expect(s.lastLearnedDate == initialLastLearnedDate)
+        #expect(try observations(in: ctx).isEmpty)
     }
 
     @Test func skipsOnDuplicateSameDay() throws {

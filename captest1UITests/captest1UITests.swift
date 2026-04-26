@@ -41,13 +41,21 @@ final class captest1UITests: XCTestCase {
         app.tabBars.buttons["설정"].tap()
         XCTAssertTrue(app.navigationBars["설정"].waitForExistence(timeout: 2))
         XCTAssertTrue(
-            app.staticTexts["취침 시간"].waitForExistence(timeout: 2)
-            || app.buttons["취침 시간"].exists
+            app.staticTexts["카페인 반감기"].waitForExistence(timeout: 2)
+            || app.staticTexts["카페인 대사"].exists
         )
+
+        if !app.staticTexts["HealthKit 연동"].exists
+            && !app.buttons["HealthKit 연동"].exists
+            && !app.staticTexts["HealthKit 접근 요청 완료"].exists
+            && !app.staticTexts["건강 데이터 사용 불가"].exists {
+            app.swipeUp()
+        }
         XCTAssertTrue(
             app.staticTexts["HealthKit 연동"].exists
             || app.buttons["HealthKit 연동"].exists
-            || app.staticTexts["HealthKit 연동됨"].exists
+            || app.staticTexts["HealthKit 접근 요청 완료"].exists
+            || app.staticTexts["건강 데이터 사용 불가"].exists
         )
         XCTAssertTrue(app.staticTexts["카페인 알림 설정"].waitForExistence(timeout: 2))
 

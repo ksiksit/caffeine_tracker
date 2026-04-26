@@ -8,16 +8,30 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 # 빌드
 xcodebuild -scheme captest1 -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build
 
-# 단위 테스트
+# 단위 테스트 (기본 검증)
+xcodebuild -scheme captest1 -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
+  -only-testing:captest1Tests test
+
+# UI 테스트 (UI 변경 또는 요청 시)
+xcodebuild -scheme captest1 -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
+  -only-testing:captest1UITests test
+
+# 전체 테스트 (단위 + UI 테스트가 함께 실행될 수 있으므로 기본 검증으로 사용하지 않음)
 xcodebuild -scheme captest1 -destination 'platform=iOS Simulator,name=iPhone 17 Pro' test
 
-# UI 테스트
-xcodebuild -scheme captest1UITests -destination 'platform=iOS Simulator,name=iPhone 17 Pro' test
-
-# 특정 테스트만 실행
+# 특정 단위 테스트만 실행
 xcodebuild -scheme captest1 -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
   -only-testing:captest1Tests/<클래스명>/<메서드명> test
 ```
+
+## 테스트 실행 및 실패 해석 지침
+
+- 기본 검증 순서는 **빌드 → 단위 테스트**이다.
+- UI 테스트는 UI 변경이 있거나 사용자가 요청한 경우에만 별도로 실행한다.
+- `xcodebuild -scheme captest1 ... test`는 UI 테스트까지 함께 실행될 수 있으므로 기본 검증 명령으로 사용하지 않는다.
+- 실패 보고 시 **컴파일 실패**, **단위 테스트 실패**, **UI 테스트 실패**, **CoreSimulator/테스트 러너 실행 실패**를 구분한다.
+- `CoreSimulatorService connection became invalid`, `Simulator device failed to launch ... xctrunner`, `ipc/mig server died`, 샌드박스/권한 오류는 앱 로직 실패로 단정하지 않는다.
+- 긴 SwiftUI 화면의 UI 테스트는 요소가 처음부터 보인다고 가정하지 말고, 필요 시 스크롤 후 확인한다.
 
 ## 프로젝트 개요
 

@@ -8,6 +8,59 @@ import Testing
 import HealthKit
 @testable import captest1
 
+struct HealthKitAccessStateTests {
+
+    @Test func unavailableDevice_returnsUnavailable() {
+        let state = HealthKitManager.accessState(
+            isAvailable: false,
+            requestStatus: .unnecessary,
+            hasRequestedBefore: true
+        )
+
+        #expect(state == .unavailable)
+    }
+
+    @Test func shouldRequest_returnsNeedsRequest() {
+        let state = HealthKitManager.accessState(
+            isAvailable: true,
+            requestStatus: .shouldRequest,
+            hasRequestedBefore: true
+        )
+
+        #expect(state == .needsRequest)
+    }
+
+    @Test func unnecessary_returnsRequestCompleted() {
+        let state = HealthKitManager.accessState(
+            isAvailable: true,
+            requestStatus: .unnecessary,
+            hasRequestedBefore: false
+        )
+
+        #expect(state == .requestCompleted)
+    }
+
+    @Test func unknownWithPriorRequest_returnsRequestCompleted() {
+        let state = HealthKitManager.accessState(
+            isAvailable: true,
+            requestStatus: .unknown,
+            hasRequestedBefore: true
+        )
+
+        #expect(state == .requestCompleted)
+    }
+
+    @Test func unknownWithoutPriorRequest_returnsNeedsRequest() {
+        let state = HealthKitManager.accessState(
+            isAvailable: true,
+            requestStatus: .unknown,
+            hasRequestedBefore: false
+        )
+
+        #expect(state == .needsRequest)
+    }
+}
+
 struct SleepStageTests {
 
     @Test func initFromHKValue_mapsCorrectly() {

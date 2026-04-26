@@ -25,6 +25,7 @@ enum LearningSkipReason: Equatable {
     case invalidPrior
     case insufficientCaffeineResidual
     case invalidObservation
+    case storageFailed
 
     var message: String {
         switch self {
@@ -46,6 +47,8 @@ enum LearningSkipReason: Equatable {
             "취침 시 카페인 잔량이 너무 적어 학습할 정보가 부족했어요."
         case .invalidObservation:
             "학습 관측값을 저장할 수 없어 건너뛰었어요."
+        case .storageFailed:
+            "학습 데이터를 저장소에 반영하지 못했어요."
         }
     }
 }
@@ -78,7 +81,7 @@ struct BayesianHalfLifeLearner {
         }
     }
 
-    /// 1회 갱신 결과. 영속화는 호출자가 수행.
+    /// 저장까지 성공한 1회 갱신 결과.
     struct UpdateResult {
         let observation: HalfLifeObservation
         let posteriorMean: Double
@@ -103,15 +106,18 @@ struct BayesianHalfLifeLearner {
     private let settings: SettingsManager
     private let context: ModelContext
     private let params: LikelihoodParams
+    private let saveContext: () throws -> Void
 
     init(
         settings: SettingsManager,
         context: ModelContext,
-        params: LikelihoodParams = LikelihoodParams()
+        params: LikelihoodParams = LikelihoodParams(),
+        saveContext: (() throws -> Void)? = nil
     ) {
         self.settings = settings
         self.context = context
         self.params = params
+        self.saveContext = saveContext ?? { try context.save() }
     }
 
     // MARK: - Public 진입점
@@ -147,8 +153,15 @@ struct BayesianHalfLifeLearner {
         for summary in sortedSummaries {
             let dayKey = Calendar.current.startOfDay(for: summary.date)
             guard seenDayKeys.insert(dayKey).inserted else { continue }
-            guard !hasExistingObservation(on: dayKey) else {
+
+            switch existingObservationStatus(on: dayKey) {
+            case .missing:
+                break
+            case .exists:
                 latestReason = (summary.date, .alreadyLearned)
+                continue
+            case .failed:
+                latestReason = (summary.date, .storageFailed)
                 continue
             }
 
@@ -179,8 +192,13 @@ struct BayesianHalfLifeLearner {
         }
 
         let dayKey = Calendar.current.startOfDay(for: summary.date)
-        guard !hasExistingObservation(on: dayKey) else {
+        switch existingObservationStatus(on: dayKey) {
+        case .missing:
+            break
+        case .exists:
             return (nil, .alreadyLearned)
+        case .failed:
+            return (nil, .storageFailed)
         }
 
         let doses = dosesInLearningWindow(
@@ -219,7 +237,12 @@ struct BayesianHalfLifeLearner {
             conditionMultiplier: multiplier
         ) else { return (nil, .invalidObservation) }
 
-        persist(observation: obs, postMean: safe.mean, postVar: safe.variance, dayKey: dayKey)
+        do {
+            try persist(observation: obs, postMean: safe.mean, postVar: safe.variance, dayKey: dayKey)
+        } catch {
+            return (nil, .storageFailed)
+        }
+
         let result = UpdateResult(
             observation: obs, posteriorMean: safe.mean, posteriorVariance: safe.variance
         )
@@ -293,15 +316,26 @@ struct BayesianHalfLifeLearner {
         return bedtime
     }
 
+    private enum ExistingObservationStatus {
+        case exists
+        case missing
+        case failed
+    }
+
     /// 같은 날짜의 학습 이력이 이미 존재하는지 확인 (날짜 범위 쿼리로 정밀도 이슈 회피).
-    private func hasExistingObservation(on dayKey: Date) -> Bool {
+    private func existingObservationStatus(on dayKey: Date) -> ExistingObservationStatus {
         guard let nextDay = Calendar.current.date(byAdding: .day, value: 1, to: dayKey)
-        else { return true }  // 날짜 계산 실패 시 안전하게 skip
+        else { return .failed }
         let predicate = #Predicate<HalfLifeObservation> {
             $0.date >= dayKey && $0.date < nextDay
         }
         let descriptor = FetchDescriptor<HalfLifeObservation>(predicate: predicate)
-        return ((try? context.fetchCount(descriptor)) ?? 0) > 0
+
+        do {
+            return try context.fetchCount(descriptor) > 0 ? .exists : .missing
+        } catch {
+            return .failed
+        }
     }
 
     /// [bedtime - dosesLookbackHours, bedtime] 윈도우의 dose 목록.
@@ -373,18 +407,25 @@ struct BayesianHalfLifeLearner {
         return (clamped, flooredVar)
     }
 
-    /// 학습 결과를 SwiftData와 설정에 반영.
+    /// 관측 저장이 성공한 뒤에만 학습 설정을 반영.
     private func persist(
         observation: HalfLifeObservation,
         postMean: Double,
         postVar: Double,
         dayKey: Date
-    ) {
+    ) throws {
         context.insert(observation)
+
+        do {
+            try saveContext()
+        } catch {
+            context.delete(observation)
+            throw error
+        }
+
         settings.learnedHalfLifeMean = postMean
         settings.learnedHalfLifeVariance = postVar
         settings.lastLearnedDate = dayKey
-        try? context.save()
     }
 
     /// ∂C/∂μ_base (μ_base는 시간 단위 base half-life).
