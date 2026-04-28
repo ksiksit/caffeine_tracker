@@ -21,10 +21,10 @@ xcodebuild -scheme captest1 -destination 'platform=iOS Simulator,name=iPhone 17 
 
 ## 프로젝트 개요
 
-카페인 섭취 추적 및 수면 분석 iOS 앱. SwiftUI + SwiftData + HealthKit + Charts 기반.
+질 좋은 수면을 위한 카페인 관리 앱. SwiftUI + SwiftData + HealthKit + Charts 기반.
 
-- **카페인 추적**: 음료 프리셋/직접 입력으로 카페인 기록, 약동학 모델로 체내 잔류량 차트 표시
-- **수면 분석**: HealthKit에서 수면 데이터(6단계) 조회, iPhone/Apple Watch 다중 기기 샘플 병합
+- **카페인 관리**: 음료 프리셋/직접 입력으로 카페인 기록, 약동학 모델로 체내 잔류량 차트 표시
+- **수면 영향 검증**: HealthKit에서 수면 데이터(6단계) 조회, iPhone/Apple Watch 다중 기기 샘플 병합
 - **설정**: 카페인 반감기 조정(3~7시간), 건강 상태별 반감기 보정(흡연/경구피임약/임신), 취침 시간 설정, HealthKit 연동
 
 ## 아키텍처

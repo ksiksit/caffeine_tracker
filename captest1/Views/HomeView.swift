@@ -32,7 +32,14 @@ struct HomeView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
-                statusCutoffCard
+                CutoffHeroCard(
+                    cutoffResult: viewModel.cutoffResult,
+                    now: viewModel.currentTime,
+                    currentResidual: viewModel.currentResidual,
+                    predictedAtBedtime: viewModel.predictedAtBedtime,
+                    referenceDoseMg: settings.referenceDoseMg,
+                    todayTotalMg: viewModel.todayTotal
+                )
 
                 addButton
 
@@ -114,84 +121,6 @@ struct HomeView: View {
         .onChange(of: settings.referenceDoseMg) {
             viewModel.referenceDoseMg = Double(settings.referenceDoseMg)
             Task { await viewModel.updateChartData() }
-        }
-    }
-
-    // MARK: - 상태 카드
-
-    private var cutoffStyle: (tint: Color, symbol: String, headline: String, subtitle: String) {
-        let now = viewModel.currentTime
-        switch viewModel.cutoffResult {
-        case .safeAnytime:
-            let subtitle = viewModel.todayRecords.isEmpty
-                ? "오늘 섭취한 카페인이 없어요"
-                : "취침까지 \(settings.referenceDoseMg) mg 한 잔 OK"
-            return (.green, "checkmark.circle.fill", "지금 마셔도 괜찮아요", subtitle)
-
-        case .cutoff(let time) where time > now:
-            let formatter = DateFormatter()
-            formatter.locale = Locale(identifier: "ko_KR")
-            formatter.dateFormat = "a h시 mm분"
-            return (
-                Color("EspressoBrown"),
-                "clock.badge.checkmark",
-                "\(formatter.string(from: time))까지 OK",
-                "그 전까지 \(settings.referenceDoseMg) mg 한 잔 추가 가능"
-            )
-
-        case .cutoff:
-            return (.orange, "clock.badge.xmark", "지금은 피하는 게 좋아요", "카페인 마감 시각이 지났어요")
-
-        case .alreadyExceeded(let predicted):
-            return (.red, "exclamationmark.triangle.fill", "오늘은 피하세요", "취침 시 예상 \(Int(predicted.rounded())) mg")
-        }
-    }
-
-    private var statusCutoffCard: some View {
-        let style = cutoffStyle
-        return HealthCard(
-            "오늘의 카페인",
-            symbol: style.symbol,
-            tint: style.tint
-        ) {
-            VStack(alignment: .leading, spacing: 16) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(style.headline)
-                        .font(.title3.weight(.bold))
-                        .foregroundStyle(.primary)
-                    Text(style.subtitle)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-
-                Divider()
-
-                HStack(alignment: .top, spacing: 12) {
-                    HealthMetric(
-                        label: "현재 잔류량",
-                        value: "\(Int(viewModel.currentResidual.rounded()))",
-                        unit: "mg"
-                    )
-                    HealthMetric(
-                        label: "취침 시 예상",
-                        value: "\(Int(viewModel.predictedAtBedtime.rounded()))",
-                        unit: "mg"
-                    )
-                }
-
-                HStack {
-                    Text("오늘 총 섭취")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                    Text("\(viewModel.todayTotal) mg")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.primary)
-                    Text("/ \(AppConstants.Caffeine.dailyRecommendedLimitMg) mg")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-            }
         }
     }
 

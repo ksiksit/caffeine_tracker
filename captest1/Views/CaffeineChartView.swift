@@ -17,6 +17,8 @@ struct CaffeineChartView: View {
 
     var body: some View {
         Chart {
+            bedtimeDangerZone
+            safetyRule
             caffeineLineSeries
             doseMarkers
             currentTimeRule
@@ -126,4 +128,34 @@ struct CaffeineChartView: View {
         }
     }
 
+    @ChartContentBuilder
+    private var safetyRule: some ChartContent {
+        RuleMark(y: .value("안전선", AppConstants.Caffeine.bedtimeSafeThresholdMg))
+            .foregroundStyle(.secondary.opacity(0.5))
+            .lineStyle(StrokeStyle(lineWidth: 1, dash: [3, 3]))
+            .annotation(position: .top, alignment: .trailing, spacing: 2) {
+                Text("안전 50mg")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+    }
+
+    @ChartContentBuilder
+    private var bedtimeDangerZone: some ChartContent {
+        if let bedtime = resolvedBedtimeDate(hour: bedtimeHour, minute: bedtimeMinute),
+           let chartEnd = dataPoints.last?.time,
+           bedtime < chartEnd {
+            let threshold = AppConstants.Caffeine.bedtimeSafeThresholdMg
+            let maxConcentration = dataPoints.map(\.concentrationMg).max() ?? threshold
+            if maxConcentration > threshold {
+                RectangleMark(
+                    xStart: .value("취침", bedtime),
+                    xEnd: .value("끝", chartEnd),
+                    yStart: .value("임계", threshold),
+                    yEnd: .value("최대", maxConcentration)
+                )
+                .foregroundStyle(Color.red.opacity(0.10))
+            }
+        }
+    }
 }

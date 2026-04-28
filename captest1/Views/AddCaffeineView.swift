@@ -9,6 +9,9 @@ import SwiftData
 struct AddCaffeineView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Environment(SettingsManager.self) private var settings
+    @Query(sort: \CaffeineRecord.timestamp, order: .reverse)
+    private var allRecords: [CaffeineRecord]
 
     let editingRecord: CaffeineRecord?
 
@@ -45,6 +48,18 @@ struct AddCaffeineView: View {
                 .padding(.vertical, 16)
             }
             .background(Color(.systemGroupedBackground).ignoresSafeArea())
+            .safeAreaInset(edge: .top, spacing: 0) {
+                if let preview = cutoffPreview {
+                    CutoffPreviewBanner(
+                        current: preview.current,
+                        projected: preview.projected,
+                        predictedAtBedtime: preview.predictedAtBedtime
+                    )
+                    .animation(.easeInOut(duration: 0.2), value: viewModel.selectedPreset?.name)
+                    .animation(.easeInOut(duration: 0.2), value: viewModel.customAmount)
+                    .animation(.easeInOut(duration: 0.2), value: viewModel.isCustomMode)
+                }
+            }
             .navigationTitle(isEditMode ? "기록 수정" : "카페인 추가")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -81,6 +96,42 @@ struct AddCaffeineView: View {
                 }
             }
         }
+    }
+
+    private var cutoffPreview: (current: CaffeineCutoffResult, projected: CaffeineCutoffResult, predictedAtBedtime: Double)? {
+        guard !isEditMode else { return nil }
+        let todayDoses = toDoses(filterTodayRecords(allRecords))
+        let bedtime = nextBedtimeForPreview(
+            hour: settings.bedtimeHour,
+            minute: settings.bedtimeMinute
+        )
+        guard let pair = viewModel.previewCutoff(
+            todayDoses: todayDoses,
+            halfLifeHours: settings.effectiveHalfLifeHours,
+            bedtime: bedtime,
+            referenceDoseMg: Double(settings.referenceDoseMg)
+        ) else { return nil }
+
+        let projectedResidual: Double = {
+            switch pair.projected {
+            case .alreadyExceeded(let mg): return mg
+            default: return 0
+            }
+        }()
+        return (pair.current, pair.projected, projectedResidual)
+    }
+
+    private func nextBedtimeForPreview(hour: Int, minute: Int) -> Date {
+        let calendar = Calendar.current
+        let now = Date()
+        var components = calendar.dateComponents([.year, .month, .day], from: now)
+        components.hour = hour
+        components.minute = minute
+        guard let todayBedtime = calendar.date(from: components) else { return now }
+        if todayBedtime <= now {
+            return calendar.date(byAdding: .day, value: 1, to: todayBedtime) ?? todayBedtime
+        }
+        return todayBedtime
     }
 
     private var presetSection: some View {

@@ -31,6 +31,48 @@ final class AddCaffeineViewModel {
         return selectedPreset != nil
     }
 
+    // MARK: - 마감시각 미리보기
+
+    /// 신규 추가 모드에서 "지금 이 음료를 추가하면 마감시각이 어떻게 바뀌는지" 계산.
+    /// 편집 모드는 base에서 자기 자신을 빼야 해 분기가 복잡하므로 nil 반환.
+    func previewCutoff(
+        todayDoses: [CaffeineKineticsCalculator.Dose],
+        halfLifeHours: Double,
+        bedtime: Date,
+        referenceDoseMg: Double
+    ) -> (current: CaffeineCutoffResult, projected: CaffeineCutoffResult)? {
+        guard editingRecord == nil else { return nil }
+
+        let pendingAmount: Double
+        if isCustomMode {
+            guard let amount = parsedAmount else { return nil }
+            pendingAmount = Double(amount)
+        } else if let preset = selectedPreset {
+            pendingAmount = Double(preset.caffeineAmount)
+        } else {
+            return nil
+        }
+
+        let current = caffeineCutoffTime(
+            currentDoses: todayDoses,
+            bedtime: bedtime,
+            referenceDoseMg: referenceDoseMg,
+            halfLifeHours: halfLifeHours
+        )
+
+        let pendingDose = CaffeineKineticsCalculator.Dose(
+            timestamp: Date(), amountMg: pendingAmount
+        )
+        let projected = caffeineCutoffTime(
+            currentDoses: todayDoses + [pendingDose],
+            bedtime: bedtime,
+            referenceDoseMg: referenceDoseMg,
+            halfLifeHours: halfLifeHours
+        )
+
+        return (current, projected)
+    }
+
     var validationMessage: String? {
         guard isCustomMode, !customAmount.isEmpty else { return nil }
         if Int(customAmount) == nil {
