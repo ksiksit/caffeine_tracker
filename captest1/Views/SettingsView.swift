@@ -6,14 +6,13 @@
 //
 
 import SwiftUI
-import SwiftData
 
 struct SettingsView: View {
-    @Environment(\.modelContext) private var modelContext
     @Environment(SettingsManager.self) private var settings
     @Environment(HealthKitManager.self) private var healthKit
-    @Query private var allCaffeineRecords: [CaffeineRecord]
+    @Environment(AuthManager.self) private var auth
     @State private var bedtimeDate = Date()
+    @State private var showLogoutConfirm = false
 
     var body: some View {
         @Bindable var settings = settings
@@ -155,18 +154,7 @@ struct SettingsView: View {
                         Task {
                             await healthKit.requestAuthorization()
                             await healthKit.loadData()
-                            // 권한 부여 직후 학습 1회 트리거
-                            let learner = BayesianHalfLifeLearner(
-                                settings: settings, context: modelContext
-                            )
-                            let summaries = healthKit.recentSummaries.isEmpty
-                                ? healthKit.lastNightSummary.map { [$0] } ?? []
-                                : healthKit.recentSummaries
-                            let result = learner.updateMissingObservations(
-                                summaries: summaries,
-                                allCaffeineRecords: allCaffeineRecords
-                            )
-                            settings.lastLearningSkipReason = result.displayReason
+                            // 학습은 단계 3에서 서버(sleep·learning 도메인)로 이관 예정 — 현재 비활성.
                         }
                     } label: {
                         Label("HealthKit 연동", systemImage: "heart.fill")
@@ -178,11 +166,44 @@ struct SettingsView: View {
                 Label("카페인 알림 설정", systemImage: "bell.fill")
             }
 
+            Section("계정") {
+                if case .authenticated(let me) = auth.state {
+                    HStack {
+                        Image(systemName: "person.crop.circle.fill")
+                            .foregroundStyle(Color("EspressoBrown"))
+                        Text(me.email)
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                    }
+                }
+
+                Button(role: .destructive) {
+                    showLogoutConfirm = true
+                } label: {
+                    Label("로그아웃", systemImage: "rectangle.portrait.and.arrow.right")
+                }
+            }
+
             Section("정보") {
                 Label("앱 버전 1.0", systemImage: "info.circle")
             }
         }
         .navigationTitle("설정")
+        .confirmationDialog(
+            "정말 로그아웃하시겠어요?",
+            isPresented: $showLogoutConfirm,
+            titleVisibility: .visible
+        ) {
+            Button("로그아웃", role: .destructive) {
+                Task {
+                    await auth.logout()
+                    settings.resetLearnedData()
+                }
+            }
+            Button("취소", role: .cancel) {}
+        } message: {
+            Text("이 기기의 학습된 카페인 반감기 데이터도 함께 초기화됩니다.")
+        }
         .task {
             await healthKit.refreshAccessState()
         }
@@ -192,15 +213,25 @@ struct SettingsView: View {
             components.minute = settings.bedtimeMinute
             bedtimeDate = Calendar.current.date(from: components) ?? Date()
         }
+        // 편집 변경 → 서버로 디바운스 동기화(server-authoritative)
+        .onChange(of: settings.halfLife) { settings.scheduleSync() }
+        .onChange(of: settings.conditionRawValue) { settings.scheduleSync() }
+        .onChange(of: settings.isLearningEnabled) { settings.scheduleSync() }
+        .onChange(of: settings.referenceDoseMg) { settings.scheduleSync() }
+        .onChange(of: settings.bedtimeHour) { settings.scheduleSync() }
+        .onChange(of: settings.bedtimeMinute) { settings.scheduleSync() }
     }
 }
 
 #Preview {
     let s = SettingsManager()
+    let keychain = KeychainHelper(service: "preview.captest1.auth")
+    let store = TokenStore(keychain: keychain)
+    let client = APIClient(baseURL: URL(string: "http://localhost:8080")!, tokenStore: store)
     return NavigationStack {
         SettingsView()
     }
     .environment(s)
     .environment(HealthKitManager(settings: s))
-    .modelContainer(for: [CaffeineRecord.self, HalfLifeObservation.self], inMemory: true)
+    .environment(AuthManager(api: client, tokenStore: store))
 }

@@ -12,11 +12,24 @@ import SwiftData
 struct captest1App: App {
     @State private var settings: SettingsManager
     @State private var healthKitManager: HealthKitManager
+    @State private var auth: AuthManager
+    @State private var caffeineStore: CaffeineStore
+    private let tokenStore: TokenStore
+    private let apiClient: APIClient
 
     init() {
         let settings = SettingsManager()
         _settings = State(wrappedValue: settings)
         _healthKitManager = State(wrappedValue: HealthKitManager(settings: settings))
+
+        let keychain = KeychainHelper(service: "app1.captest1.auth")
+        let store = TokenStore(keychain: keychain)
+        let client = APIClient(baseURL: AppEnvironment.baseURL, tokenStore: store)
+        tokenStore = store
+        apiClient = client
+        settings.attach(api: client)
+        _auth = State(wrappedValue: AuthManager(api: client, tokenStore: store))
+        _caffeineStore = State(wrappedValue: CaffeineStore(api: client))
     }
 
     var sharedModelContainer: ModelContainer = {
@@ -35,9 +48,17 @@ struct captest1App: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            RootView()
                 .environment(healthKitManager)
                 .environment(settings)
+                .environment(auth)
+                .environment(caffeineStore)
+                .task {
+                    await tokenStore.bootstrap()
+                    await apiClient.setAccessToken(tokenStore.accessToken)
+                    await apiClient.setRefreshToken(tokenStore.refreshToken)
+                    await auth.bootstrap()
+                }
         }
         .modelContainer(sharedModelContainer)
     }

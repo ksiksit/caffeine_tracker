@@ -4,22 +4,20 @@
 //
 
 import SwiftUI
-import SwiftData
 
 struct AddCaffeineView: View {
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.modelContext) private var modelContext
     @Environment(SettingsManager.self) private var settings
-    @Query(sort: \CaffeineRecord.timestamp, order: .reverse)
-    private var allRecords: [CaffeineRecord]
+    @Environment(CaffeineStore.self) private var store
 
-    let editingRecord: CaffeineRecord?
+    let editingRecord: CaffeineRecordDTO?
 
     @State private var viewModel = AddCaffeineViewModel()
     @State private var loaded = false
+    @State private var isSaving = false
     @FocusState private var focusedField: CustomField?
 
-    init(editing record: CaffeineRecord? = nil) {
+    init(editing record: CaffeineRecordDTO? = nil) {
         self.editingRecord = record
     }
 
@@ -68,11 +66,9 @@ struct AddCaffeineView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button(isEditMode ? "저장" : "추가") {
-                        if viewModel.save(into: modelContext) {
-                            dismiss()
-                        }
+                        save()
                     }
-                    .disabled(!viewModel.canSave)
+                    .disabled(!viewModel.canSave || isSaving)
                     .fontWeight(.semibold)
                 }
             }
@@ -100,7 +96,8 @@ struct AddCaffeineView: View {
 
     private var cutoffPreview: (current: CaffeineCutoffResult, projected: CaffeineCutoffResult, predictedAtBedtime: Double)? {
         guard !isEditMode else { return nil }
-        let todayDoses = toDoses(filterTodayRecords(allRecords))
+        // 즉시 미리보기만 로컬 공식 유지(키 입력 왕복 방지). 오늘 doses는 서버 today 결과에서.
+        let todayDoses = store.chartDoses
         let bedtime = nextBedtimeForPreview(
             hour: settings.bedtimeHour,
             minute: settings.bedtimeMinute
@@ -132,6 +129,31 @@ struct AddCaffeineView: View {
             return calendar.date(byAdding: .day, value: 1, to: todayBedtime) ?? todayBedtime
         }
         return todayBedtime
+    }
+
+    private func save() {
+        guard let resolved = viewModel.resolve() else {
+            viewModel.showingSaveError = true
+            return
+        }
+        isSaving = true
+        Task {
+            let ok: Bool
+            if let editing = viewModel.editingRecord {
+                ok = await store.update(
+                    id: editing.id, amount: resolved.amount,
+                    drinkName: resolved.drinkName, timestamp: resolved.timestamp)
+            } else {
+                ok = await store.add(
+                    amount: resolved.amount, drinkName: resolved.drinkName, timestamp: resolved.timestamp)
+            }
+            isSaving = false
+            if ok {
+                dismiss()
+            } else {
+                viewModel.showingSaveError = true
+            }
+        }
     }
 
     private var presetSection: some View {
@@ -251,6 +273,11 @@ struct AddCaffeineView: View {
 }
 
 #Preview {
-    AddCaffeineView()
-        .modelContainer(for: CaffeineRecord.self, inMemory: true)
+    let s = SettingsManager()
+    let keychain = KeychainHelper(service: "preview.captest1.add")
+    let store = TokenStore(keychain: keychain)
+    let client = APIClient(baseURL: URL(string: "http://localhost:8080")!, tokenStore: store)
+    return AddCaffeineView()
+        .environment(s)
+        .environment(CaffeineStore(api: client))
 }

@@ -112,4 +112,98 @@ final class SettingsManager {
         self.isLearningEnabled = (defaults.object(forKey: Keys.isLearningEnabled) as? Bool) ?? true
         self.lastLearnedDate = defaults.object(forKey: Keys.lastLearnedDate) as? Date
     }
+
+    /// 로그아웃 등 사용자 전환 시 베이지안 학습 결과를 초기화한다.
+    func resetLearnedData() {
+        learnedHalfLifeMean = AppConstants.Pharmacokinetics.defaultHalfLifeHours
+        learnedHalfLifeVariance = Self.populationPriorVariance
+        lastLearnedDate = nil
+        lastLearningSkipReason = nil
+    }
+
+    // MARK: - 서버 동기화 (server-authoritative)
+
+    private var api: APIClient?
+    private var syncTask: Task<Void, Never>?
+    private var isApplyingServer = false
+    private var lastSyncedSnapshot: Snapshot?
+
+    private struct Snapshot: Equatable {
+        let halfLife: Double
+        let condition: Int
+        let bedtimeHour: Int
+        let bedtimeMinute: Int
+        let referenceDoseMg: Int
+        let isLearningEnabled: Bool
+    }
+
+    private func currentSnapshot() -> Snapshot {
+        Snapshot(halfLife: halfLife, condition: conditionRawValue, bedtimeHour: bedtimeHour,
+                 bedtimeMinute: bedtimeMinute, referenceDoseMg: referenceDoseMg,
+                 isLearningEnabled: isLearningEnabled)
+    }
+
+    func attach(api: APIClient) {
+        self.api = api
+    }
+
+    /// 로그인 직후 서버 설정을 로컬 미러로 가져온다.
+    func loadFromServer() async {
+        guard let api else { return }
+        if let dto = try? await api.getSettings() {
+            applyServer(dto)
+        }
+    }
+
+    /// 편집 변경 시 호출(디바운스). 서버 PUT 후 권위 값을 다시 적용한다.
+    func scheduleSync() {
+        guard api != nil, !isApplyingServer else { return }
+        guard currentSnapshot() != lastSyncedSnapshot else { return }
+        syncTask?.cancel()
+        syncTask = Task { [weak self] in
+            try? await Task.sleep(for: .milliseconds(400))
+            guard let self, !Task.isCancelled else { return }
+            await self.syncToServer()
+        }
+    }
+
+    private func syncToServer() async {
+        guard let api else { return }
+        let req = UpdateSettingsRequest(
+            halfLife: halfLife, condition: conditionRawValue,
+            bedtimeHour: bedtimeHour, bedtimeMinute: bedtimeMinute,
+            referenceDoseMg: referenceDoseMg, isLearningEnabled: isLearningEnabled)
+        if let dto = try? await api.updateSettings(req) {
+            applyServer(dto)
+        }
+    }
+
+    /// 서버 권위 값을 로컬에 반영. didSet 의 prior 리셋을 덮어쓰도록 learned* 를 halfLife 뒤에 적용.
+    private func applyServer(_ dto: SettingsResponse) {
+        isApplyingServer = true
+        defer { isApplyingServer = false }
+        halfLife = dto.halfLife
+        conditionRawValue = dto.condition
+        bedtimeHour = dto.bedtimeHour
+        bedtimeMinute = dto.bedtimeMinute
+        referenceDoseMg = dto.referenceDoseMg
+        isLearningEnabled = dto.isLearningEnabled
+        learnedHalfLifeMean = dto.learnedMean
+        learnedHalfLifeVariance = dto.learnedVariance
+        lastLearnedDate = Self.parseServerDate(dto.lastLearnedDate)
+        lastSyncedSnapshot = currentSnapshot()
+    }
+
+    private static let serverDateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.calendar = Calendar(identifier: .gregorian)
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.dateFormat = "yyyy-MM-dd"
+        return f
+    }()
+
+    private static func parseServerDate(_ s: String?) -> Date? {
+        guard let s else { return nil }
+        return serverDateFormatter.date(from: s)
+    }
 }

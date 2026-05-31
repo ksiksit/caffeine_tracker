@@ -6,13 +6,10 @@
 //
 
 import SwiftUI
-import SwiftData
 
 struct ContentView: View {
-    @Environment(\.modelContext) private var modelContext
     @Environment(HealthKitManager.self) private var healthKit
     @Environment(SettingsManager.self) private var settings
-    @Query private var allCaffeineRecords: [CaffeineRecord]
     @State private var selectedTab: Int = 0
 
     var body: some View {
@@ -42,31 +39,10 @@ struct ContentView: View {
             }
         }
         .task {
+            // 서버 설정을 로컬 미러로 로드(server-authoritative)
+            await settings.loadFromServer()
             await healthKit.loadDataIfNeeded()
-            runLearningIfPossible()
-        }
-        .onChange(of: healthKit.lastNightSummary?.id) {
-            // 권한 부여 후 데이터가 늦게 도착하는 경우 커버
-            runLearningIfPossible()
+            // 베이지안 학습은 단계 3에서 서버(sleep·learning 도메인)로 이관 — 현재 클라 로컬 학습 비활성.
         }
     }
-
-    private func runLearningIfPossible() {
-        let learner = BayesianHalfLifeLearner(settings: settings, context: modelContext)
-        let summaries = healthKit.recentSummaries.isEmpty
-            ? healthKit.lastNightSummary.map { [$0] } ?? []
-            : healthKit.recentSummaries
-        let result = learner.updateMissingObservations(
-            summaries: summaries,
-            allCaffeineRecords: allCaffeineRecords
-        )
-        settings.lastLearningSkipReason = result.displayReason
-    }
-}
-
-#Preview {
-    ContentView()
-        .modelContainer(for: [CaffeineRecord.self, HalfLifeObservation.self], inMemory: true)
-        .environment(SettingsManager())
-        .environment(HealthKitManager(settings: SettingsManager()))
 }

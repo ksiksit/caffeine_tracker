@@ -401,6 +401,7 @@
 				DEVELOPMENT_TEAM = AYY5XCZ8LV;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Config/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "수면 데이터를 분석하기 위해 건강 데이터에 접근합니다";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -436,6 +437,7 @@
 				DEVELOPMENT_TEAM = AYY5XCZ8LV;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Config/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "수면 데이터를 분석하기 위해 건강 데이터에 접근합니다";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;

@@ -6,53 +6,47 @@
 //
 
 import SwiftUI
-import SwiftData
 import Charts
 
 struct HomeView: View {
-    @Environment(\.modelContext) private var modelContext
     @Environment(SettingsManager.self) private var settings
-    @Query(sort: \CaffeineRecord.timestamp, order: .reverse)
-    private var allRecords: [CaffeineRecord]
+    @Environment(CaffeineStore.self) private var store
 
-    @State private var viewModel = HomeViewModel()
-    @State private var editingRecord: CaffeineRecord?
-    @State private var pendingDelete: CaffeineRecord?
-
-    private var recordsSignature: Int {
-        var hasher = Hasher()
-        for record in allRecords {
-            hasher.combine(record.persistentModelID)
-            hasher.combine(record.amount)
-            hasher.combine(record.timestamp)
-        }
-        return hasher.finalize()
-    }
+    @State private var showingAddSheet = false
+    @State private var editingRecord: CaffeineRecordDTO?
+    @State private var pendingDelete: CaffeineRecordDTO?
 
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
                 CutoffHeroCard(
-                    cutoffResult: viewModel.cutoffResult,
-                    now: viewModel.currentTime,
-                    currentResidual: viewModel.currentResidual,
-                    predictedAtBedtime: viewModel.predictedAtBedtime,
+                    cutoffResult: store.cutoffResult,
+                    now: store.currentTime,
+                    currentResidual: store.currentResidual,
+                    predictedAtBedtime: store.predictedAtBedtime,
                     referenceDoseMg: settings.referenceDoseMg,
-                    todayTotalMg: viewModel.todayTotal
+                    todayTotalMg: store.todayTotal
                 )
 
                 addButton
 
-                if !viewModel.todayRecords.isEmpty {
+                if let message = store.errorMessage {
+                    Text(message)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+
+                if !store.todayRecords.isEmpty {
                     HealthCard(
                         "시간대별 카페인",
                         symbol: "chart.line.uptrend.xyaxis",
                         tint: Color("EspressoBrown")
                     ) {
                         CaffeineChartView(
-                            dataPoints: viewModel.chartDataPoints,
-                            doses: viewModel.chartDoses,
-                            currentTime: viewModel.currentTime,
+                            dataPoints: store.chartDataPoints,
+                            doses: store.chartDoses,
+                            currentTime: store.currentTime,
                             bedtimeHour: settings.bedtimeHour,
                             bedtimeMinute: settings.bedtimeMinute
                         )
@@ -67,19 +61,15 @@ struct HomeView: View {
         .background(Color(.systemGroupedBackground).ignoresSafeArea())
         .navigationTitle("홈")
         .navigationBarTitleDisplayMode(.large)
-        .sheet(isPresented: $viewModel.showingAddSheet) {
+        .refreshable { await store.refresh() }
+        .sheet(isPresented: $showingAddSheet) {
             AddCaffeineView()
-        }
-        .task(id: recordsSignature) {
-            viewModel.halfLife = settings.effectiveHalfLifeHours
-            viewModel.bedtimeHour = settings.bedtimeHour
-            viewModel.bedtimeMinute = settings.bedtimeMinute
-            viewModel.referenceDoseMg = Double(settings.referenceDoseMg)
-            viewModel.updateRecords(allRecords)
-            await viewModel.updateChartData()
         }
         .sheet(item: $editingRecord) { record in
             AddCaffeineView(editing: record)
+        }
+        .task {
+            await store.refresh()
         }
         .alert("기록을 삭제할까요?", isPresented: Binding(
             get: { pendingDelete != nil },
@@ -87,40 +77,11 @@ struct HomeView: View {
         )) {
             Button("삭제", role: .destructive) {
                 if let record = pendingDelete {
-                    modelContext.delete(record)
-                    try? modelContext.save()
+                    Task { await store.delete(id: record.id) }
                 }
                 pendingDelete = nil
             }
             Button("취소", role: .cancel) { pendingDelete = nil }
-        }
-        .onChange(of: settings.halfLife) {
-            viewModel.halfLife = settings.effectiveHalfLifeHours
-            Task { await viewModel.updateChartData() }
-        }
-        .onChange(of: settings.learnedHalfLifeMean) {
-            viewModel.halfLife = settings.effectiveHalfLifeHours
-            Task { await viewModel.updateChartData() }
-        }
-        .onChange(of: settings.isLearningEnabled) {
-            viewModel.halfLife = settings.effectiveHalfLifeHours
-            Task { await viewModel.updateChartData() }
-        }
-        .onChange(of: settings.conditionRawValue) {
-            viewModel.halfLife = settings.effectiveHalfLifeHours
-            Task { await viewModel.updateChartData() }
-        }
-        .onChange(of: settings.bedtimeHour) {
-            viewModel.bedtimeHour = settings.bedtimeHour
-            Task { await viewModel.updateChartData() }
-        }
-        .onChange(of: settings.bedtimeMinute) {
-            viewModel.bedtimeMinute = settings.bedtimeMinute
-            Task { await viewModel.updateChartData() }
-        }
-        .onChange(of: settings.referenceDoseMg) {
-            viewModel.referenceDoseMg = Double(settings.referenceDoseMg)
-            Task { await viewModel.updateChartData() }
         }
     }
 
@@ -128,7 +89,7 @@ struct HomeView: View {
 
     private var addButton: some View {
         Button {
-            viewModel.showingAddSheet = true
+            showingAddSheet = true
         } label: {
             Label("카페인 추가", systemImage: "plus.circle.fill")
                 .font(.headline)
@@ -145,7 +106,7 @@ struct HomeView: View {
     private var todayRecordsCard: some View {
         HealthCard("오늘의 기록", symbol: "list.bullet", tint: Color("EspressoBrown")) {
             VStack(spacing: 0) {
-                ForEach(Array(viewModel.todayRecords.enumerated()), id: \.element.id) { index, record in
+                ForEach(Array(store.todayRecords.enumerated()), id: \.element.id) { index, record in
                     if index > 0 {
                         Divider().padding(.leading, 44)
                     }
@@ -155,7 +116,7 @@ struct HomeView: View {
         }
     }
 
-    private func recordRow(_ record: CaffeineRecord) -> some View {
+    private func recordRow(_ record: CaffeineRecordDTO) -> some View {
         HStack(spacing: 12) {
             CategoryIconBadge(symbol: "cup.and.saucer.fill", tint: Color("EspressoBrown"), size: 32)
 
@@ -190,12 +151,4 @@ struct HomeView: View {
             }
         }
     }
-}
-
-#Preview {
-    NavigationStack {
-        HomeView()
-    }
-    .modelContainer(for: CaffeineRecord.self, inMemory: true)
-    .environment(SettingsManager())
 }

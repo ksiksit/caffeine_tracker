@@ -4,7 +4,6 @@
 //
 
 import Foundation
-import SwiftData
 
 @MainActor @Observable
 final class AddCaffeineViewModel {
@@ -16,7 +15,7 @@ final class AddCaffeineViewModel {
     var showingSaveError: Bool = false
 
     // MARK: - 편집 모드
-    var editingRecord: CaffeineRecord?
+    var editingRecord: CaffeineRecordDTO?
     var selectedDate: Date = .now
 
     // MARK: - 유효성 검증
@@ -103,7 +102,7 @@ final class AddCaffeineViewModel {
         if filtered != newValue { customAmount = filtered }
     }
 
-    func loadForEdit(_ record: CaffeineRecord) {
+    func loadForEdit(_ record: CaffeineRecordDTO) {
         editingRecord = record
         customName = record.drinkName
         customAmount = String(record.amount)
@@ -119,36 +118,20 @@ final class AddCaffeineViewModel {
         }
     }
 
-    /// - Returns: 저장 성공 시 true
-    func save(into modelContext: ModelContext) -> Bool {
-        if let editing = editingRecord {
-            if let preset = selectedPreset, !isCustomMode {
-                editing.drinkName = preset.name
-                editing.amount = preset.caffeineAmount
-            } else {
-                guard let amount = parsedAmount else { return false }
-                editing.drinkName = customName.isEmpty ? "직접 입력" : customName
-                editing.amount = amount
-            }
-            editing.timestamp = selectedDate
+    /// 입력값을 (양, 음료명, 시각)으로 해소. 신규는 지금 시각, 편집은 선택 시각.
+    /// - Returns: 유효하지 않으면 nil.
+    func resolve() -> (amount: Int, drinkName: String, timestamp: Date)? {
+        let amount: Int
+        let drinkName: String
+        if let preset = selectedPreset, !isCustomMode {
+            amount = preset.caffeineAmount
+            drinkName = preset.name
         } else {
-            let record: CaffeineRecord
-            if let preset = selectedPreset, !isCustomMode {
-                record = CaffeineRecord(amount: preset.caffeineAmount, drinkName: preset.name)
-            } else {
-                guard let amount = parsedAmount else { return false }
-                let name = customName.isEmpty ? "직접 입력" : customName
-                record = CaffeineRecord(amount: amount, drinkName: name)
-            }
-            modelContext.insert(record)
+            guard let parsed = parsedAmount else { return nil }
+            amount = parsed
+            drinkName = customName.isEmpty ? "직접 입력" : customName
         }
-
-        do {
-            try modelContext.save()
-            return true
-        } catch {
-            showingSaveError = true
-            return false
-        }
+        let timestamp = editingRecord == nil ? Date() : selectedDate
+        return (amount, drinkName, timestamp)
     }
 }
