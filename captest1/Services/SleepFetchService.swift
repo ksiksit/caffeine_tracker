@@ -6,11 +6,31 @@
 import Foundation
 import HealthKit
 
+struct RawSleepSample: Sendable {
+    let clientUuid: String
+    let start: Date
+    let end: Date
+    let hkValue: Int
+}
+
 struct SleepFetchService {
     private let healthStore: HKHealthStore
 
     init(healthStore: HKHealthStore) {
         self.healthStore = healthStore
+    }
+
+    /// 서버 업로드용 원시 샘플(병합 전). HK 샘플 uuid를 멱등 키로 사용.
+    func fetchRawSamples(for date: Date) async throws -> [RawSleepSample] {
+        let samples = try await fetchSleepSamples(for: date)
+        return samples.map {
+            RawSleepSample(
+                clientUuid: $0.uuid.uuidString,
+                start: $0.startDate,
+                end: $0.endDate,
+                hkValue: $0.value
+            )
+        }
     }
 
     func fetchSleepSummary(for date: Date) async throws -> SleepSummary? {

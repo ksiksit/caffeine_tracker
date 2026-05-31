@@ -30,6 +30,12 @@ final class HealthKitManager {
     private let healthStore: HKHealthStore
     private let fetchService: SleepFetchService
     private let settings: SettingsManager
+    private var api: APIClient?
+
+    /// 서버 업로드/요약을 위해 APIClient를 주입(앱 부팅 시).
+    func attach(api: APIClient) {
+        self.api = api
+    }
 
     init(settings: SettingsManager) {
         let store = HKHealthStore()
@@ -133,12 +139,47 @@ final class HealthKitManager {
 
         do {
             let today = Date()
-            lastNightSummary = try await fetchService.fetchSleepSummary(for: today)
-            recentSummaries = try await fetchService.fetchRecentSummaries(days: AppConstants.Sleep.recentHistoryDays)
+            // 원시 샘플을 서버로 업로드하고, 병합·요약은 서버가 계산한 결과를 표시한다.
+            lastNightSummary = try await serverSummary(for: today)
+            var recents: [SleepSummary] = []
+            for offset in 0..<AppConstants.Sleep.recentHistoryDays {
+                guard let date = Calendar.current.date(byAdding: .day, value: -offset, to: today) else { continue }
+                if let summary = try await serverSummary(for: date) {
+                    recents.append(summary)
+                }
+            }
+            recentSummaries = recents
             hasLoadedData = true
         } catch {
             errorMessage = "수면 데이터를 불러오는데 실패했습니다: \(error.localizedDescription)"
         }
+    }
+
+    /// HealthKit 원시 샘플을 읽어 서버에 업로드하고, 서버가 병합·계산한 요약을 SleepSummary로 매핑.
+    private func serverSummary(for date: Date) async throws -> SleepSummary? {
+        guard let api else { return nil }
+        let raw = try await fetchService.fetchRawSamples(for: date)
+        if !raw.isEmpty {
+            let items = raw.map {
+                UploadSleepSampleItem(clientUuid: $0.clientUuid, start: $0.start, end: $0.end, hkValue: $0.hkValue)
+            }
+            _ = try await api.uploadSleepSamples(UploadSleepSamplesRequest(samples: items))
+        }
+        let response = try await api.sleepSummary(date: Self.localDateString(date))
+        guard response.hasData else { return nil }
+        let records = response.records.map {
+            SleepRecord(startDate: $0.start, endDate: $0.end, stage: SleepStage(from: $0.hkValue))
+        }
+        return SleepSummary(date: date, records: records, bedtimeStart: response.bedtimeStart)
+    }
+
+    private static func localDateString(_ date: Date) -> String {
+        let f = DateFormatter()
+        f.calendar = Calendar(identifier: .gregorian)
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.timeZone = .current
+        f.dateFormat = "yyyy-MM-dd"
+        return f.string(from: date)
     }
 
     private func requestStatus(

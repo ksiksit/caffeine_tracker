@@ -19,8 +19,9 @@ struct captest1App: App {
 
     init() {
         let settings = SettingsManager()
+        let healthKit = HealthKitManager(settings: settings)
         _settings = State(wrappedValue: settings)
-        _healthKitManager = State(wrappedValue: HealthKitManager(settings: settings))
+        _healthKitManager = State(wrappedValue: healthKit)
 
         let keychain = KeychainHelper(service: "app1.captest1.auth")
         let store = TokenStore(keychain: keychain)
@@ -28,6 +29,7 @@ struct captest1App: App {
         tokenStore = store
         apiClient = client
         settings.attach(api: client)
+        healthKit.attach(api: client)
         _auth = State(wrappedValue: AuthManager(api: client, tokenStore: store))
         _caffeineStore = State(wrappedValue: CaffeineStore(api: client))
     }

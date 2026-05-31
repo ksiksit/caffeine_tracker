@@ -118,6 +118,24 @@ actor APIClient {
         return try await send(request, authenticated: true, decoding: CaffeineTodayResponse.self)
     }
 
+    // MARK: - Sleep endpoints
+
+    func uploadSleepSamples(_ req: UploadSleepSamplesRequest) async throws -> UploadSleepSamplesResponse {
+        let request = try makeRequest(path: "/api/sleep/samples", method: "POST", body: req)
+        return try await send(request, authenticated: true, decoding: UploadSleepSamplesResponse.self)
+    }
+
+    /// date: "yyyy-MM-dd"(로컬 아침 기준). 서버가 전날 18시~당일 12시 윈도우를 병합·계산.
+    func sleepSummary(date: String, timeZone: TimeZone = .current) async throws -> SleepSummaryResponse {
+        let request = try makeRequest(
+            path: "/api/sleep/summary",
+            method: "GET",
+            query: ["date": date, "tz": timeZone.identifier],
+            body: Optional<Empty>.none
+        )
+        return try await send(request, authenticated: true, decoding: SleepSummaryResponse.self)
+    }
+
     // MARK: - Settings endpoints
 
     func getSettings() async throws -> SettingsResponse {
