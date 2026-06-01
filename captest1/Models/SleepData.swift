@@ -102,7 +102,7 @@ struct SleepSummary: Identifiable {
     }
 
     /// 첫 inBed 시작 ~ 첫 asleep* 시작 사이의 잠복 시간(초).
-    /// inBed 기록이 없거나 음수면 nil. BayesianHalfLifeLearner의 학습 정책과 통일.
+    /// inBed 기록이 없거나 음수면 nil. (학습용 SOL은 서버 BedtimeExtractor가 별도 계산)
     var sleepOnsetLatency: TimeInterval? {
         let fallbackInBedStart = records
             .filter { $0.stage == .inBed }

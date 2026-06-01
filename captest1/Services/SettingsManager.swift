@@ -73,9 +73,6 @@ final class SettingsManager {
         didSet { UserDefaults.standard.set(lastLearnedDate, forKey: Keys.lastLearnedDate) }
     }
 
-    /// 마지막 자동 학습 시도에서 사용자에게 보여줄 수 있는 실패 사유. 앱 재실행 시 초기화.
-    var lastLearningSkipReason: LearningSkipReason? = nil
-
     var condition: CaffeineCondition {
         CaffeineCondition(rawValue: conditionRawValue) ?? .none
     }
@@ -118,7 +115,6 @@ final class SettingsManager {
         learnedHalfLifeMean = AppConstants.Pharmacokinetics.defaultHalfLifeHours
         learnedHalfLifeVariance = Self.populationPriorVariance
         lastLearnedDate = nil
-        lastLearningSkipReason = nil
     }
 
     // MARK: - 서버 동기화 (server-authoritative)

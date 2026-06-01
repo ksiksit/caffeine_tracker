@@ -151,7 +151,7 @@ private struct CalibrationCard: View {
 
     var body: some View {
         let points = calibration.points.map {
-            LearningStats.Point(predicted: $0.predicted, observed: $0.observed, date: Date())
+            CalibrationPoint(predicted: $0.predicted, observed: $0.observed)
         }
         let domain = calibration.domainLower...max(calibration.domainUpper, calibration.domainLower + 1)
 

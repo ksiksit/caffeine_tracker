@@ -10,8 +10,15 @@
 import SwiftUI
 import Charts
 
+/// Calibration 차트 입력 점 (예측 SOL vs 측정 SOL). 서버 대시보드 DTO에서 매핑한다.
+struct CalibrationPoint: Identifiable {
+    let id = UUID()
+    let predicted: Double
+    let observed: Double
+}
+
 struct CalibrationScatterChart: View {
-    let points: [LearningStats.Point]
+    let points: [CalibrationPoint]
     let domain: ClosedRange<Double>
     /// 회색 노이즈 밴드 폭 (분). 기본 ±10 = σ_obs.
     var noiseBandMinutes: Double = 10
@@ -83,31 +90,28 @@ struct CalibrationScatterChart: View {
 }
 
 private struct CalibrationPreviewWrapper: View {
-    let points: [LearningStats.Point]
+    let points: [CalibrationPoint]
     var body: some View {
-        CalibrationScatterChart(
-            points: points,
-            domain: LearningStats.calibrationDomain(points: points)
-        )
-        .padding()
+        CalibrationScatterChart(points: points, domain: 10...55)
+            .padding()
     }
 }
 
 #Preview("정상 — 대각선 근처") {
     CalibrationPreviewWrapper(points: [
-        .init(predicted: 18, observed: 22, date: .now),
-        .init(predicted: 25, observed: 23, date: .now),
-        .init(predicted: 32, observed: 35, date: .now),
-        .init(predicted: 40, observed: 38, date: .now),
-        .init(predicted: 28, observed: 30, date: .now),
-        .init(predicted: 22, observed: 19, date: .now),
-        .init(predicted: 45, observed: 50, date: .now)
+        .init(predicted: 18, observed: 22),
+        .init(predicted: 25, observed: 23),
+        .init(predicted: 32, observed: 35),
+        .init(predicted: 40, observed: 38),
+        .init(predicted: 28, observed: 30),
+        .init(predicted: 22, observed: 19),
+        .init(predicted: 45, observed: 50)
     ])
 }
 
 #Preview("적은 데이터") {
     CalibrationPreviewWrapper(points: [
-        .init(predicted: 20, observed: 25, date: .now),
-        .init(predicted: 30, observed: 28, date: .now)
+        .init(predicted: 20, observed: 25),
+        .init(predicted: 30, observed: 28)
     ])
 }
