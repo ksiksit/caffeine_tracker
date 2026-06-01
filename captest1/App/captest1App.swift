@@ -14,6 +14,7 @@ struct captest1App: App {
     @State private var healthKitManager: HealthKitManager
     @State private var auth: AuthManager
     @State private var caffeineStore: CaffeineStore
+    @State private var learningStore: LearningStore
     private let tokenStore: TokenStore
     private let apiClient: APIClient
 
@@ -32,6 +33,7 @@ struct captest1App: App {
         healthKit.attach(api: client)
         _auth = State(wrappedValue: AuthManager(api: client, tokenStore: store))
         _caffeineStore = State(wrappedValue: CaffeineStore(api: client))
+        _learningStore = State(wrappedValue: LearningStore(api: client))
     }
 
     var sharedModelContainer: ModelContainer = {
@@ -55,6 +57,7 @@ struct captest1App: App {
                 .environment(settings)
                 .environment(auth)
                 .environment(caffeineStore)
+                .environment(learningStore)
                 .task {
                     await tokenStore.bootstrap()
                     await apiClient.setAccessToken(tokenStore.accessToken)

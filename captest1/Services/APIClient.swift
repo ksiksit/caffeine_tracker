@@ -136,6 +136,24 @@ actor APIClient {
         return try await send(request, authenticated: true, decoding: SleepSummaryResponse.self)
     }
 
+    // MARK: - Learning endpoints
+
+    @discardableResult
+    func learningRun(timeZone: TimeZone = .current) async throws -> LearningRunResponse {
+        let request = try makeRequest(
+            path: "/api/learning/run",
+            method: "POST",
+            query: ["tz": timeZone.identifier],
+            body: Optional<Empty>.none
+        )
+        return try await send(request, authenticated: true, decoding: LearningRunResponse.self)
+    }
+
+    func learningDashboard() async throws -> LearningDashboardResponse {
+        let request = try makeRequest(path: "/api/learning/dashboard", method: "GET", body: Optional<Empty>.none)
+        return try await send(request, authenticated: true, decoding: LearningDashboardResponse.self)
+    }
+
     // MARK: - Settings endpoints
 
     func getSettings() async throws -> SettingsResponse {
