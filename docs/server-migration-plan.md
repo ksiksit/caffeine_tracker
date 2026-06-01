@@ -1,8 +1,21 @@
 # 서버 기반 전환 계획서
 
+> ## ✅ 전환 완료 (2026-06-01)
+>
+> 서버 이관이 완료되었습니다. **실제 채택 방식은 thin-client(서버 권위)** 입니다 —
+> 앱은 입력을 전송하고 **서버가 약동학·수면 병합·베이지안 학습을 연산·저장**하며, 앱은 결과를 표시합니다.
+> 아래 본문에 적힌 *local-first 양방향 동기화*는 **초기 구상이며 미채택**(오프라인 동기화는 고도화 과제로 보류)입니다.
+>
+> **실제 구현 요약:**
+> - 서버: `settings`·`caffeine`·`sleep`·`learning` 도메인 + `calc/` 순수 연산(iOS Swift 포팅, 골든 테스트). Flyway `V1`~`V6`.
+> - 클라: `APIClient` + `CaffeineStore`/`LearningStore`(@Observable) + `SettingsManager` 서버 미러. HealthKit 읽기만 기기.
+> - 타임존 계약(요청 `tz`), JSON 날짜 ISO-8601+오프셋, learning 순차 prior 체이닝.
+> - 온라인 전용(기존 로컬 데이터는 버리고 새로 시작, 학습 mean/variance만 1회 시드 가능).
+> - 상세 단계별 계획·검증은 작업 플랜 참조. 아래 §1~§6은 **초기 구상 기록(historical)**.
+
 > 카페인 관리 앱(SwiftUI + SwiftData + HealthKit)을 **Spring Boot 백엔드 + 로컬 우선 동기화** 구조로 전환하는 로드맵.
 > 앱 레포: `captest1` · 서버 레포: `../server` (Java 21 / Spring Boot 3.5 / **MySQL 8**)
-> 최종 갱신: 2026-05-31
+> 최종 갱신: 2026-05-31 (구상) · 완료: 2026-06-01 (thin-client로 실현)
 
 ---
 
