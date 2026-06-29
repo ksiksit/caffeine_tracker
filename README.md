@@ -40,14 +40,7 @@
 
 ## 스크린샷
 
-실제 스크린샷 파일은 별도 작업으로 추가할 예정입니다. 현재 README에는 깨진 이미지 링크가 생기지 않도록 예정 경로만 정리합니다.
-
-| 화면 | 예정 경로 | 설명 |
-| --- | --- | --- |
-| 홈 | `docs/screenshots/home.png` | 마감 시각 hero, 잔류량 차트(안전선·위험 영역), 취침 시 예상량, 오늘의 기록 |
-| 수면 분석 | `docs/screenshots/sleep-analysis.png` | 지난밤 수면 요약, 단계별 수면 분석, 최근 기록 |
-| 내 학습 데이터 | `docs/screenshots/learning-dashboard.png` | 개인화 반감기 추정, 신뢰도, 모델 정확도 |
-| 설정 | `docs/screenshots/settings.png` | 반감기, 건강 상태, 취침 시간, HealthKit 설정 |
+스크린샷은 추후 추가 예정입니다. 화면별 구성은 위 [프로젝트 소개](#프로젝트-소개)의 탭 표를 참고하세요.
 
 ## 기술 스택
 
