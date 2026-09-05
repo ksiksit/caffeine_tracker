@@ -1,5 +1,5 @@
 //
-//  ServerLearningDTO.swift
+//  LearningDTO.swift
 //  captest1
 //
 //  학습 실행/대시보드 DTO. 베이지안 학습·통계는 서버가 계산한다.

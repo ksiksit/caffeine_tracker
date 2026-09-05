@@ -1,5 +1,5 @@
 //
-//  ServerSleepDTO.swift
+//  SleepDTO.swift
 //  captest1
 //
 //  수면 원시 샘플 업로드 / 서버 요약 DTO. 병합·SOL 계산은 서버가 수행한다.
