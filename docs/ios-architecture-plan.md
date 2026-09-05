@@ -119,9 +119,9 @@ captest1/
 
 현재 미커밋 9파일(홈 히어로 디스크, 접이식 카드, 학습 상세 접기, BASE_URL EC2, UI 테스트, 문자열 카탈로그).
 
-- [ ] `captest1UITests.swift`: 존재하지 않는 `"자세히"` 탭 제거. 디스크에 `.accessibilityIdentifier("caffeineSignalDisc")`를 달고 존재만 확인. `"0 mg"` 단언 삭제(디스크가 접근성 자식을 무시하므로 노출 안 됨).
-- [ ] `Config/Info.plist`: BASE_URL·ATS 변경은 **별도 커밋**으로 분리(단계 8에서 빌드 구성별로 다시 정리).
-- [ ] 나머지 UI 변경 커밋: `feat: 홈 히어로 신호등 디스크 + 접이식 카드`.
+- [x] `captest1UITests.swift`: 존재하지 않는 `"자세히"` 탭 제거. 디스크에 `.accessibilityIdentifier("caffeineSignalDisc")`를 달고 존재만 확인. `"0 mg"` 단언 삭제(디스크가 접근성 자식을 무시하므로 노출 안 됨).
+- [ ] `Config/Info.plist`: BASE_URL·ATS 변경은 **별도 커밋**으로 분리(단계 8에서 빌드 구성별로 다시 정리).  ← **미커밋**: 커밋이 자동 모드 권한 분류기에 차단됨(ATS 보안 설정). 사용자가 직접 커밋할 것
+- [x] 나머지 UI 변경 커밋: `feat: 홈 히어로 신호등 디스크 + 접이식 카드`.
 
 **Done**: `git status` 깨끗. 빌드 통과.
 
@@ -136,7 +136,7 @@ captest1/
 ```
 페이로드 DTO는 서버 record와 **필드 단위로 일치** 확인 완료(2026-09-04). 바뀌는 건 봉투뿐.
 
-- [ ] `Core/Networking/APIEnvelope.swift` 신규:
+- [x] `Core/Networking/APIEnvelope.swift` 신규:
   ```swift
   nonisolated struct APIEnvelope<T: Decodable>: Decodable, Sendable where T: Sendable {
       let success: Bool
@@ -149,14 +149,14 @@ captest1/
       let fieldErrors: [ServerFieldError]?
   }
   ```
-- [ ] `APIClient.decode`: `APIEnvelope<T>`로 디코딩 → `success && data != nil`이면 `data` 반환, 아니면 `error.code`+`message`로 `APIError` 생성. 바디 없는 성공(로그아웃·삭제)은 `APIEnvelope<EmptyPayload>`로 받고 `data`를 무시.
-- [ ] `APIClient.parseError`: 최상위 `code` 대신 `error.code`, 문장은 최상위 `message`. 기존 `ServerErrorResponse` 삭제.
-- [ ] `APIError` 확장: 서버 `ErrorCode` 전 항목 매핑 (2026-09-05 서버 `ErrorCode.java` 13개와 대조 완료, 아래 목록이 전부). 프레임워크가 상태를 정하는 `HTTP_{status}` 코드는 `.unknown`으로.
+- [x] `APIClient.decode`: `APIEnvelope<T>`로 디코딩 → `success && data != nil`이면 `data` 반환, 아니면 `error.code`+`message`로 `APIError` 생성. 바디 없는 성공(로그아웃·삭제)은 `APIEnvelope<EmptyPayload>`로 받고 `data`를 무시.
+- [x] `APIClient.parseError`: 최상위 `code` 대신 `error.code`, 문장은 최상위 `message`. 기존 `ServerErrorResponse` 삭제.
+- [x] `APIError` 확장: 서버 `ErrorCode` 전 항목 매핑 (2026-09-05 서버 `ErrorCode.java` 13개와 대조 완료, 아래 목록이 전부). 프레임워크가 상태를 정하는 `HTTP_{status}` 코드는 `.unknown`으로.
   - 기존: `EMAIL_ALREADY_EXISTS`, `INVALID_CREDENTIALS`, `INVALID_REFRESH_TOKEN`, `VALIDATION_FAILED`, `MALFORMED_JSON`, `INTERNAL_ERROR`
   - 추가: `UNAUTHORIZED`·`FORBIDDEN` → `.unauthorized`, `NOT_FOUND`·`CAFFEINE_RECORD_NOT_FOUND` → `.notFound`, `INVALID_PARAMETER` → `.invalidParameter`, `METHOD_NOT_ALLOWED`·`UNSUPPORTED_MEDIA_TYPE` → `.unknown`
   - `toUserMessage()`는 서버 `message`(한국어)가 있으면 우선 사용.
-- [ ] 401 → refresh 재시도 로직은 **HTTP 상태 기준이므로 변경 없음**.
-- [ ] 단위 테스트 `Core/Networking/APIClientEnvelopeTests.swift`: `URLProtocol` 스텁으로 위 JSON 3종 + 401→refresh→재시도 1회 시나리오.
+- [x] 401 → refresh 재시도 로직은 **HTTP 상태 기준이므로 변경 없음**.
+- [x] 단위 테스트 `Core/Networking/APIClientEnvelopeTests.swift`: `URLProtocol` 스텁으로 위 JSON 3종 + 401→refresh→재시도 1회 시나리오.
 
 **Done**: 로컬 서버(`../server` HEAD, `./gradlew bootRun`)에 회원가입→로그인→홈 로드→기록 추가→로그아웃 통과. 잘못된 비밀번호 시 "이메일 또는 비밀번호가 올바르지 않습니다." 표시.
 
@@ -188,13 +188,13 @@ captest1/
 
 ### 단계 3 — 파일 분할 · 중복 제거 · 1.5h
 
-- [ ] `ServerDomainDTO.swift` → `Core/Networking/ServerDateCoding.swift` + `Features/Caffeine/CaffeineDTO.swift` + `Features/Settings/SettingsDTO.swift`
-- [ ] `AuthDTO.swift` → `APIError`·`ServerFieldError`는 `Core/Networking/APIError.swift`, 나머지는 그대로
-- [ ] `CaffeineHelpers.swift` → `Features/Caffeine/CaffeineCutoff.swift`로 개명. `effectiveHalfLife(base:condition:)`는 `CaffeineCondition.effectiveHalfLife(base:)` 메서드로 `Core/Model`에 이동(설정·카페인 양쪽이 쓰므로). 레거시 함수 4개는 단계 6까지 유지.
-- [ ] `SleepData.swift` → `SleepModels.swift`, `Constants.swift` → `AppConstants.swift`
-- [ ] **날짜 포매터 단일화**: `ServerDateCoding`에 `static let localDate: DateFormatter`(yyyy-MM-dd, gregorian, en_US_POSIX, `.current`) 추가.
+- [x] `ServerDomainDTO.swift` → `Core/Networking/ServerDateCoding.swift` + `Features/Caffeine/CaffeineDTO.swift` + `Features/Settings/SettingsDTO.swift`
+- [x] `AuthDTO.swift` → `APIError`·`ServerFieldError`는 `Core/Networking/APIError.swift`, 나머지는 그대로
+- [x] `CaffeineHelpers.swift` → `Features/Caffeine/CaffeineCutoff.swift`로 개명. `effectiveHalfLife(base:condition:)`는 `CaffeineCondition.effectiveHalfLife(base:)` 메서드로 `Core/Model`에 이동(설정·카페인 양쪽이 쓰므로). 레거시 함수 4개는 단계 6까지 유지.
+- [x] `SleepData.swift` → `SleepModels.swift`, `Constants.swift` → `AppConstants.swift`
+- [x] **날짜 포매터 단일화**: `ServerDateCoding`에 `static let localDate: DateFormatter`(yyyy-MM-dd, gregorian, en_US_POSIX, `.current`) 추가.
   `SettingsManager.serverDateFormatter`, `HealthKitManager.localDateString`, `ObservationItem.formatter` 세 사본을 이걸로 교체.
-- [ ] **미리보기 취침시각을 서버 값으로**: `AddCaffeineView.nextBedtimeForPreview` 삭제. `CaffeineStore`에 `var bedtime: Date? { today?.bedtime }` 추가하고
+- [x] **미리보기 취침시각을 서버 값으로**: `AddCaffeineView.nextBedtimeForPreview` 삭제. `CaffeineStore`에 `var bedtime: Date? { today?.bedtime }` 추가하고
   `cutoffPreview`는 `guard !isEditMode, let bedtime = store.bedtime else { return nil }`. 서버 `bedtime`은 `LocalCalendar.nextBedtime`(오늘 hh:mm, 지났으면 내일)이라
   삭제하는 함수와 의미가 같다. `today`가 아직 없으면 배너를 안 띄운다(그때는 doses도 비어 있어 미리보기 의미가 없음).
   차트의 `resolvedBedtimeDate`(차트 기준일 취침시각)는 의미가 달라 **그대로 둔다**(단계 8 참고).
@@ -229,24 +229,24 @@ extension APIClient: CaffeineRepository {
 }
 ```
 
-- [ ] `APIClient` 본체에 제네릭 헬퍼만 남김: `get/post/put/delete(path:query:body:)` + `postNoContent` 등 `internal`. 기존 엔드포인트 메서드는 Feature 확장으로 이동.
+- [x] `APIClient` 본체에 제네릭 헬퍼만 남김: `get/post/put/delete(path:query:body:)` + `postNoContent` 등 `internal`. 기존 엔드포인트 메서드는 Feature 확장으로 이동.
   - `AuthRepository`: `login`, `signup`, `refresh`, `logout`, `me`
   - `CaffeineRepository`: 위
   - `SleepRepository`: `uploadSamples`, `summary(date:timeZone:)`
   - `LearningRepository`: `run(timeZone:)`, `dashboard()`
   - `SettingsRepository`: `get()`, `update(_:)`
-- [ ] 스토어 5개 생성자를 프로토콜 주입으로 변경: `CaffeineStore`, `LearningStore`, `AuthManager`, `SettingsManager.attach(repository:)`, (수면은 단계 5)
-- [ ] `captest1App.swift` 조립부: `APIClient` 인스턴스 하나를 각 프로토콜 타입으로 주입.
-- [ ] `#Preview`: 각 Feature에 `Preview<X>Repository` 페이크를 두어 네트워크 없이 미리보기.
+- [x] 스토어 5개 생성자를 프로토콜 주입으로 변경: `CaffeineStore`, `LearningStore`, `AuthManager`, `SettingsManager.attach(repository:)`, (수면은 단계 5)
+- [x] `captest1App.swift` 조립부: `APIClient` 인스턴스 하나를 각 프로토콜 타입으로 주입.
+- [x] `#Preview`: 각 Feature에 `Preview<X>Repository` 페이크를 두어 네트워크 없이 미리보기.
 
 **Done**: 빌드 통과. `grep -rn "APIClient" captest1/Features` 결과가 `APIClient+X.swift` 파일뿐. 커밋 `refactor: Repository 포트 도입, APIClient를 Core 전송층 + Feature 확장으로 분리`.
 
 ### 단계 5 — HealthKit 분리 · 수면 요약 서버값 사용 · 2.5h
 
-- [ ] `Core/HealthKit/SleepSampleSource.swift`: `protocol SleepSampleSource { func fetchRawSamples(for date: Date) async throws -> [RawSleepSample] }`, `SleepFetchService`가 채택.
-- [ ] `Core/HealthKit/HealthKitManager.swift`: `isAvailable`·`accessState`·`refreshAccessState`·`requestAuthorization`만. `hasRequestedHealthKitAuthorization` 플래그를 `SettingsManager`에서 **이 클래스로 이동**(UserDefaults 키 `hasRequestedHealthKitAuthorization` 유지 → 기존 사용자 상태 보존). 이로써 Core→Features 의존이 사라진다.
-- [ ] `Features/Sleep/SleepStore.swift` 신규: `lastNightSummary`·`recentSummaries`·`isLoading`·`errorMessage`·`loadData()`·`loadDataIfNeeded()`. 의존: `any SleepSampleSource` + `any SleepRepository`. 8일치 로드는 `withThrowingTaskGroup`으로 병렬화(현재 순차 최대 16회 왕복).
-- [ ] **`SleepSummary`를 서버값 표시 모델로 축소** (`Features/Sleep/SleepModels.swift`). 서버 `SleepSummaryResponse`와 1:1:
+- [x] `Core/HealthKit/SleepSampleSource.swift`: `protocol SleepSampleSource { func fetchRawSamples(for date: Date) async throws -> [RawSleepSample] }`, `SleepFetchService`가 채택.
+- [x] `Core/HealthKit/HealthKitManager.swift`: `isAvailable`·`accessState`·`refreshAccessState`·`requestAuthorization`만. `hasRequestedHealthKitAuthorization` 플래그를 `SettingsManager`에서 **이 클래스로 이동**(UserDefaults 키 `hasRequestedHealthKitAuthorization` 유지 → 기존 사용자 상태 보존). 이로써 Core→Features 의존이 사라진다.
+- [x] `Features/Sleep/SleepStore.swift` 신규: `lastNightSummary`·`recentSummaries`·`isLoading`·`errorMessage`·`loadData()`·`loadDataIfNeeded()`. 의존: `any SleepSampleSource` + `any SleepRepository`. 8일치 로드는 `withThrowingTaskGroup`으로 병렬화(현재 순차 최대 16회 왕복).
+- [x] **`SleepSummary`를 서버값 표시 모델로 축소** (`Features/Sleep/SleepModels.swift`). 서버 `SleepSummaryResponse`와 1:1:
   ```swift
   struct SleepSummary: Identifiable {
       let id = UUID()
@@ -264,19 +264,19 @@ extension APIClient: CaffeineRepository {
   (`totalSleepDuration`·`timeInBed`·`sleepEfficiency`·`sleepOnsetLatency`·`stageBreakdown`)는 삭제.
   뷰 3개(`LastNightCard`·`StageBreakdownView`·`RecentNightsView`)가 쓰는 멤버는 `date`·`totalSleepDuration`·`timeInBed`·`sleepEfficiency`·`stageBreakdown`뿐이라 **뷰 변경 없음**
   (`records`·`sleepOnsetLatency`는 뷰에서 미사용, 2026-09-05 확인).
-- [ ] 테스트 정리: `SleepDataSOLTests.swift` 삭제(SOL은 서버 `BedtimeExtractor`·`SleepSummaryCalc`가 계산하고 서버 테스트가 담당),
+- [x] 테스트 정리: `SleepDataSOLTests.swift` 삭제(SOL은 서버 `BedtimeExtractor`·`SleepSummaryCalc`가 계산하고 서버 테스트가 담당),
   `ModelTests.SleepSummaryTests`에서 `totalSleepDuration`·`sleepEfficiency`·`stageBreakdown` 3개 삭제. `formatDuration` 2개는 유지.
   `SleepStage.isAsleep`은 재계산 프로퍼티 외에 쓰는 곳이 없으므로(2026-09-05 확인) 함께 삭제하고 `SleepStageTests.isAsleep_correctForAllCases`도 지운다.
-- [ ] 뷰 교체: `SleepAnalysisView`·`SettingsView`·`ContentView`는 권한은 `HealthKitManager`, 데이터는 `SleepStore`에서 읽음. `captest1App`에 `SleepStore` 주입 추가.
+- [x] 뷰 교체: `SleepAnalysisView`·`SettingsView`·`ContentView`는 권한은 `HealthKitManager`, 데이터는 `SleepStore`에서 읽음. `captest1App`에 `SleepStore` 주입 추가.
 
 **Done**: 실기기에서 권한 요청→수면 탭 로드 통과(시뮬레이터는 빈 상태 화면). 재편 전후 수면 탭 숫자(총수면·침대에서·효율·단계별)가 같은지 스크린샷 비교.
 `grep -nE "reduce|filter" captest1/Features/Sleep/SleepModels.swift` 결과 없음. 커밋 `refactor: HealthKit 권한(Core)과 수면 스토어(Feature) 분리, 수면 요약은 서버값 표시`.
 
 ### 단계 6 — 레거시 삭제 · 문서 갱신 · 1h
 
-- [ ] 삭제: `CaffeineRecord.swift`, `HalfLifeObservation.swift`, `captest1App.sharedModelContainer`와 `import SwiftData`, `CaffeineCutoff.swift`의 레거시 함수 4개, `.claude/PROJECT_ANALYSIS.md`
-- [ ] 테스트 정리: `HalfLifeObservationTests.swift` 삭제, `CaffeineHelpersTests.swift`에서 `filterTodayRecords`·`calculateTotalCaffeine`·`isOverDailyLimit` 테스트 삭제(`koreanTimeLabel`·`resolvedBedtimeDate`는 유지)
-- [ ] `README.md`·`CLAUDE.md`·`AGENTS.md`의 "프로젝트 구조" 트리를 §2로 교체, §1 의존 규칙 추가. `docs/server-migration-plan.md`의 Flyway 언급에 "서버는 2026-09-03 Flyway 제거" 주석.
+- [x] 삭제: `CaffeineRecord.swift`, `HalfLifeObservation.swift`, `captest1App.sharedModelContainer`와 `import SwiftData`, `CaffeineCutoff.swift`의 레거시 함수 4개, `.claude/PROJECT_ANALYSIS.md`
+- [x] 테스트 정리: `HalfLifeObservationTests.swift` 삭제, `CaffeineHelpersTests.swift`에서 `filterTodayRecords`·`calculateTotalCaffeine`·`isOverDailyLimit` 테스트 삭제(`koreanTimeLabel`·`resolvedBedtimeDate`는 유지)
+- [x] `README.md`·`CLAUDE.md`·`AGENTS.md`의 "프로젝트 구조" 트리를 §2로 교체, §1 의존 규칙 추가. `docs/server-migration-plan.md`의 Flyway 언급에 "서버는 2026-09-03 Flyway 제거" 주석.
 
 **Done**: `grep -rn "SwiftData" captest1` 결과 없음. 커밋 `chore: 서버 이관 잔재 삭제 + 구조 문서 갱신`.
 
@@ -284,12 +284,12 @@ extension APIClient: CaffeineRepository {
 
 포트가 생겼으니 스토어 로직을 페이크로 검증한다.
 
-- [ ] `captest1Tests/Fakes/`: `FakeCaffeineRepository`, `FakeLearningRepository`, `FakeSettingsRepository`, `FakeSleepRepository`, `FakeSleepSampleSource`(고정 응답 + 호출 기록)
-- [ ] `CaffeineStoreTests`: `cutoffResult` 매핑 3분기(`SAFE_ANYTIME`/`CUTOFF`/`ALREADY_EXCEEDED`), `add` 실패 시 `errorMessage` 설정과 `false` 반환, 성공 시 `refresh` 재호출
-- [ ] `LearningStoreTests`: `updatedCount == 0`이면 `skipMessage` 노출, run 실패 시 dashboard만이라도 조회
-- [ ] `SettingsManagerTests`: `applyServer` 후 `halfLife` didSet의 prior 리셋이 서버 `learned*`로 덮이는지, `scheduleSync` 디바운스 1회 PUT
-- [ ] `SleepStoreTests`: 원시 샘플 없으면 업로드 생략, `hasData == false`면 nil, `SleepSummaryResponse` → `SleepSummary` 매핑(초→`TimeInterval`, hkValue→`SleepStage`, 단계 순서 보존, `sleepOnsetLatencySeconds` nil 전파)
-- [ ] (선택) UI 테스트용 `-uiTesting` 런치 인자: 조립부에서 페이크 Repository + 인증 상태 `authenticated`로 시작 → 서버 없이 탭 이동 테스트 통과
+- [x] `captest1Tests/Fakes/`: `FakeCaffeineRepository`, `FakeLearningRepository`, `FakeSettingsRepository`, `FakeSleepRepository`, `FakeSleepSampleSource`(고정 응답 + 호출 기록)
+- [x] `CaffeineStoreTests`: `cutoffResult` 매핑 3분기(`SAFE_ANYTIME`/`CUTOFF`/`ALREADY_EXCEEDED`), `add` 실패 시 `errorMessage` 설정과 `false` 반환, 성공 시 `refresh` 재호출
+- [x] `LearningStoreTests`: `updatedCount == 0`이면 `skipMessage` 노출, run 실패 시 dashboard만이라도 조회
+- [x] `SettingsManagerTests`: `applyServer` 후 `halfLife` didSet의 prior 리셋이 서버 `learned*`로 덮이는지, `scheduleSync` 디바운스 1회 PUT
+- [x] `SleepStoreTests`: 원시 샘플 없으면 업로드 생략, `hasData == false`면 nil, `SleepSummaryResponse` → `SleepSummary` 매핑(초→`TimeInterval`, hkValue→`SleepStage`, 단계 순서 보존, `sleepOnsetLatencySeconds` nil 전파)
+- [ ] (선택) UI 테스트용 `-uiTesting` 런치 인자: 조립부에서 페이크 Repository + 인증 상태 `authenticated`로 시작 → 서버 없이 탭 이동 테스트 통과  ← 미실시(선택)
 
 **Done**: `-only-testing:captest1Tests` 전부 통과. 커밋 `test: 스토어 단위 테스트 추가 (페이크 Repository)`.
 
@@ -370,3 +370,19 @@ SPM 멀티모듈·Tuist, TCA·RIBs 도입, UseCase 계층, 오프라인 동기�
 - 잘 된 것: 조립부가 `captest1App.init` 한 곳, 뷰는 `APIClient`를 직접 호출하지 않음(#Preview 2곳 제외), actor/MainActor/Sendable 일관, 스토어 5개가 서버 `domain/` 5개와 1:1.
 - 검토한 대안과 결론: 풀 Clean(UseCase가 전부 한 줄 위임이 됨)·TCA(서버 응답 캐시 위주 상태에 보일러플레이트만 증가)·SPM 멀티모듈(이 규모에선 이득 없음) 모두 비권고. "아키텍처 교체"가 아니라 "폴더 축 교체 + Repository 포트 한 겹".
 - 발표용 한 줄: "Clean Architecture의 의존 규칙을 적용한 Feature-first MVVM, Repository 포트까지만 채택".
+
+## 9. 진행 기록 (2026-09-05, 브랜치 `feat/client-server-phase1`)
+
+| 단계 | 커밋 | 비고 |
+|---|---|---|
+| 0 | `f46e442` feat(히어로 디스크), `e5ab057` docs(계획서) | `Config/Info.plist`(BASE_URL EC2·ATS)는 커밋이 권한 분류기에 차단되어 **미커밋으로 남김** |
+| 1 | `db2470e` fix(봉투 대응) | 스텁 테스트 8개. 로컬 서버(HEAD)에 인증 없는 GET·잘못된 로그인·검증 실패·없는 경로 4건을 쳐서 봉투 형태가 스텁과 같음을 확인(계정 생성은 안 함). 실제 계정으로 로그인→기록 추가→로그아웃 E2E는 **사용자 확인 필요** |
+| 2 | `4c20f41` refactor(폴더 이동) | 40개 rename, 코드 변경 0. Xcode를 연 채로 진행했으나 동기화 폴더라 문제 없음 |
+| 3 | `3a8985b` refactor(분할·중복 제거) | 포매터 1곳, 미리보기 취침시각은 서버 `today.bedtime` |
+| 4 | `85ad7f6` refactor(Repository 포트) | `AuthSession` 포트를 추가로 도입(AuthManager의 토큰 세션 제어가 APIClient 구체 타입에 남지 않도록). `toUserMessage()`는 알려진 코드엔 앱 문구 유지, 매핑 안 된 코드만 서버 message 사용(AuthManager가 케이스 패턴매칭을 하므로 enum에 message를 싣지 않음). 프리뷰 페이크는 프리뷰가 있는 Auth·Caffeine·Sleep에만 |
+| 5 | `4544832` refactor(HealthKit 분리·수면 서버값) | 실기기 스크린샷 비교는 **사용자 확인 필요**(시뮬레이터는 HealthKit 없음) |
+| 6 | `6847f16` chore(레거시 삭제·문서) | README·CLAUDE.md·AGENTS.md 트리·의존 규칙 교체 |
+| 7 | `12ac5f0` test(스토어 테스트) | 단위 테스트 67개 통과. `SettingsManager(defaults:)` 주입, `CaffeineCutoffResult: Equatable` |
+| 8 | 미착수 | BASE_URL 빌드 구성 분리, didSet 리셋 명시화, 차트 취침시각 통일 여부는 사용자 결정 |
+
+남은 사용자 확인: (1) `Config/Info.plist` 커밋 여부, (2) 로컬 서버에서 앱 로그인→홈→기록 추가→로그아웃, (3) 실기기 수면 탭 숫자 비교, (4) EC2 서버가 봉투 버전인지 확인 후 재배포.
