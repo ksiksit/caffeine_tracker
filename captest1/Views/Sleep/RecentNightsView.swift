@@ -9,7 +9,7 @@ struct RecentNightsView: View {
     let summaries: [SleepSummary]
 
     var body: some View {
-        HealthCard("최근 기록", symbol: "calendar", tint: .indigo) {
+        HealthCard("최근 기록", symbol: "calendar", tint: .indigo, collapsible: true) {
             if summaries.isEmpty {
                 Text("최근 수면 기록이 없습니다")
                     .font(.subheadline)

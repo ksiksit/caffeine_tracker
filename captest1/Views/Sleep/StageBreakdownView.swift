@@ -9,7 +9,7 @@ struct StageBreakdownView: View {
     let summary: SleepSummary
 
     var body: some View {
-        HealthCard("수면 단계", symbol: "chart.bar.fill", tint: .indigo) {
+        HealthCard("수면 단계", symbol: "chart.bar.fill", tint: .indigo, collapsible: true) {
             VStack(spacing: 0) {
                 ForEach(Array(summary.stageBreakdown.enumerated()), id: \.element.stage) { index, item in
                     if index > 0 {

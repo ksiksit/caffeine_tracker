@@ -30,7 +30,8 @@ final class captest1UITests: XCTestCase {
         // 홈 탭이 기본으로 표시되는지 확인
         XCTAssertTrue(app.navigationBars["홈"].waitForExistence(timeout: 2))
         XCTAssertTrue(app.staticTexts["오늘의 카페인"].exists)
-        XCTAssertTrue(app.staticTexts["0 mg"].exists)
+        // 신호등 디스크는 접근성 자식을 무시하므로 내부 숫자 대신 식별자 존재만 확인한다
+        XCTAssertTrue(app.descendants(matching: .any)["caffeineSignalDisc"].waitForExistence(timeout: 2))
 
         // 수면 분석 탭 전환
         app.tabBars.buttons["수면 분석"].tap()

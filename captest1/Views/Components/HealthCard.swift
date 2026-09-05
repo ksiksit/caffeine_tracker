@@ -24,6 +24,8 @@ struct HealthCard<Content: View>: View {
     let symbol: String?
     let tint: Color
     let trailing: AnyView?
+    let collapsible: Bool
+    @State private var isExpanded: Bool
     @ViewBuilder let content: () -> Content
 
     init(
@@ -31,34 +33,27 @@ struct HealthCard<Content: View>: View {
         symbol: String? = nil,
         tint: Color = .accentColor,
         trailing: AnyView? = nil,
+        collapsible: Bool = false,
+        initiallyExpanded: Bool = false,
         @ViewBuilder content: @escaping () -> Content
     ) {
         self.title = title
         self.symbol = symbol
         self.tint = tint
         self.trailing = trailing
+        self.collapsible = collapsible
+        self._isExpanded = State(initialValue: initiallyExpanded)
         self.content = content
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            if title != nil || symbol != nil || trailing != nil {
-                HStack(spacing: 10) {
-                    if let symbol {
-                        CategoryIconBadge(symbol: symbol, tint: tint, size: 28)
-                    }
-                    if let title {
-                        Text(title)
-                            .font(.headline)
-                            .foregroundStyle(.primary)
-                    }
-                    Spacer(minLength: 0)
-                    if let trailing {
-                        trailing
-                    }
-                }
+            if title != nil || symbol != nil || trailing != nil || collapsible {
+                header
             }
-            content()
+            if !collapsible || isExpanded {
+                content()
+            }
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -66,6 +61,41 @@ struct HealthCard<Content: View>: View {
             RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .fill(Color(.secondarySystemGroupedBackground))
         )
+    }
+
+    @ViewBuilder
+    private var header: some View {
+        let row = HStack(spacing: 10) {
+            if let symbol {
+                CategoryIconBadge(symbol: symbol, tint: tint, size: 28)
+            }
+            if let title {
+                Text(title)
+                    .font(.headline)
+                    .foregroundStyle(.primary)
+            }
+            Spacer(minLength: 0)
+            if let trailing {
+                trailing
+            }
+            if collapsible {
+                Image(systemName: "chevron.right")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .rotationEffect(.degrees(isExpanded ? 90 : 0))
+            }
+        }
+
+        if collapsible {
+            Button {
+                withAnimation { isExpanded.toggle() }
+            } label: {
+                row.contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+        } else {
+            row
+        }
     }
 }
 

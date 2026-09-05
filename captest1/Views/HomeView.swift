@@ -41,7 +41,8 @@ struct HomeView: View {
                     HealthCard(
                         "시간대별 카페인",
                         symbol: "chart.line.uptrend.xyaxis",
-                        tint: Color("EspressoBrown")
+                        tint: Color("EspressoBrown"),
+                        collapsible: true
                     ) {
                         CaffeineChartView(
                             dataPoints: store.chartDataPoints,

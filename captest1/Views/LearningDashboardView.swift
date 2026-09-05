@@ -51,10 +51,50 @@ struct LearningDashboardView: View {
             if let latest = dashboard.latest {
                 HeroEstimateCard(latest: latest, count: dashboard.count, lastLearnedDate: settings.lastLearnedDate)
             }
-            LearningTrendCard(observations: dashboard.observations)
-            CalibrationCard(calibration: dashboard.calibration)
-            InputDistributionCard(residual: dashboard.residualHistogram, sol: dashboard.solHistogram)
-            ObservationListCard(observations: dashboard.observations)
+            LearningDetailsDisclosure {
+                LearningTrendCard(observations: dashboard.observations)
+                CalibrationCard(calibration: dashboard.calibration)
+                InputDistributionCard(residual: dashboard.residualHistogram, sol: dashboard.solHistogram)
+                ObservationListCard(observations: dashboard.observations)
+            }
+        }
+    }
+}
+
+// MARK: - 학습 상세 (점진적 공개)
+
+private struct LearningDetailsDisclosure<Content: View>: View {
+    @State private var isExpanded = false
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        VStack(spacing: 16) {
+            Button {
+                withAnimation { isExpanded.toggle() }
+            } label: {
+                HStack(spacing: 10) {
+                    CategoryIconBadge(symbol: "chart.xyaxis.line", tint: Color("EspressoBrown"), size: 28)
+                    Text("학습 상세 보기")
+                        .font(.headline)
+                        .foregroundStyle(.primary)
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.right")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .rotationEffect(.degrees(isExpanded ? 90 : 0))
+                }
+                .padding(16)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(Color(.secondarySystemGroupedBackground))
+                )
+            }
+            .buttonStyle(.plain)
+
+            if isExpanded {
+                content()
+            }
         }
     }
 }
