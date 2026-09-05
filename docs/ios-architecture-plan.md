@@ -322,7 +322,7 @@ Clean의 Domain 계층으로 오해되기 때문. `Store/`를 `ViewModel/`로 �
 | Learning | LearningDashboardView, CalibrationScatterChart, ConfidenceBar | LearningStore | LearningRepository, APIClient+Learning, ServerLearningDTO | – |
 | Settings | SettingsView | SettingsManager | SettingsRepository, APIClient+Settings, SettingsDTO | – |
 
-- [ ] **커밋 1 · 폴더 이동** `refactor: Feature 내부를 Views/Store/Data/Model로 분류 (이동만)`. Xcode를 닫고 실행:
+- [x] **커밋 1 · 폴더 이동** `refactor: Feature 내부를 Views/Store/Data/Model로 분류 (이동만)`. Xcode를 닫고 실행:
   ```bash
   cd captest1/Features
   mkdir -p Auth/{Views,Store,Data} Caffeine/{Views,Store,Data,Model} Sleep/{Views,Store,Data,Model} Learning/{Views,Store,Data} Settings/{Views,Store,Data}
@@ -345,7 +345,7 @@ Clean의 Domain 계층으로 오해되기 때문. `Store/`를 `ViewModel/`로 �
   git mv Settings/{SettingsRepository,APIClient+Settings,SettingsDTO}.swift Settings/Data/
   ```
   `git mv`가 스테이징까지 하므로 `git commit`만 한다. **`git commit -a` 금지** — 미커밋으로 두기로 한 `Config/Info.plist`가 딸려 들어간다.
-- [ ] **커밋 2 · DTO 파일명 통일** `refactor: DTO 파일명 통일 (ServerSleepDTO→SleepDTO, ServerLearningDTO→LearningDTO)`.
+- [x] **커밋 2 · DTO 파일명 통일** `refactor: DTO 파일명 통일 (ServerSleepDTO→SleepDTO, ServerLearningDTO→LearningDTO)`.
   단계 3에서 §2에 계획만 하고 빠뜨린 항목. 타입 이름에는 `Server` 접두어가 없어(2026-09-05 확인) 파일명과 헤더 주석 1줄만 바뀐다.
   ```bash
   git mv captest1/Features/Sleep/Data/ServerSleepDTO.swift captest1/Features/Sleep/Data/SleepDTO.swift
@@ -353,7 +353,7 @@ Clean의 Domain 계층으로 오해되기 때문. `Store/`를 `ViewModel/`로 �
   sed -i '' 's|//  ServerSleepDTO.swift|//  SleepDTO.swift|' captest1/Features/Sleep/Data/SleepDTO.swift
   sed -i '' 's|//  ServerLearningDTO.swift|//  LearningDTO.swift|' captest1/Features/Learning/Data/LearningDTO.swift
   ```
-- [ ] **커밋 3 · 문서** `docs: Feature 내부 계층 폴더 반영 (트리·배치 규칙·검증 grep)`.
+- [x] **커밋 3 · 문서** `docs: Feature 내부 계층 폴더 반영 (트리·배치 규칙·검증 grep)`.
   `CLAUDE.md`·`README.md`·`AGENTS.md` 세 벌: 트리 블록을 §2와 같게(`Features/` 주석의 "한 폴더에" 삭제), 의존 규칙에 6번 "Feature 내부는 `Views → Store → Data·Model`, 배치는 단계 9 표"를 추가하고
   규칙 3 옆에 §4의 grep을 붙인다. 이 문서는 §9 진행 기록에 커밋 해시 기입.
 
@@ -454,7 +454,7 @@ SPM 멀티모듈·Tuist, TCA·RIBs 도입, UseCase 계층, 오프라인 동기�
 | 6 | `6847f16` chore(레거시 삭제·문서) | README·CLAUDE.md·AGENTS.md 트리·의존 규칙 교체 |
 | 7 | `12ac5f0` test(스토어 테스트) | 단위 테스트 67개 통과. `SettingsManager(defaults:)` 주입, `CaffeineCutoffResult: Equatable` |
 | 8 | 미착수 | BASE_URL 빌드 구성 분리, didSet 리셋 명시화, 차트 취침시각 통일 여부는 사용자 결정 |
-| 9 | 계획만 수립 | 2026-09-05 §3 단계 9·§10. 커밋 3개 예정(이동 44개 / DTO 파일명 2개 / 문서 3벌), 코드 변경은 헤더 주석 2줄 |
+| 9 | `3f6067c` docs(계획), `5ed689a` refactor(이동), `b08522e` refactor(DTO 파일명), 문서 반영은 이 커밋 | rename 44개·코드 변경 0(Xcode 연 채 진행, 문제 없음), DTO 파일명 2개 + 헤더 주석 2줄, 단위 테스트 67개 통과. CLAUDE.md·README.md·AGENTS.md 트리와 규칙 3·6 갱신 |
 
 남은 사용자 확인: (1) `Config/Info.plist` 커밋 여부, (2) 로컬 서버에서 앱 로그인→홈→기록 추가→로그아웃, (3) 실기기 수면 탭 숫자 비교, (4) EC2 서버가 봉투 버전인지 확인 후 재배포.
 
