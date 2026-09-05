@@ -13,7 +13,6 @@ final class SettingsManager {
         static let bedtimeHour = "bedtimeHour"
         static let bedtimeMinute = "bedtimeMinute"
         static let referenceDoseMg = "referenceDoseMg"
-        static let hasRequestedHealthKit = "hasRequestedHealthKitAuthorization"
         static let learnedMean = "learnedHalfLifeMean"
         static let learnedVariance = "learnedHalfLifeVariance"
         static let isLearningEnabled = "isLearningEnabled"
@@ -47,10 +46,6 @@ final class SettingsManager {
 
     var referenceDoseMg: Int {
         didSet { UserDefaults.standard.set(referenceDoseMg, forKey: Keys.referenceDoseMg) }
-    }
-
-    var hasRequestedHealthKitAuthorization: Bool {
-        didSet { UserDefaults.standard.set(hasRequestedHealthKitAuthorization, forKey: Keys.hasRequestedHealthKit) }
     }
 
     /// 학습된 사후 평균 (h, base half-life). 학습 OFF 시에는 사용되지 않음.
@@ -101,7 +96,6 @@ final class SettingsManager {
         self.bedtimeMinute = (defaults.object(forKey: Keys.bedtimeMinute) as? Int) ?? 0
         self.referenceDoseMg = (defaults.object(forKey: Keys.referenceDoseMg) as? Int)
             ?? AppConstants.Caffeine.defaultReferenceDoseMg
-        self.hasRequestedHealthKitAuthorization = defaults.bool(forKey: Keys.hasRequestedHealthKit)
         self.learnedHalfLifeMean = (defaults.object(forKey: Keys.learnedMean) as? Double)
             ?? AppConstants.Pharmacokinetics.defaultHalfLifeHours
         self.learnedHalfLifeVariance = (defaults.object(forKey: Keys.learnedVariance) as? Double)

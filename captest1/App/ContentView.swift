@@ -9,6 +9,7 @@ import SwiftUI
 
 struct ContentView: View {
     @Environment(HealthKitManager.self) private var healthKit
+    @Environment(SleepStore.self) private var sleepStore
     @Environment(SettingsManager.self) private var settings
     @State private var selectedTab: Int = 0
 
@@ -41,8 +42,10 @@ struct ContentView: View {
         .task {
             // 서버 설정을 로컬 미러로 로드(server-authoritative)
             await settings.loadFromServer()
-            await healthKit.loadDataIfNeeded()
-            // 베이지안 학습은 단계 3에서 서버(sleep·learning 도메인)로 이관 — 현재 클라 로컬 학습 비활성.
+            // 권한은 Core(HealthKitManager), 데이터는 Feature(SleepStore)
+            if await healthKit.refreshAccessState() == .requestCompleted {
+                await sleepStore.loadDataIfNeeded()
+            }
         }
     }
 }

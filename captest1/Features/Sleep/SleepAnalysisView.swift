@@ -6,18 +6,19 @@
 import SwiftUI
 
 struct SleepAnalysisView: View {
-    @Environment(HealthKitManager.self) private var manager
+    @Environment(HealthKitManager.self) private var healthKit
+    @Environment(SleepStore.self) private var store
     @State private var showingError: Bool = false
 
     var body: some View {
         Group {
-            if manager.accessState == .unavailable {
+            if healthKit.accessState == .unavailable {
                 unavailableView
-            } else if manager.accessState == .needsRequest {
+            } else if healthKit.accessState == .needsRequest {
                 authorizationView
-            } else if manager.isLoading {
+            } else if store.isLoading {
                 ProgressView("수면 데이터를 불러오는 중...")
-            } else if let summary = manager.lastNightSummary {
+            } else if let summary = store.lastNightSummary {
                 sleepDataView(summary: summary)
             } else {
                 emptyStateView
@@ -25,18 +26,21 @@ struct SleepAnalysisView: View {
         }
         .navigationTitle("수면 분석")
         .task {
-            await manager.refreshAccessState()
-            if manager.canAttemptDataLoad {
-                await manager.loadDataIfNeeded()
+            await healthKit.refreshAccessState()
+            if healthKit.canAttemptDataLoad {
+                await store.loadDataIfNeeded()
             }
         }
-        .onChange(of: manager.errorMessage) { _, newValue in
+        .onChange(of: store.errorMessage) { _, newValue in
+            showingError = newValue != nil
+        }
+        .onChange(of: healthKit.errorMessage) { _, newValue in
             showingError = newValue != nil
         }
         .alert("오류", isPresented: $showingError) {
             Button("확인", role: .cancel) { }
         } message: {
-            Text(manager.errorMessage ?? "")
+            Text(store.errorMessage ?? healthKit.errorMessage ?? "")
         }
     }
 
@@ -60,8 +64,10 @@ struct SleepAnalysisView: View {
         } actions: {
             Button {
                 Task {
-                    await manager.requestAuthorization()
-                    await manager.loadData()
+                    await healthKit.requestAuthorization()
+                    if healthKit.canAttemptDataLoad {
+                        await store.loadData()
+                    }
                 }
             } label: {
                 Text("HealthKit 연동하기")
@@ -96,23 +102,22 @@ struct SleepAnalysisView: View {
             LazyVStack(spacing: 16) {
                 LastNightCard(summary: summary)
                 StageBreakdownView(summary: summary)
-                RecentNightsView(summaries: manager.recentSummaries)
+                RecentNightsView(summaries: store.recentSummaries)
             }
             .padding(.horizontal)
             .padding(.vertical, 16)
         }
         .background(Color(.systemGroupedBackground).ignoresSafeArea())
         .refreshable {
-            await manager.loadData()
+            await store.loadData()
         }
     }
 }
 
 #Preview {
-    let settings = SettingsManager()
-    return NavigationStack {
+    NavigationStack {
         SleepAnalysisView()
-            .environment(HealthKitManager(settings: settings))
-            .environment(settings)
+            .environment(HealthKitManager())
+            .environment(SleepStore(samples: PreviewSleepSampleSource(), repository: PreviewSleepRepository()))
     }
 }

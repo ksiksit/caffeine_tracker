@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import HealthKit
 
 @main
 struct captest1App: App {
@@ -15,12 +16,14 @@ struct captest1App: App {
     @State private var auth: AuthManager
     @State private var caffeineStore: CaffeineStore
     @State private var learningStore: LearningStore
+    @State private var sleepStore: SleepStore
     private let tokenStore: TokenStore
     private let apiClient: APIClient
 
     init() {
         let settings = SettingsManager()
-        let healthKit = HealthKitManager(settings: settings)
+        let healthStore = HKHealthStore()
+        let healthKit = HealthKitManager(healthStore: healthStore)
         _settings = State(wrappedValue: settings)
         _healthKitManager = State(wrappedValue: healthKit)
 
@@ -31,10 +34,10 @@ struct captest1App: App {
         apiClient = client
         // APIClient 하나를 각 도메인 포트(Repository)와 세션 제어(AuthSession)로 주입한다.
         settings.attach(repository: client)
-        healthKit.attach(repository: client)
         _auth = State(wrappedValue: AuthManager(repository: client, session: client, tokenStore: store))
         _caffeineStore = State(wrappedValue: CaffeineStore(repository: client))
         _learningStore = State(wrappedValue: LearningStore(repository: client))
+        _sleepStore = State(wrappedValue: SleepStore(samples: SleepFetchService(healthStore: healthStore), repository: client))
     }
 
     var sharedModelContainer: ModelContainer = {
@@ -59,6 +62,7 @@ struct captest1App: App {
                 .environment(auth)
                 .environment(caffeineStore)
                 .environment(learningStore)
+                .environment(sleepStore)
                 .task {
                     await tokenStore.bootstrap()
                     await apiClient.setAccessToken(tokenStore.accessToken)

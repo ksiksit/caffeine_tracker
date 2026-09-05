@@ -2,11 +2,14 @@
 //  HealthKitManager.swift
 //  captest1
 //
+//  HealthKit 가용성·권한 상태만 담당한다(Core). 수면 데이터 업로드·요약은 Features/Sleep의 수면 스토어.
+//  HealthKit은 읽기 권한 허용 여부를 알려주지 않으므로 "요청한 적 있음" 플래그로 상태를 추정한다.
+//
 
 import Foundation
 import HealthKit
 
-enum HealthKitAccessState: Equatable {
+nonisolated enum HealthKitAccessState: Equatable {
     case unavailable
     case needsRequest
     case requestCompleted
@@ -17,36 +20,30 @@ enum HealthKitAccessState: Equatable {
 final class HealthKitManager {
     var isAvailable: Bool = false
     var accessState: HealthKitAccessState = .needsRequest
-    var lastNightSummary: SleepSummary?
-    var recentSummaries: [SleepSummary] = []
-    var isLoading: Bool = false
     var errorMessage: String?
-    private(set) var hasLoadedData: Bool = false
 
     var canAttemptDataLoad: Bool {
         accessState == .requestCompleted
     }
 
-    private let healthStore: HKHealthStore
-    private let fetchService: SleepFetchService
-    private let settings: SettingsManager
-    private var repository: (any SleepRepository)?
-
-    /// 서버 업로드/요약 포트를 주입(앱 부팅 시).
-    func attach(repository: any SleepRepository) {
-        self.repository = repository
+    /// 권한 요청을 한 번이라도 했는지. 설정 스토어에서 이전했으며 UserDefaults 키는 그대로라 기존 사용자 상태가 보존된다.
+    private(set) var hasRequestedAuthorization: Bool {
+        didSet { defaults.set(hasRequestedAuthorization, forKey: Self.hasRequestedKey) }
     }
 
-    init(settings: SettingsManager) {
-        let store = HKHealthStore()
-        healthStore = store
-        fetchService = SleepFetchService(healthStore: store)
-        self.settings = settings
+    private static let hasRequestedKey = "hasRequestedHealthKitAuthorization"
+    private let healthStore: HKHealthStore
+    private let defaults: UserDefaults
+
+    init(healthStore: HKHealthStore = HKHealthStore(), defaults: UserDefaults = .standard) {
+        self.healthStore = healthStore
+        self.defaults = defaults
+        hasRequestedAuthorization = defaults.bool(forKey: Self.hasRequestedKey)
         isAvailable = HKHealthStore.isHealthDataAvailable()
         accessState = Self.accessState(
             isAvailable: isAvailable,
             requestStatus: nil,
-            hasRequestedBefore: settings.hasRequestedHealthKitAuthorization
+            hasRequestedBefore: hasRequestedAuthorization
         )
     }
 
@@ -83,26 +80,18 @@ final class HealthKitManager {
             accessState = Self.accessState(
                 isAvailable: isAvailable,
                 requestStatus: nil,
-                hasRequestedBefore: settings.hasRequestedHealthKitAuthorization
+                hasRequestedBefore: hasRequestedAuthorization
             )
             return accessState
         }
 
-        do {
-            let requestStatus = try await requestStatus(for: sleepType)
-            accessState = Self.accessState(
-                isAvailable: isAvailable,
-                requestStatus: requestStatus,
-                hasRequestedBefore: settings.hasRequestedHealthKitAuthorization
-            )
-        } catch {
-            accessState = Self.accessState(
-                isAvailable: isAvailable,
-                requestStatus: nil,
-                hasRequestedBefore: settings.hasRequestedHealthKitAuthorization
-            )
-        }
-
+        // 상태 조회 실패는 "모름"으로 두고 플래그로 추정한다.
+        let requestStatus = try? await requestStatus(for: sleepType)
+        accessState = Self.accessState(
+            isAvailable: isAvailable,
+            requestStatus: requestStatus,
+            hasRequestedBefore: hasRequestedAuthorization
+        )
         return accessState
     }
 
@@ -116,61 +105,11 @@ final class HealthKitManager {
 
         do {
             try await healthStore.requestAuthorization(toShare: [], read: [sleepType])
-            settings.hasRequestedHealthKitAuthorization = true
-            await refreshAccessState()
+            hasRequestedAuthorization = true
         } catch {
             errorMessage = "HealthKit 권한 요청에 실패했습니다: \(error.localizedDescription)"
-            await refreshAccessState()
         }
-    }
-
-    func loadDataIfNeeded() async {
-        guard !hasLoadedData else { return }
-        await loadData()
-    }
-
-    func loadData() async {
-        let state = await refreshAccessState()
-        guard state == .requestCompleted else { return }
-
-        isLoading = true
-        errorMessage = nil
-        defer { isLoading = false }
-
-        do {
-            let today = Date()
-            // 원시 샘플을 서버로 업로드하고, 병합·요약은 서버가 계산한 결과를 표시한다.
-            lastNightSummary = try await serverSummary(for: today)
-            var recents: [SleepSummary] = []
-            for offset in 0..<AppConstants.Sleep.recentHistoryDays {
-                guard let date = Calendar.current.date(byAdding: .day, value: -offset, to: today) else { continue }
-                if let summary = try await serverSummary(for: date) {
-                    recents.append(summary)
-                }
-            }
-            recentSummaries = recents
-            hasLoadedData = true
-        } catch {
-            errorMessage = "수면 데이터를 불러오는데 실패했습니다: \(error.localizedDescription)"
-        }
-    }
-
-    /// HealthKit 원시 샘플을 읽어 서버에 업로드하고, 서버가 병합·계산한 요약을 SleepSummary로 매핑.
-    private func serverSummary(for date: Date) async throws -> SleepSummary? {
-        guard let repository else { return nil }
-        let raw = try await fetchService.fetchRawSamples(for: date)
-        if !raw.isEmpty {
-            let items = raw.map {
-                UploadSleepSampleItem(clientUuid: $0.clientUuid, start: $0.start, end: $0.end, hkValue: $0.hkValue)
-            }
-            _ = try await repository.uploadSamples(UploadSleepSamplesRequest(samples: items))
-        }
-        let response = try await repository.summary(date: ServerDateCoding.localDate.string(from: date), timeZone: .current)
-        guard response.hasData else { return nil }
-        let records = response.records.map {
-            SleepRecord(startDate: $0.start, endDate: $0.end, stage: SleepStage(from: $0.hkValue))
-        }
-        return SleepSummary(date: date, records: records, bedtimeStart: response.bedtimeStart)
+        await refreshAccessState()
     }
 
     private func requestStatus(

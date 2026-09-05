@@ -10,6 +10,7 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(SettingsManager.self) private var settings
     @Environment(HealthKitManager.self) private var healthKit
+    @Environment(SleepStore.self) private var sleepStore
     @Environment(AuthManager.self) private var auth
     @State private var bedtimeDate = Date()
     @State private var showLogoutConfirm = false
@@ -153,8 +154,9 @@ struct SettingsView: View {
                     Button {
                         Task {
                             await healthKit.requestAuthorization()
-                            await healthKit.loadData()
-                            // 학습은 단계 3에서 서버(sleep·learning 도메인)로 이관 예정 — 현재 비활성.
+                            if healthKit.canAttemptDataLoad {
+                                await sleepStore.loadData()
+                            }
                         }
                     } label: {
                         Label("HealthKit 연동", systemImage: "heart.fill")
@@ -230,6 +232,7 @@ struct SettingsView: View {
         SettingsView()
     }
     .environment(s)
-    .environment(HealthKitManager(settings: s))
+    .environment(HealthKitManager())
+    .environment(SleepStore(samples: PreviewSleepSampleSource(), repository: PreviewSleepRepository()))
     .environment(AuthManager(repository: PreviewAuthRepository(), session: PreviewAuthSession(), tokenStore: tokenStore))
 }

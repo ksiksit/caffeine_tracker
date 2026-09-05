@@ -1,12 +1,15 @@
 //
-//  SleepData.swift
+//  SleepModels.swift
 //  captest1
+//
+//  수면 탭 표시 모델. 총수면·침대시간·효율·단계별 합계·SOL은 서버 SleepSummaryCalc가 계산한 값을 그대로 담으며
+//  앱은 재계산하지 않는다(thin-client). 단계(hkValue) → SleepStage 복원과 표시 포맷만 여기서 한다.
 //
 
 import SwiftUI
 import HealthKit
 
-enum SleepStage: CaseIterable {
+nonisolated enum SleepStage: CaseIterable {
     case inBed
     case awake
     case asleepCore
@@ -52,80 +55,30 @@ enum SleepStage: CaseIterable {
             self = .asleepUnspecified
         }
     }
-
-    var isAsleep: Bool {
-        switch self {
-        case .asleepCore, .asleepDeep, .asleepREM, .asleepUnspecified:
-            true
-        default:
-            false
-        }
-    }
 }
 
-struct SleepRecord: Identifiable {
+/// 서버 `SleepSummaryResponse`와 1:1인 표시 모델.
+nonisolated struct SleepSummary: Identifiable {
     let id = UUID()
-    let startDate: Date
-    let endDate: Date
-    let stage: SleepStage
-
-    var duration: TimeInterval {
-        endDate.timeIntervalSince(startDate)
-    }
-}
-
-struct SleepSummary: Identifiable {
-    let id = UUID()
+    /// 요약 기준 날짜(그 밤이 끝나는 아침).
     let date: Date
-    let records: [SleepRecord]
     let bedtimeStart: Date?
+    let totalSleepDuration: TimeInterval
+    /// 최초 시작~최후 끝 스팬(서버 정의, IN_BED 합이 아님).
+    let timeInBed: TimeInterval
+    let sleepEfficiency: Double
+    let sleepOnsetLatency: TimeInterval?
+    /// 지속시간 > 0인 단계만, SleepStage 선언 순서(서버가 정렬).
+    let stageBreakdown: [(stage: SleepStage, duration: TimeInterval)]
 
-    init(date: Date, records: [SleepRecord], bedtimeStart: Date? = nil) {
+    init(date: Date, response: SleepSummaryResponse) {
         self.date = date
-        self.records = records
-        self.bedtimeStart = bedtimeStart
-    }
-
-    var totalSleepDuration: TimeInterval {
-        records.filter { $0.stage.isAsleep }.reduce(0) { $0 + $1.duration }
-    }
-
-    var timeInBed: TimeInterval {
-        guard let earliest = records.map(\.startDate).min(),
-              let latest = records.map(\.endDate).max() else { return 0 }
-        return latest.timeIntervalSince(earliest)
-    }
-
-    var sleepEfficiency: Double {
-        guard timeInBed > 0 else { return 0 }
-        return totalSleepDuration / timeInBed
-    }
-
-    /// 첫 inBed 시작 ~ 첫 asleep* 시작 사이의 잠복 시간(초).
-    /// inBed 기록이 없거나 음수면 nil. (학습용 SOL은 서버 BedtimeExtractor가 별도 계산)
-    var sleepOnsetLatency: TimeInterval? {
-        let fallbackInBedStart = records
-            .filter { $0.stage == .inBed }
-            .map(\.startDate)
-            .min()
-        guard let inBedStart = bedtimeStart ?? fallbackInBedStart,
-              let firstAsleep = records
-                .filter({ $0.stage.isAsleep })
-                .map(\.startDate).min()
-        else { return nil }
-        let latency = firstAsleep.timeIntervalSince(inBedStart)
-        return latency >= 0 ? latency : nil
-    }
-
-    var stageBreakdown: [(stage: SleepStage, duration: TimeInterval)] {
-        var breakdown: [SleepStage: TimeInterval] = [:]
-        for record in records {
-            breakdown[record.stage, default: 0] += record.duration
-        }
-        return SleepStage.allCases.compactMap { stage in
-            guard let duration = breakdown[stage], duration > 0 else { return nil }
-            return (stage, duration)
-        }
+        bedtimeStart = response.bedtimeStart
+        totalSleepDuration = response.totalSleepSeconds
+        timeInBed = response.timeInBedSeconds
+        sleepEfficiency = response.sleepEfficiency
+        sleepOnsetLatency = response.sleepOnsetLatencySeconds
+        stageBreakdown = response.stageBreakdown.map { (SleepStage(from: $0.hkValue), $0.durationSeconds) }
     }
 
     static func formatDuration(_ interval: TimeInterval) -> String {
