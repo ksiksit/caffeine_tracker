@@ -12,12 +12,14 @@ final class AuthManager {
     var isProcessing: Bool = false
     var lastError: AuthErrorMessage?
 
-    private let api: APIClient
+    private let repository: any AuthRepository
+    private let session: any AuthSession
     private let tokenStore: TokenStore
     private var isLoggingOut: Bool = false
 
-    init(api: APIClient, tokenStore: TokenStore) {
-        self.api = api
+    init(repository: any AuthRepository, session: any AuthSession, tokenStore: TokenStore) {
+        self.repository = repository
+        self.session = session
         self.tokenStore = tokenStore
     }
 
@@ -31,13 +33,13 @@ final class AuthManager {
         }
 
         do {
-            _ = try await api.refresh(refreshToken: refresh)
-            let me = try await api.getMe()
+            _ = try await repository.refresh(refreshToken: refresh)
+            let me = try await repository.me()
             state = .authenticated(me)
         } catch APIError.invalidRefreshToken, APIError.sessionExpired {
             await tokenStore.clear()
-            await api.setAccessToken(nil)
-            await api.setRefreshToken(nil)
+            await session.setAccessToken(nil)
+            await session.setRefreshToken(nil)
             state = .unauthenticated
         } catch APIError.network {
             // 오프라인 부팅: 토큰 보존, 다음 시도에 재진입
@@ -55,13 +57,13 @@ final class AuthManager {
         defer { isProcessing = false }
 
         do {
-            let tokens = try await api.login(LoginRequest(email: email, password: password))
+            let tokens = try await repository.login(LoginRequest(email: email, password: password))
             await tokenStore.save(access: tokens.accessToken, refresh: tokens.refreshToken)
-            await api.setAccessToken(tokens.accessToken)
-            await api.setRefreshToken(tokens.refreshToken)
+            await session.setAccessToken(tokens.accessToken)
+            await session.setRefreshToken(tokens.refreshToken)
             await installSessionExpiredHandler()
             isLoggingOut = false
-            let me = try await api.getMe()
+            let me = try await repository.me()
             state = .authenticated(me)
         } catch let error as APIError {
             lastError = error.toUserMessage()
@@ -77,7 +79,7 @@ final class AuthManager {
         defer { isProcessing = false }
 
         do {
-            _ = try await api.signup(SignupRequest(email: email, password: password, nickname: nickname))
+            _ = try await repository.signup(SignupRequest(email: email, password: password, nickname: nickname))
         } catch let error as APIError {
             lastError = error.toUserMessage()
             return
@@ -88,13 +90,13 @@ final class AuthManager {
 
         // signup 성공 → 자동 로그인 (isProcessing 가드를 우회하기 위해 내부 직접 호출)
         do {
-            let tokens = try await api.login(LoginRequest(email: email, password: password))
+            let tokens = try await repository.login(LoginRequest(email: email, password: password))
             await tokenStore.save(access: tokens.accessToken, refresh: tokens.refreshToken)
-            await api.setAccessToken(tokens.accessToken)
-            await api.setRefreshToken(tokens.refreshToken)
+            await session.setAccessToken(tokens.accessToken)
+            await session.setRefreshToken(tokens.refreshToken)
             await installSessionExpiredHandler()
             isLoggingOut = false
-            let me = try await api.getMe()
+            let me = try await repository.me()
             state = .authenticated(me)
         } catch let error as APIError {
             lastError = error.toUserMessage()
@@ -105,29 +107,29 @@ final class AuthManager {
 
     func logout() async {
         isLoggingOut = true
-        await api.setSessionExpiredHandler(nil)
-        await api.cancelRefresh()
+        await session.setSessionExpiredHandler(nil)
+        await session.cancelRefresh()
 
         if let refresh = await tokenStore.refreshToken {
             // best-effort. 실패해도 로컬 정리는 진행
-            _ = try? await api.logout(refreshToken: refresh)
+            _ = try? await repository.logout(refreshToken: refresh)
         }
 
         await tokenStore.clear()
-        await api.setAccessToken(nil)
-        await api.setRefreshToken(nil)
+        await session.setAccessToken(nil)
+        await session.setRefreshToken(nil)
         state = .unauthenticated
         lastError = nil
         isLoggingOut = false
     }
 
-    /// APIClient가 refresh 실패를 감지하면 호출
+    /// 전송층(AuthSession)이 refresh 실패를 감지하면 호출
     func handleSessionExpired() {
         guard !isLoggingOut else { return }
         Task {
             await tokenStore.clear()
-            await api.setAccessToken(nil)
-            await api.setRefreshToken(nil)
+            await session.setAccessToken(nil)
+            await session.setRefreshToken(nil)
             state = .unauthenticated
             lastError = APIError.sessionExpired.toUserMessage()
         }
@@ -138,7 +140,7 @@ final class AuthManager {
     }
 
     private func installSessionExpiredHandler() async {
-        await api.setSessionExpiredHandler { [weak self] in
+        await session.setSessionExpiredHandler { [weak self] in
             await self?.handleSessionExpired()
         }
     }

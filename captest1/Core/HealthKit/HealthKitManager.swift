@@ -30,11 +30,11 @@ final class HealthKitManager {
     private let healthStore: HKHealthStore
     private let fetchService: SleepFetchService
     private let settings: SettingsManager
-    private var api: APIClient?
+    private var repository: (any SleepRepository)?
 
-    /// 서버 업로드/요약을 위해 APIClient를 주입(앱 부팅 시).
-    func attach(api: APIClient) {
-        self.api = api
+    /// 서버 업로드/요약 포트를 주입(앱 부팅 시).
+    func attach(repository: any SleepRepository) {
+        self.repository = repository
     }
 
     init(settings: SettingsManager) {
@@ -157,15 +157,15 @@ final class HealthKitManager {
 
     /// HealthKit 원시 샘플을 읽어 서버에 업로드하고, 서버가 병합·계산한 요약을 SleepSummary로 매핑.
     private func serverSummary(for date: Date) async throws -> SleepSummary? {
-        guard let api else { return nil }
+        guard let repository else { return nil }
         let raw = try await fetchService.fetchRawSamples(for: date)
         if !raw.isEmpty {
             let items = raw.map {
                 UploadSleepSampleItem(clientUuid: $0.clientUuid, start: $0.start, end: $0.end, hkValue: $0.hkValue)
             }
-            _ = try await api.uploadSleepSamples(UploadSleepSamplesRequest(samples: items))
+            _ = try await repository.uploadSamples(UploadSleepSamplesRequest(samples: items))
         }
-        let response = try await api.sleepSummary(date: ServerDateCoding.localDate.string(from: date))
+        let response = try await repository.summary(date: ServerDateCoding.localDate.string(from: date), timeZone: .current)
         guard response.hasData else { return nil }
         let records = response.records.map {
             SleepRecord(startDate: $0.start, endDate: $0.end, stage: SleepStage(from: $0.hkValue))

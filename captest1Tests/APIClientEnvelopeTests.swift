@@ -33,7 +33,7 @@ struct APIClientEnvelopeTests {
         StubURLProtocol.install { _ in
             .init(status: 200, json: #"{ "success": true, "data": { "userId": 1, "email": "user@example.com" }, "error": null, "message": null }"#)
         }
-        let me = try await makeClient().getMe()
+        let me = try await makeClient().me()
         #expect(me == MeResponse(userId: 1, email: "user@example.com"))
     }
 
@@ -64,7 +64,7 @@ struct APIClientEnvelopeTests {
             .init(status: 405, json: #"{ "success": false, "data": null, "error": { "code": "METHOD_NOT_ALLOWED" }, "message": "허용되지 않은 HTTP 메서드입니다." }"#)
         }
         await #expect(throws: APIError.unknown(statusCode: 405, message: "허용되지 않은 HTTP 메서드입니다.")) {
-            try await makeClient().getMe()
+            try await makeClient().me()
         }
     }
 
@@ -82,7 +82,7 @@ struct APIClientEnvelopeTests {
             .init(status: 200, json: #"{ "success": true, "data": null, "error": null, "message": null }"#)
         }
         await #expect(throws: APIError.decoding) {
-            try await makeClient().getMe()
+            try await makeClient().me()
         }
     }
 
@@ -104,7 +104,7 @@ struct APIClientEnvelopeTests {
         await client.setAccessToken("old-access")
         await client.setRefreshToken("r1")
 
-        let settings = try await client.getSettings()
+        let settings = try await client.settings()
 
         #expect(settings.halfLife == 5.0)
         let paths = StubURLProtocol.requests.map { $0.url?.path ?? "" }
@@ -124,7 +124,7 @@ struct APIClientEnvelopeTests {
         await client.setAccessToken("old-access")
         await client.setRefreshToken("r1")
         await #expect(throws: APIError.sessionExpired) {
-            try await client.getMe()
+            try await client.me()
         }
     }
 }

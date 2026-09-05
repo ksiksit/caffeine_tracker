@@ -257,11 +257,7 @@ struct AddCaffeineView: View {
 }
 
 #Preview {
-    let s = SettingsManager()
-    let keychain = KeychainHelper(service: "preview.captest1.add")
-    let store = TokenStore(keychain: keychain)
-    let client = APIClient(baseURL: URL(string: "http://localhost:8080")!, tokenStore: store)
-    return AddCaffeineView()
-        .environment(s)
-        .environment(CaffeineStore(api: client))
+    AddCaffeineView()
+        .environment(SettingsManager())
+        .environment(CaffeineStore(repository: PreviewCaffeineRepository()))
 }

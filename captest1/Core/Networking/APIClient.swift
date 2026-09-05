@@ -2,6 +2,9 @@
 //  APIClient.swift
 //  captest1
 //
+//  HTTP 전송층: 요청 조립, JWT 부착, 401 → refresh → 1회 재시도, 응답 봉투 해제.
+//  엔드포인트 메서드는 여기 두지 않는다 — 각 Feature의 `APIClient+<도메인>.swift` 확장이 `<도메인>Repository`를 채택한다.
+//
 
 import Foundation
 
@@ -32,7 +35,7 @@ actor APIClient {
         self.session = session
     }
 
-    // MARK: - Configuration
+    // MARK: - 세션 제어 (AuthSession)
 
     func setAccessToken(_ token: String?) {
         accessToken = token
@@ -51,132 +54,50 @@ actor APIClient {
         refreshTask = nil
     }
 
-    // MARK: - Public endpoints
-
-    func login(_ req: LoginRequest) async throws -> TokenResponse {
-        let request = try makeRequest(path: "/api/auth/login", method: "POST", body: req)
-        return try await send(request, authenticated: false, decoding: TokenResponse.self)
-    }
-
-    func signup(_ req: SignupRequest) async throws -> SignupResponse {
-        let request = try makeRequest(path: "/api/auth/signup", method: "POST", body: req)
-        return try await send(request, authenticated: false, decoding: SignupResponse.self)
-    }
-
-    func refresh(refreshToken token: String) async throws -> TokenResponse {
-        let request = try makeRequest(
-            path: "/api/auth/refresh",
-            method: "POST",
-            body: RefreshTokenRequest(refreshToken: token)
-        )
-        let tokens = try await send(request, authenticated: false, decoding: TokenResponse.self)
+    /// refresh로 받은 새 토큰 쌍을 메모리와 Keychain에 반영한다(`APIClient+Auth`의 refresh가 호출).
+    func applyTokens(_ tokens: TokenResponse) async {
         accessToken = tokens.accessToken
         refreshToken = tokens.refreshToken
         await tokenStore.save(access: tokens.accessToken, refresh: tokens.refreshToken)
-        return tokens
     }
 
-    func getMe() async throws -> MeResponse {
-        let request = try makeRequest(path: "/api/me", method: "GET", body: Optional<Empty>.none)
-        return try await send(request, authenticated: true, decoding: MeResponse.self)
+    // MARK: - 전송 헬퍼 (Feature 확장이 사용)
+
+    func get<T: Decodable>(path: String, query: [String: String] = [:], authenticated: Bool = true) async throws -> T {
+        let request = try makeRequest(path: path, method: "GET", query: query, body: Optional<NoBody>.none)
+        return try await send(request, authenticated: authenticated, decoding: T.self)
     }
 
-    func logout(refreshToken token: String) async throws {
-        let request = try makeRequest(
-            path: "/api/auth/logout",
-            method: "POST",
-            body: LogoutRequest(refreshToken: token)
-        )
-        try await sendNoContent(request, authenticated: true)
+    /// 바디 없는 POST(예: 학습 실행).
+    func post<T: Decodable>(path: String, query: [String: String] = [:], authenticated: Bool = true) async throws -> T {
+        let request = try makeRequest(path: path, method: "POST", query: query, body: Optional<NoBody>.none)
+        return try await send(request, authenticated: authenticated, decoding: T.self)
     }
 
-    // MARK: - Caffeine endpoints
-
-    func createCaffeineRecord(_ req: CreateCaffeineRecordRequest) async throws -> CaffeineRecordDTO {
-        let request = try makeRequest(path: "/api/caffeine-records", method: "POST", body: req)
-        return try await send(request, authenticated: true, decoding: CaffeineRecordDTO.self)
+    func post<B: Encodable, T: Decodable>(path: String, body: B, authenticated: Bool = true) async throws -> T {
+        let request = try makeRequest(path: path, method: "POST", body: body)
+        return try await send(request, authenticated: authenticated, decoding: T.self)
     }
 
-    func updateCaffeineRecord(id: Int64, _ req: UpdateCaffeineRecordRequest) async throws -> CaffeineRecordDTO {
-        let request = try makeRequest(path: "/api/caffeine-records/\(id)", method: "PUT", body: req)
-        return try await send(request, authenticated: true, decoding: CaffeineRecordDTO.self)
+    func put<B: Encodable, T: Decodable>(path: String, body: B, authenticated: Bool = true) async throws -> T {
+        let request = try makeRequest(path: path, method: "PUT", body: body)
+        return try await send(request, authenticated: authenticated, decoding: T.self)
     }
 
-    func deleteCaffeineRecord(id: Int64) async throws {
-        let request = try makeRequest(path: "/api/caffeine-records/\(id)", method: "DELETE", body: Optional<Empty>.none)
-        try await sendNoContent(request, authenticated: true)
+    /// 200 + `data: null`을 기대하는 POST(로그아웃 등).
+    func postNoContent<B: Encodable>(path: String, body: B, authenticated: Bool = true) async throws {
+        let request = try makeRequest(path: path, method: "POST", body: body)
+        try await sendNoContent(request, authenticated: authenticated)
     }
 
-    /// 오늘 현황(차트·잔량·마감시각)을 서버가 settings를 읽어 계산해 반환.
-    func caffeineToday(now: Date = Date(), timeZone: TimeZone = .current) async throws -> CaffeineTodayResponse {
-        let request = try makeRequest(
-            path: "/api/caffeine/today",
-            method: "GET",
-            query: ["now": isoOffset(now), "tz": timeZone.identifier],
-            body: Optional<Empty>.none
-        )
-        return try await send(request, authenticated: true, decoding: CaffeineTodayResponse.self)
-    }
-
-    // MARK: - Sleep endpoints
-
-    func uploadSleepSamples(_ req: UploadSleepSamplesRequest) async throws -> UploadSleepSamplesResponse {
-        let request = try makeRequest(path: "/api/sleep/samples", method: "POST", body: req)
-        return try await send(request, authenticated: true, decoding: UploadSleepSamplesResponse.self)
-    }
-
-    /// date: "yyyy-MM-dd"(로컬 아침 기준). 서버가 전날 18시~당일 12시 윈도우를 병합·계산.
-    func sleepSummary(date: String, timeZone: TimeZone = .current) async throws -> SleepSummaryResponse {
-        let request = try makeRequest(
-            path: "/api/sleep/summary",
-            method: "GET",
-            query: ["date": date, "tz": timeZone.identifier],
-            body: Optional<Empty>.none
-        )
-        return try await send(request, authenticated: true, decoding: SleepSummaryResponse.self)
-    }
-
-    // MARK: - Learning endpoints
-
-    @discardableResult
-    func learningRun(timeZone: TimeZone = .current) async throws -> LearningRunResponse {
-        let request = try makeRequest(
-            path: "/api/learning/run",
-            method: "POST",
-            query: ["tz": timeZone.identifier],
-            body: Optional<Empty>.none
-        )
-        return try await send(request, authenticated: true, decoding: LearningRunResponse.self)
-    }
-
-    func learningDashboard() async throws -> LearningDashboardResponse {
-        let request = try makeRequest(path: "/api/learning/dashboard", method: "GET", body: Optional<Empty>.none)
-        return try await send(request, authenticated: true, decoding: LearningDashboardResponse.self)
-    }
-
-    // MARK: - Settings endpoints
-
-    func getSettings() async throws -> SettingsResponse {
-        let request = try makeRequest(path: "/api/settings", method: "GET", body: Optional<Empty>.none)
-        return try await send(request, authenticated: true, decoding: SettingsResponse.self)
-    }
-
-    func updateSettings(_ req: UpdateSettingsRequest) async throws -> SettingsResponse {
-        let request = try makeRequest(path: "/api/settings", method: "PUT", body: req)
-        return try await send(request, authenticated: true, decoding: SettingsResponse.self)
+    func delete(path: String, authenticated: Bool = true) async throws {
+        let request = try makeRequest(path: path, method: "DELETE", body: Optional<NoBody>.none)
+        try await sendNoContent(request, authenticated: authenticated)
     }
 
     // MARK: - Internals
 
-    private struct Empty: Encodable {}
-
-    /// ISO-8601 + 오프셋 문자열. 쿼리 파라미터의 '+' 가 공백으로 해석되지 않도록 호출부에서 퍼센트 인코딩한다.
-    private func isoOffset(_ date: Date) -> String {
-        let f = ISO8601DateFormatter()
-        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        f.timeZone = TimeZone.current
-        return f.string(from: date)
-    }
+    private struct NoBody: Encodable {}
 
     private func makeRequest<Body: Encodable>(
         path: String,

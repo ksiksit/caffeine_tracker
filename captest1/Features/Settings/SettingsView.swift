@@ -225,13 +225,11 @@ struct SettingsView: View {
 
 #Preview {
     let s = SettingsManager()
-    let keychain = KeychainHelper(service: "preview.captest1.auth")
-    let store = TokenStore(keychain: keychain)
-    let client = APIClient(baseURL: URL(string: "http://localhost:8080")!, tokenStore: store)
+    let tokenStore = TokenStore(keychain: KeychainHelper(service: "preview.captest1.auth"))
     return NavigationStack {
         SettingsView()
     }
     .environment(s)
     .environment(HealthKitManager(settings: s))
-    .environment(AuthManager(api: client, tokenStore: store))
+    .environment(AuthManager(repository: PreviewAuthRepository(), session: PreviewAuthSession(), tokenStore: tokenStore))
 }

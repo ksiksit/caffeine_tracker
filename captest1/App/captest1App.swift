@@ -29,11 +29,12 @@ struct captest1App: App {
         let client = APIClient(baseURL: AppEnvironment.baseURL, tokenStore: store)
         tokenStore = store
         apiClient = client
-        settings.attach(api: client)
-        healthKit.attach(api: client)
-        _auth = State(wrappedValue: AuthManager(api: client, tokenStore: store))
-        _caffeineStore = State(wrappedValue: CaffeineStore(api: client))
-        _learningStore = State(wrappedValue: LearningStore(api: client))
+        // APIClient 하나를 각 도메인 포트(Repository)와 세션 제어(AuthSession)로 주입한다.
+        settings.attach(repository: client)
+        healthKit.attach(repository: client)
+        _auth = State(wrappedValue: AuthManager(repository: client, session: client, tokenStore: store))
+        _caffeineStore = State(wrappedValue: CaffeineStore(repository: client))
+        _learningStore = State(wrappedValue: LearningStore(repository: client))
     }
 
     var sharedModelContainer: ModelContainer = {

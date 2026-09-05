@@ -119,7 +119,7 @@ final class SettingsManager {
 
     // MARK: - 서버 동기화 (server-authoritative)
 
-    private var api: APIClient?
+    private var repository: (any SettingsRepository)?
     private var syncTask: Task<Void, Never>?
     private var isApplyingServer = false
     private var lastSyncedSnapshot: Snapshot?
@@ -139,21 +139,21 @@ final class SettingsManager {
                  isLearningEnabled: isLearningEnabled)
     }
 
-    func attach(api: APIClient) {
-        self.api = api
+    func attach(repository: any SettingsRepository) {
+        self.repository = repository
     }
 
     /// 로그인 직후 서버 설정을 로컬 미러로 가져온다.
     func loadFromServer() async {
-        guard let api else { return }
-        if let dto = try? await api.getSettings() {
+        guard let repository else { return }
+        if let dto = try? await repository.settings() {
             applyServer(dto)
         }
     }
 
     /// 편집 변경 시 호출(디바운스). 서버 PUT 후 권위 값을 다시 적용한다.
     func scheduleSync() {
-        guard api != nil, !isApplyingServer else { return }
+        guard repository != nil, !isApplyingServer else { return }
         guard currentSnapshot() != lastSyncedSnapshot else { return }
         syncTask?.cancel()
         syncTask = Task { [weak self] in
@@ -164,12 +164,12 @@ final class SettingsManager {
     }
 
     private func syncToServer() async {
-        guard let api else { return }
+        guard let repository else { return }
         let req = UpdateSettingsRequest(
             halfLife: halfLife, condition: conditionRawValue,
             bedtimeHour: bedtimeHour, bedtimeMinute: bedtimeMinute,
             referenceDoseMg: referenceDoseMg, isLearningEnabled: isLearningEnabled)
-        if let dto = try? await api.updateSettings(req) {
+        if let dto = try? await repository.updateSettings(req) {
             applyServer(dto)
         }
     }

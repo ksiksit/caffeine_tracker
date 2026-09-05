@@ -4,7 +4,6 @@
 //
 //  홈 화면의 서버 상태 저장소. 카페인 기록 CRUD는 서버로 전송하고,
 //  잔류량/마감시각 계산은 서버(/api/caffeine/today)가 settings를 읽어 수행한 결과를 보관한다.
-//  (← 기존 HomeViewModel의 로컬 약동학 계산을 대체)
 //
 
 import Foundation
@@ -16,10 +15,10 @@ final class CaffeineStore {
     private(set) var isLoading = false
     var errorMessage: String?
 
-    private let api: APIClient
+    private let repository: any CaffeineRepository
 
-    init(api: APIClient) {
-        self.api = api
+    init(repository: any CaffeineRepository) {
+        self.repository = repository
     }
 
     // MARK: - 서버 동기화
@@ -28,7 +27,7 @@ final class CaffeineStore {
         isLoading = true
         defer { isLoading = false }
         do {
-            today = try await api.caffeineToday()
+            today = try await repository.today()
             errorMessage = nil
         } catch is CancellationError {
             // 무시
@@ -39,21 +38,21 @@ final class CaffeineStore {
 
     func add(amount: Int, drinkName: String, timestamp: Date) async -> Bool {
         await mutate {
-            _ = try await api.createCaffeineRecord(
+            _ = try await repository.create(
                 CreateCaffeineRecordRequest(amount: amount, drinkName: drinkName, timestamp: timestamp))
         }
     }
 
     func update(id: Int64, amount: Int, drinkName: String, timestamp: Date) async -> Bool {
         await mutate {
-            _ = try await api.updateCaffeineRecord(
+            _ = try await repository.update(
                 id: id, UpdateCaffeineRecordRequest(amount: amount, drinkName: drinkName, timestamp: timestamp))
         }
     }
 
     func delete(id: Int64) async -> Bool {
         await mutate {
-            try await api.deleteCaffeineRecord(id: id)
+            try await repository.delete(id: id)
         }
     }
 
