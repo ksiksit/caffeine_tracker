@@ -218,9 +218,15 @@ actor APIClient {
         return try decode(data: data, response: response, type: T.self)
     }
 
+    /// 바디 없는 성공(200 + `data: null`). 봉투가 있으면 `success`까지 확인한다.
     private func sendNoContent(_ request: URLRequest, authenticated: Bool) async throws {
         let (data, response) = try await performRequest(request, authenticated: authenticated)
         try ensureSuccess(data: data, response: response)
+        if !data.isEmpty,
+           let envelope = try? decoder.decode(APIEnvelope<EmptyPayload>.self, from: data),
+           !envelope.success {
+            throw Self.mapError(envelope, statusCode: response.statusCode)
+        }
     }
 
     private func performRequest(
@@ -291,24 +297,42 @@ actor APIClient {
         throw parseError(data: data, statusCode: response.statusCode)
     }
 
+    /// 봉투를 벗겨 `data`만 돌려준다. `success == false`면 `error.code`·`message`로 APIError를 만든다.
     private func decode<T: Decodable>(data: Data, response: HTTPURLResponse, type: T.Type) throws -> T {
         try ensureSuccess(data: data, response: response)
+        let envelope: APIEnvelope<T>
         do {
-            return try decoder.decode(T.self, from: data)
+            envelope = try decoder.decode(APIEnvelope<T>.self, from: data)
         } catch {
             throw APIError.decoding
         }
+        guard envelope.success else {
+            throw Self.mapError(envelope, statusCode: response.statusCode)
+        }
+        guard let payload = envelope.data else {
+            // 계약 위반: 성공인데 페이로드가 없음(이 타입은 data가 필요)
+            throw APIError.decoding
+        }
+        return payload
     }
 
+    /// HTTP 실패 응답의 봉투(`data: null`)에서 에러를 읽는다. 봉투가 아니면 상태 코드만 담는다.
     private func parseError(data: Data, statusCode: Int) -> APIError {
-        if let server = try? decoder.decode(ServerErrorResponse.self, from: data) {
-            return APIError(
-                serverCode: server.code,
-                message: server.message,
-                fieldErrors: server.fieldErrors,
-                statusCode: statusCode
-            )
+        if let envelope = try? decoder.decode(APIEnvelope<EmptyPayload>.self, from: data) {
+            return Self.mapError(envelope, statusCode: statusCode)
         }
         return .unknown(statusCode: statusCode, message: nil)
+    }
+
+    private static func mapError<T>(_ envelope: APIEnvelope<T>, statusCode: Int) -> APIError {
+        guard let body = envelope.error else {
+            return .unknown(statusCode: statusCode, message: envelope.message)
+        }
+        return APIError(
+            serverCode: body.code,
+            message: envelope.message,
+            fieldErrors: body.fieldErrors,
+            statusCode: statusCode
+        )
     }
 }
