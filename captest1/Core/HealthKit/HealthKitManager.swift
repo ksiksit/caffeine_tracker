@@ -165,21 +165,12 @@ final class HealthKitManager {
             }
             _ = try await api.uploadSleepSamples(UploadSleepSamplesRequest(samples: items))
         }
-        let response = try await api.sleepSummary(date: Self.localDateString(date))
+        let response = try await api.sleepSummary(date: ServerDateCoding.localDate.string(from: date))
         guard response.hasData else { return nil }
         let records = response.records.map {
             SleepRecord(startDate: $0.start, endDate: $0.end, stage: SleepStage(from: $0.hkValue))
         }
         return SleepSummary(date: date, records: records, bedtimeStart: response.bedtimeStart)
-    }
-
-    private static func localDateString(_ date: Date) -> String {
-        let f = DateFormatter()
-        f.calendar = Calendar(identifier: .gregorian)
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.timeZone = .current
-        f.dateFormat = "yyyy-MM-dd"
-        return f.string(from: date)
     }
 
     private func requestStatus(

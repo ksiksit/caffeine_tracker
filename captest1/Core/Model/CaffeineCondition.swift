@@ -31,6 +31,11 @@ enum CaffeineCondition: Int, CaseIterable, Identifiable {
         }
     }
 
+    /// 건강 상태 보정 반감기 = base × multiplier. 서버 calc.Pharmacokinetics와 같은 규칙(즉시 미리보기용 로컬 미러).
+    func effectiveHalfLife(base: Double) -> Double {
+        base * multiplier
+    }
+
     var description: String {
         switch self {
         case .none:              return ""

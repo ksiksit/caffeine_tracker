@@ -41,19 +41,10 @@ nonisolated struct ObservationItem: Decodable, Identifiable, Sendable {
 
     var id: String { date }
 
-    /// 차트 x축용. yyyy-MM-dd 로컬 파싱.
+    /// 차트 x축용. 서버 LocalDate를 로컬 날짜로.
     var parsedDate: Date {
-        ObservationItem.formatter.date(from: date) ?? Date()
+        ServerDateCoding.localDate.date(from: date) ?? Date()
     }
-
-    private static let formatter: DateFormatter = {
-        let f = DateFormatter()
-        f.calendar = Calendar(identifier: .gregorian)
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.timeZone = .current
-        f.dateFormat = "yyyy-MM-dd"
-        return f
-    }()
 }
 
 nonisolated struct Calibration: Decodable, Sendable {

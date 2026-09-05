@@ -95,13 +95,10 @@ struct AddCaffeineView: View {
     }
 
     private var cutoffPreview: (current: CaffeineCutoffResult, projected: CaffeineCutoffResult, predictedAtBedtime: Double)? {
-        guard !isEditMode else { return nil }
-        // 즉시 미리보기만 로컬 공식 유지(키 입력 왕복 방지). 오늘 doses는 서버 today 결과에서.
+        // 즉시 미리보기만 로컬 공식 유지(키 입력 왕복 방지). 오늘 doses와 취침시각은 서버 today 결과에서.
+        // today가 아직 없으면(첫 로드 전) doses도 비어 있어 미리보기 의미가 없으므로 배너를 띄우지 않는다.
+        guard !isEditMode, let bedtime = store.bedtime else { return nil }
         let todayDoses = store.chartDoses
-        let bedtime = nextBedtimeForPreview(
-            hour: settings.bedtimeHour,
-            minute: settings.bedtimeMinute
-        )
         guard let pair = viewModel.previewCutoff(
             todayDoses: todayDoses,
             halfLifeHours: settings.effectiveHalfLifeHours,
@@ -116,19 +113,6 @@ struct AddCaffeineView: View {
             }
         }()
         return (pair.current, pair.projected, projectedResidual)
-    }
-
-    private func nextBedtimeForPreview(hour: Int, minute: Int) -> Date {
-        let calendar = Calendar.current
-        let now = Date()
-        var components = calendar.dateComponents([.year, .month, .day], from: now)
-        components.hour = hour
-        components.minute = minute
-        guard let todayBedtime = calendar.date(from: components) else { return now }
-        if todayBedtime <= now {
-            return calendar.date(byAdding: .day, value: 1, to: todayBedtime) ?? todayBedtime
-        }
-        return todayBedtime
     }
 
     private func save() {

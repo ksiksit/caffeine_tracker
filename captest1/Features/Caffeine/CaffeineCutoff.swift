@@ -1,6 +1,9 @@
 //
-//  CaffeineHelpers.swift
+//  CaffeineCutoff.swift
 //  captest1
+//
+//  카페인 추가 화면의 즉시 미리보기용 마감시각 계산(서버 calc의 로컬 미러)과 차트 보조 함수.
+//  filterTodayRecords·calculateTotalCaffeine·isOverDailyLimit·toDoses는 서버 이관 잔재로 단계 6에서 삭제 예정.
 //
 
 import Foundation
@@ -34,10 +37,6 @@ func koreanTimeLabel(for date: Date) -> String {
     case 18: return "오후 6시"
     default: return "\(hour)시"
     }
-}
-
-func effectiveHalfLife(base: Double, condition: CaffeineCondition) -> Double {
-    base * condition.multiplier
 }
 
 enum CaffeineCutoffResult {

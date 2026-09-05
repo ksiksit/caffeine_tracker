@@ -83,7 +83,7 @@ final class SettingsManager {
     }
 
     var effectiveHalfLifeHours: Double {
-        effectiveHalfLife(base: inferredBaseHalfLife, condition: condition)
+        condition.effectiveHalfLife(base: inferredBaseHalfLife)
     }
 
     /// 95% 신뢰구간 반폭 (h). UI 표시용.
@@ -186,20 +186,7 @@ final class SettingsManager {
         isLearningEnabled = dto.isLearningEnabled
         learnedHalfLifeMean = dto.learnedMean
         learnedHalfLifeVariance = dto.learnedVariance
-        lastLearnedDate = Self.parseServerDate(dto.lastLearnedDate)
+        lastLearnedDate = dto.lastLearnedDate.flatMap { ServerDateCoding.localDate.date(from: $0) }
         lastSyncedSnapshot = currentSnapshot()
-    }
-
-    private static let serverDateFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.calendar = Calendar(identifier: .gregorian)
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.dateFormat = "yyyy-MM-dd"
-        return f
-    }()
-
-    private static func parseServerDate(_ s: String?) -> Date? {
-        guard let s else { return nil }
-        return serverDateFormatter.date(from: s)
     }
 }

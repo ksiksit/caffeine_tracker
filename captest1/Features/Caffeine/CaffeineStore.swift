@@ -96,6 +96,8 @@ final class CaffeineStore {
         }
     }
 
+    /// 서버가 계산한 다음 취침시각(오늘의 설정 취침시각, 지났으면 내일). 미리보기가 로컬 계산 대신 이 값을 쓴다.
+    var bedtime: Date? { today?.bedtime }
     var todayRecords: [CaffeineRecordDTO] { today?.records ?? [] }
     var todayTotal: Int { today?.todayTotal ?? 0 }
     var currentResidual: Double { today?.currentResidual ?? 0 }
