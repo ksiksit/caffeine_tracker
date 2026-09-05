@@ -34,27 +34,43 @@ xcodebuild -scheme captest1 -destination 'platform=iOS Simulator,name=iPhone 17 
 
 ## 아키텍처
 
-```
+```text
 captest1/
-├── App/          # 앱 진입점, 환경 주입(Store·APIClient·Auth)
-├── Views/        # SwiftUI 뷰 (TabView 4탭: 홈·수면 분석·학습·설정) + Auth/
-│   └── Sleep/    # 수면 분석 서브뷰
-├── ViewModels/   # AddCaffeineViewModel (즉시 미리보기 등)
-├── Models/       # 서버 DTO, 프리셋, 수면 표시 모델, 건강 상태, (SwiftData 모델은 보존·미사용)
-├── Services/     # APIClient, CaffeineStore/LearningStore(@Observable), SettingsManager,
-│                 #   AuthManager/TokenStore/Keychain, HealthKitManager/SleepFetchService(읽기)
-├── Utilities/    # 상수, 카페인 헬퍼(즉시 미리보기용)
-└── Resources/    # entitlements, 에셋, 로컬라이제이션
+├── App/              # 조립(컴포지션 루트): captest1App·RootView·ContentView·AppEnvironment
+├── Features/         # ↔ 서버 domain/<도메인>. 뷰·스토어·DTO·Repository 포트·APIClient 확장을 한 폴더에
+│   ├── Auth/         # LoginView·SignupView, AuthManager(세션 상태), AuthRepository + APIClient+Auth
+│   ├── Caffeine/     # HomeView·AddCaffeineView(+ViewModel)·차트·히어로 카드, CaffeineStore, CaffeineRepository,
+│   │                 #   CaffeineKineticsCalculator·CaffeineCutoff(즉시 미리보기용 로컬 미러), DrinkPreset
+│   ├── Sleep/        # SleepAnalysisView·카드, SleepStore(업로드·요약), SleepModels(서버값 표시 모델), SleepRepository
+│   ├── Learning/     # LearningDashboardView·차트, LearningStore, LearningRepository
+│   └── Settings/     # SettingsView, SettingsManager(서버 권위 + 로컬 미러), SettingsRepository
+├── Core/             # ↔ 서버 global/. Features를 참조하지 않는다
+│   ├── Networking/   # APIClient(전송·JWT·401 refresh·봉투 해제), APIEnvelope·APIError, ServerDateCoding, TokenStore, AuthSession
+│   ├── HealthKit/    # HealthKitManager(가용성·권한만), SleepFetchService(읽기), SleepSampleSource 포트
+│   ├── Security/     # KeychainHelper
+│   ├── DesignSystem/ # HealthCard·CategoryIconBadge·HealthMetric·SectionHeader
+│   └── Model/        # CaffeineCondition, AppConstants
+└── Resources/        # entitlements, 에셋, 로컬라이제이션
 ```
 
-**데이터 흐름**: 사용자 입력 → `APIClient` → 서버 연산 → `Store(@Observable)` → View
-**수면**: HealthKit 원시 샘플 → 서버 업로드 → 서버 병합·요약 → View
+**구조 이름**: Clean Architecture의 의존 규칙을 적용한 Feature-first MVVM(Repository 포트까지만 채택).
+`XStore`(@Observable) = ViewModel 역할, `XRepository` = 포트, `extension APIClient: XRepository` = 어댑터, UseCase·Entity는 생략(연산은 서버).
+
+**의존 규칙**
+1. `Core`는 `Features`를 참조하지 않는다. (`grep -rnE "SettingsManager|CaffeineStore|LearningStore|SleepStore|AuthManager" captest1/Core` 결과 없음)
+2. Feature 간 참조는 `SettingsManager` 읽기만 허용. 그 외 공유가 필요하면 `Core/Model`로 올린다.
+3. View는 Repository를 직접 호출하지 않는다. 항상 Store를 거친다.
+4. `APIClient` 본체에는 엔드포인트를 두지 않는다. 각 Feature의 `APIClient+X.swift` 확장이 `XRepository`를 채택하고, 조립은 `captest1App.init` 한 곳에서 한다.
+5. DTO는 Feature 폴더에, 날짜 코딩·에러·봉투는 `Core/Networking`에.
+
+**데이터 흐름**: 사용자 입력 → `Store` → `XRepository`(= `APIClient` 확장) → 서버 연산 → `Store(@Observable)` → View
+**수면**: HealthKit 원시 샘플(`SleepSampleSource`) → `SleepStore`가 서버 업로드 → 서버 병합·요약 → `SleepSummary`(서버값 그대로) → View
 **설정**: 서버 권위 + `SettingsManager` 로컬 미러(변경 시 디바운스 PUT)
 
 ## 핵심 도메인 지식 (연산은 서버에서 수행)
 
 - **약동학 계산**: `amount = dose * exp(-ke * t)`, ke = ln(2)/halfLife — 서버 `calc.Pharmacokinetics`.
-  단, **카페인 추가 화면 즉시 미리보기 1곳만** 로컬 `CaffeineKineticsCalculator`/`CaffeineHelpers.caffeineCutoffTime` 사용.
+  단, **카페인 추가 화면 즉시 미리보기 1곳만** 로컬 `CaffeineKineticsCalculator`/`CaffeineCutoff.caffeineCutoffTime` 사용.
 - **건강 상태 보정**: `effectiveHalfLife = base × condition.multiplier` — 흡연(×0.5), 경구피임약(×2.0), 임신(×2.5). 서버 resolve.
 - **수면 병합**: 단계 우선순위(deep→REM→core→unspecified→awake→inBed) — 서버 `calc.SleepMerger`. 앱은 읽기·업로드만.
 

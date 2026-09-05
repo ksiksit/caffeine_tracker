@@ -8,6 +8,7 @@
 >
 > **실제 구현 요약:**
 > - 서버: `settings`·`caffeine`·`sleep`·`learning` 도메인 + `calc/` 순수 연산(iOS Swift 포팅, 골든 테스트). Flyway `V1`~`V6`.
+>   ※ 서버는 2026-09-03에 Flyway를 제거하고 `docs/db-schema.sql` 수동 적용으로 전환했다. 아래 Flyway 언급은 당시 기록이다.
 > - 클라: `APIClient` + `CaffeineStore`/`LearningStore`(@Observable) + `SettingsManager` 서버 미러. HealthKit 읽기만 기기.
 > - 타임존 계약(요청 `tz`), JSON 날짜 ISO-8601+오프셋, learning 순차 prior 체이닝.
 > - 온라인 전용(기존 로컬 데이터는 버리고 새로 시작, 학습 mean/variance만 1회 시드 가능).

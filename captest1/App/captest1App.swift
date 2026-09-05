@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import SwiftData
 import HealthKit
 
 @main
@@ -40,20 +39,6 @@ struct captest1App: App {
         _sleepStore = State(wrappedValue: SleepStore(samples: SleepFetchService(healthStore: healthStore), repository: client))
     }
 
-    var sharedModelContainer: ModelContainer = {
-        let schema = Schema([
-            CaffeineRecord.self,
-            HalfLifeObservation.self,
-        ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-
-        do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
-        } catch {
-            fatalError("Could not create ModelContainer: \(error)")
-        }
-    }()
-
     var body: some Scene {
         WindowGroup {
             RootView()
@@ -70,6 +55,5 @@ struct captest1App: App {
                     await auth.bootstrap()
                 }
         }
-        .modelContainer(sharedModelContainer)
     }
 }

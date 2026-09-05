@@ -3,30 +3,9 @@
 //  captest1
 //
 //  카페인 추가 화면의 즉시 미리보기용 마감시각 계산(서버 calc의 로컬 미러)과 차트 보조 함수.
-//  filterTodayRecords·calculateTotalCaffeine·isOverDailyLimit·toDoses는 서버 이관 잔재로 단계 6에서 삭제 예정.
 //
 
 import Foundation
-
-func filterTodayRecords(_ records: [CaffeineRecord]) -> [CaffeineRecord] {
-    let startOfDay = Calendar.current.startOfDay(for: Date())
-        .addingTimeInterval(Double(AppConstants.Pharmacokinetics.chartStartHour) * 3600)
-    return records.filter { $0.timestamp >= startOfDay }
-}
-
-func calculateTotalCaffeine(_ records: [CaffeineRecord]) -> Int {
-    records.reduce(0) { $0 + $1.amount }
-}
-
-func isOverDailyLimit(_ total: Int) -> Bool {
-    total > AppConstants.Caffeine.dailyRecommendedLimitMg
-}
-
-func toDoses(_ records: [CaffeineRecord]) -> [CaffeineKineticsCalculator.Dose] {
-    records.map {
-        CaffeineKineticsCalculator.Dose(timestamp: $0.timestamp, amountMg: Double($0.amount))
-    }
-}
 
 func koreanTimeLabel(for date: Date) -> String {
     let hour = Calendar.current.component(.hour, from: date)
