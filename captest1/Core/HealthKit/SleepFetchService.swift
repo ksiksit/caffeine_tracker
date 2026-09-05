@@ -6,7 +6,7 @@
 import Foundation
 import HealthKit
 
-struct RawSleepSample: Sendable {
+nonisolated struct RawSleepSample: Sendable {
     let clientUuid: String
     let start: Date
     let end: Date

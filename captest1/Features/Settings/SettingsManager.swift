@@ -24,7 +24,7 @@ final class SettingsManager {
 
     var halfLife: Double {
         didSet {
-            UserDefaults.standard.set(halfLife, forKey: Keys.halfLife)
+            defaults.set(halfLife, forKey: Keys.halfLife)
             // 슬라이더 조작 시 prior 리셋 (학습값을 슬라이더값으로, 분산을 모집단으로)
             learnedHalfLifeMean = halfLife
             learnedHalfLifeVariance = Self.populationPriorVariance
@@ -33,39 +33,39 @@ final class SettingsManager {
     }
 
     var conditionRawValue: Int {
-        didSet { UserDefaults.standard.set(conditionRawValue, forKey: Keys.condition) }
+        didSet { defaults.set(conditionRawValue, forKey: Keys.condition) }
     }
 
     var bedtimeHour: Int {
-        didSet { UserDefaults.standard.set(bedtimeHour, forKey: Keys.bedtimeHour) }
+        didSet { defaults.set(bedtimeHour, forKey: Keys.bedtimeHour) }
     }
 
     var bedtimeMinute: Int {
-        didSet { UserDefaults.standard.set(bedtimeMinute, forKey: Keys.bedtimeMinute) }
+        didSet { defaults.set(bedtimeMinute, forKey: Keys.bedtimeMinute) }
     }
 
     var referenceDoseMg: Int {
-        didSet { UserDefaults.standard.set(referenceDoseMg, forKey: Keys.referenceDoseMg) }
+        didSet { defaults.set(referenceDoseMg, forKey: Keys.referenceDoseMg) }
     }
 
     /// 학습된 사후 평균 (h, base half-life). 학습 OFF 시에는 사용되지 않음.
     var learnedHalfLifeMean: Double {
-        didSet { UserDefaults.standard.set(learnedHalfLifeMean, forKey: Keys.learnedMean) }
+        didSet { defaults.set(learnedHalfLifeMean, forKey: Keys.learnedMean) }
     }
 
     /// 학습된 사후 분산 (h²).
     var learnedHalfLifeVariance: Double {
-        didSet { UserDefaults.standard.set(learnedHalfLifeVariance, forKey: Keys.learnedVariance) }
+        didSet { defaults.set(learnedHalfLifeVariance, forKey: Keys.learnedVariance) }
     }
 
     /// 자동 학습 ON/OFF.
     var isLearningEnabled: Bool {
-        didSet { UserDefaults.standard.set(isLearningEnabled, forKey: Keys.isLearningEnabled) }
+        didSet { defaults.set(isLearningEnabled, forKey: Keys.isLearningEnabled) }
     }
 
     /// 마지막 학습이 수행된 날짜 (해당 밤의 startOfDay). nil이면 학습 이력 없음.
     var lastLearnedDate: Date? {
-        didSet { UserDefaults.standard.set(lastLearnedDate, forKey: Keys.lastLearnedDate) }
+        didSet { defaults.set(lastLearnedDate, forKey: Keys.lastLearnedDate) }
     }
 
     var condition: CaffeineCondition {
@@ -86,8 +86,10 @@ final class SettingsManager {
         1.96 * sqrt(learnedHalfLifeVariance)
     }
 
-    init() {
-        let defaults = UserDefaults.standard
+    private let defaults: UserDefaults
+
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
         self.halfLife = (defaults.object(forKey: Keys.halfLife) as? Double)
             ?? AppConstants.Pharmacokinetics.defaultHalfLifeHours
         self.conditionRawValue = (defaults.object(forKey: Keys.condition) as? Int)

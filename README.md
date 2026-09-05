@@ -136,7 +136,8 @@ captest1/
 │   └── Model/        # CaffeineCondition, AppConstants
 └── Resources/        # entitlements, 에셋, 로컬라이제이션
 
-captest1Tests/        # 단위 테스트: 응답 봉투(URLProtocol 스텁)·표시 모델 매핑·즉시 미리보기 계산. 도메인 연산 검증은 서버 골든 테스트
+captest1Tests/        # 단위 테스트: 응답 봉투(Support/ URLProtocol 스텁), 스토어 5종(Fakes/ 페이크 Repository), 표시 모델·즉시 미리보기 계산.
+                      #   도메인 연산 검증은 서버 골든 테스트
 captest1UITests/      # 기본 탭 이동과 런치 성능 UI 테스트
 ```
 

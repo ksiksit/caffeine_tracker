@@ -18,7 +18,7 @@ func koreanTimeLabel(for date: Date) -> String {
     }
 }
 
-enum CaffeineCutoffResult {
+enum CaffeineCutoffResult: Equatable {
     case safeAnytime
     case cutoff(Date)
     case alreadyExceeded(Double)
