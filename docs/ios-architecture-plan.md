@@ -1,6 +1,6 @@
 # iOS 앱 아키텍처 재편 계획서
 
-> 작성: 2026-09-04 · 개정: 2026-09-05 (재분석 반영, §8) · 대상: `captest1` (iOS thin-client) · 서버: `../server`
+> 작성: 2026-09-04 · 개정: 2026-09-05 (재분석 반영 §8 · Feature 내부 계층 폴더 §10) · 대상: `captest1` (iOS thin-client) · 서버: `../server`
 > 채택 구조: **Clean Architecture 기반 MVVM의 축소 변형** — Repository 프로토콜(포트)과 Data 계층은 살리고,
 > UseCase 계층과 Entity↔DTO 매핑은 생략. 화면 패턴은 Apple 방식(`@Observable` Store + Environment)을 유지한다.
 
@@ -48,43 +48,29 @@ captest1/
 │   ├── AppEnvironment.swift      # ← Services/
 │   ├── RootView.swift            # ← Views/Auth/
 │   └── ContentView.swift         # ← Views/
-├── Features/                     # ↔ 서버 domain/
+├── Features/                     # ↔ 서버 domain/. 각 Feature 내부는 Views/Store/Data/Model 4종으로 분류(단계 9)
 │   ├── Auth/
-│   │   ├── LoginView.swift, SignupView.swift
-│   │   ├── AuthManager.swift     # 세션 상태 Store
-│   │   ├── AuthState.swift
-│   │   ├── AuthDTO.swift         # 요청/응답 + AuthErrorMessage (APIError는 Core로)
-│   │   ├── AuthRepository.swift  # 신규: protocol
-│   │   └── APIClient+Auth.swift  # 신규: 확장(어댑터)
+│   │   ├── Views/    LoginView.swift, SignupView.swift
+│   │   ├── Store/    AuthManager.swift(세션 상태 Store), AuthState.swift
+│   │   └── Data/     AuthRepository.swift(포트), APIClient+Auth.swift(어댑터), AuthDTO.swift, PreviewAuthRepository.swift
 │   ├── Caffeine/
-│   │   ├── HomeView.swift, AddCaffeineView.swift, AddCaffeineViewModel.swift
-│   │   ├── CaffeineChartView.swift, CutoffHeroCard.swift, CutoffPreviewBanner.swift
-│   │   ├── CaffeineStore.swift
-│   │   ├── CaffeineDTO.swift     # ← ServerDomainDTO.swift(카페인 부분)
-│   │   ├── CaffeineCutoff.swift  # ← CaffeineHelpers.swift(마감시각·CutoffResult·koreanTimeLabel·resolvedBedtimeDate)
-│   │   ├── CaffeineKineticsCalculator.swift   # 즉시 미리보기용 로컬 계산(유지)
-│   │   ├── DrinkPreset.swift
-│   │   ├── CaffeineRepository.swift           # 신규
-│   │   └── APIClient+Caffeine.swift           # 신규
+│   │   ├── Views/    HomeView, AddCaffeineView, CaffeineChartView, CutoffHeroCard, CutoffPreviewBanner
+│   │   ├── Store/    CaffeineStore, AddCaffeineViewModel(폼 전용)
+│   │   ├── Data/     CaffeineRepository, APIClient+Caffeine, CaffeineDTO, PreviewCaffeineRepository
+│   │   └── Model/    CaffeineKineticsCalculator·CaffeineCutoff(즉시 미리보기용 로컬 계산), DrinkPreset
 │   ├── Sleep/
-│   │   ├── SleepAnalysisView.swift, LastNightCard.swift, StageBreakdownView.swift, RecentNightsView.swift
-│   │   ├── SleepStore.swift      # 신규: HealthKitManager에서 업로드·요약 조회 분리, 서버 DTO → 표시 모델 1:1 매핑
-│   │   ├── SleepModels.swift     # ← SleepData.swift (SleepStage + SleepSummary 표시 모델. 재계산 없음, SleepRecord 삭제)
-│   │   ├── SleepDTO.swift        # ← ServerSleepDTO.swift
-│   │   ├── SleepRepository.swift # 신규
-│   │   └── APIClient+Sleep.swift # 신규
+│   │   ├── Views/    SleepAnalysisView, LastNightCard, StageBreakdownView, RecentNightsView
+│   │   ├── Store/    SleepStore(HealthKit 샘플 업로드·요약 조회)
+│   │   ├── Data/     SleepRepository, APIClient+Sleep, SleepDTO(← ServerSleepDTO, 단계 9), PreviewSleepRepository
+│   │   └── Model/    SleepModels(SleepStage + SleepSummary 표시 모델, 재계산 없음)
 │   ├── Learning/
-│   │   ├── LearningDashboardView.swift, CalibrationScatterChart.swift, ConfidenceBar.swift
-│   │   ├── LearningStore.swift
-│   │   ├── LearningDTO.swift     # ← ServerLearningDTO.swift
-│   │   ├── LearningRepository.swift           # 신규
-│   │   └── APIClient+Learning.swift           # 신규
+│   │   ├── Views/    LearningDashboardView, CalibrationScatterChart, ConfidenceBar
+│   │   ├── Store/    LearningStore
+│   │   └── Data/     LearningRepository, APIClient+Learning, LearningDTO(← ServerLearningDTO, 단계 9)
 │   └── Settings/
-│       ├── SettingsView.swift
-│       ├── SettingsManager.swift # Store 역할(이름 유지)
-│       ├── SettingsDTO.swift     # ← ServerDomainDTO.swift(설정 부분)
-│       ├── SettingsRepository.swift           # 신규
-│       └── APIClient+Settings.swift           # 신규
+│       ├── Views/    SettingsView
+│       ├── Store/    SettingsManager(Store 역할, 이름 유지)
+│       └── Data/     SettingsRepository, APIClient+Settings, SettingsDTO
 ├── Core/                         # ↔ 서버 global/
 │   ├── Networking/
 │   │   ├── APIClient.swift       # 전송·JWT·refresh 재시도·봉투 디코딩만
@@ -300,6 +286,83 @@ extension APIClient: CaffeineRepository {
 - [ ] 차트의 취침 룰·위험 구간(`CaffeineChartView`)도 서버 `today.bedtime`으로 통일할지 결정. 통일하면 `resolvedBedtimeDate`와 테스트 3개를 지울 수 있지만,
   지금 시각이 취침시각을 지난 경우 서버 값은 다음날이라 차트 범위(기준일 05시 + 24h) 밖으로 나가 취침선·위험 구간이 사라진다. 실기기에서 밤 시간대 화면을 확인하고 결정.
 
+### 단계 9 — Feature 내부 계층 폴더 (이동만 + DTO 파일명 통일) · 0.5h
+
+단계 2~7을 마치자 Feature 폴더가 5~14개 파일로 늘어 한 화면에 안 들어온다(Caffeine 14, Sleep 10, Auth 8, Learning 7, Settings 5).
+각 Feature 안을 **`Views/ Store/ Data/ Model/`** 4종으로 나눈다. 결정 근거와 검토한 대안은 §10.
+Swift는 한 타깃 안에서 폴더가 import·접근제어에 영향이 없고 `captest1/`이 Xcode 동기화 루트라 **`git mv`만으로 끝난다**(단계 2와 동일).
+
+**배치 규칙** (새 파일을 만들 때도 이 표를 따른다)
+
+| 폴더 | 들어가는 것 | Spring 비유 |
+|---|---|---|
+| `Views/` | SwiftUI 화면과 그 화면 전용 컴포넌트(카드·차트·배너). 두 Feature 이상이 쓰는 컴포넌트는 `Core/DesignSystem` | (서버 대응 없음) |
+| `Store/` | `@Observable` 스토어(`XStore`·`XManager`), 폼 전용 `XViewModel`, 스토어가 노출하는 상태 타입(`AuthState`) | `service` |
+| `Data/` | `XRepository`(포트), `APIClient+X`(어댑터), `XDTO`, `PreviewXRepository`(`#if DEBUG` 페이크). 포트·어댑터·페이크는 항상 같은 폴더 | `repository` + `dto` |
+| `Model/` | 서버 값을 표시하기 위한 로컬 모델(`SleepModels`), 즉시 미리보기용 로컬 계산(`CaffeineKineticsCalculator`·`CaffeineCutoff`), 프리셋. 해당 파일이 없는 Feature는 폴더를 만들지 않는다 | `entity`(연산 없는 표시용) |
+
+폴더 이름: `Views`는 iOS 관례, 나머지는 계층 이름(`Core/Model`과 같이 단수). `Domain/`이라 부르지 않는 이유는 UseCase·Entity를 생략한 구조라
+Clean의 Domain 계층으로 오해되기 때문. `Store/`를 `ViewModel/`로 부르고 싶으면 폴더명만 바꾸면 된다(코드 영향 없음).
+
+**Feature 내부 의존 방향** (2026-09-05 grep으로 현재 코드와 대조 완료)
+
+- `Views → Store` 호출, `Views → Model·DTO` 읽기. Entity를 생략하고 서버 DTO를 표시 모델로 쓰므로(§1 용어표) 뷰가 DTO를 읽는 것은 정상.
+  `Views → Repository·APIClient`는 금지(규칙 3), `#Preview`의 페이크 주입 줄만 예외.
+- `Store → Data · Model`. `Store → Views` 없음.
+- `Model → Data`는 DTO→표시 모델 변환 이니셜라이저 한 가지만(현재 `SleepSummary.init(date:response:)`).
+- `Data`는 같은 Feature의 `Store`·`Views`·`Model`을 모른다(주석 1줄 외 참조 없음).
+
+**이동 표** (44개 전부, 코드 변경 0)
+
+| Feature | `Views/` | `Store/` | `Data/` | `Model/` |
+|---|---|---|---|---|
+| Auth | LoginView, SignupView | AuthManager, AuthState | AuthRepository, APIClient+Auth, AuthDTO, PreviewAuthRepository | – |
+| Caffeine | HomeView, AddCaffeineView, CaffeineChartView, CutoffHeroCard, CutoffPreviewBanner | CaffeineStore, AddCaffeineViewModel | CaffeineRepository, APIClient+Caffeine, CaffeineDTO, PreviewCaffeineRepository | CaffeineKineticsCalculator, CaffeineCutoff, DrinkPreset |
+| Sleep | SleepAnalysisView, LastNightCard, StageBreakdownView, RecentNightsView | SleepStore | SleepRepository, APIClient+Sleep, ServerSleepDTO, PreviewSleepRepository | SleepModels |
+| Learning | LearningDashboardView, CalibrationScatterChart, ConfidenceBar | LearningStore | LearningRepository, APIClient+Learning, ServerLearningDTO | – |
+| Settings | SettingsView | SettingsManager | SettingsRepository, APIClient+Settings, SettingsDTO | – |
+
+- [ ] **커밋 1 · 폴더 이동** `refactor: Feature 내부를 Views/Store/Data/Model로 분류 (이동만)`. Xcode를 닫고 실행:
+  ```bash
+  cd captest1/Features
+  mkdir -p Auth/{Views,Store,Data} Caffeine/{Views,Store,Data,Model} Sleep/{Views,Store,Data,Model} Learning/{Views,Store,Data} Settings/{Views,Store,Data}
+  git mv Auth/{LoginView,SignupView}.swift Auth/Views/
+  git mv Auth/{AuthManager,AuthState}.swift Auth/Store/
+  git mv Auth/{AuthRepository,APIClient+Auth,AuthDTO,PreviewAuthRepository}.swift Auth/Data/
+  git mv Caffeine/{HomeView,AddCaffeineView,CaffeineChartView,CutoffHeroCard,CutoffPreviewBanner}.swift Caffeine/Views/
+  git mv Caffeine/{CaffeineStore,AddCaffeineViewModel}.swift Caffeine/Store/
+  git mv Caffeine/{CaffeineRepository,APIClient+Caffeine,CaffeineDTO,PreviewCaffeineRepository}.swift Caffeine/Data/
+  git mv Caffeine/{CaffeineKineticsCalculator,CaffeineCutoff,DrinkPreset}.swift Caffeine/Model/
+  git mv Sleep/{SleepAnalysisView,LastNightCard,StageBreakdownView,RecentNightsView}.swift Sleep/Views/
+  git mv Sleep/SleepStore.swift Sleep/Store/
+  git mv Sleep/{SleepRepository,APIClient+Sleep,ServerSleepDTO,PreviewSleepRepository}.swift Sleep/Data/
+  git mv Sleep/SleepModels.swift Sleep/Model/
+  git mv Learning/{LearningDashboardView,CalibrationScatterChart,ConfidenceBar}.swift Learning/Views/
+  git mv Learning/LearningStore.swift Learning/Store/
+  git mv Learning/{LearningRepository,APIClient+Learning,ServerLearningDTO}.swift Learning/Data/
+  git mv Settings/SettingsView.swift Settings/Views/
+  git mv Settings/SettingsManager.swift Settings/Store/
+  git mv Settings/{SettingsRepository,APIClient+Settings,SettingsDTO}.swift Settings/Data/
+  ```
+  `git mv`가 스테이징까지 하므로 `git commit`만 한다. **`git commit -a` 금지** — 미커밋으로 두기로 한 `Config/Info.plist`가 딸려 들어간다.
+- [ ] **커밋 2 · DTO 파일명 통일** `refactor: DTO 파일명 통일 (ServerSleepDTO→SleepDTO, ServerLearningDTO→LearningDTO)`.
+  단계 3에서 §2에 계획만 하고 빠뜨린 항목. 타입 이름에는 `Server` 접두어가 없어(2026-09-05 확인) 파일명과 헤더 주석 1줄만 바뀐다.
+  ```bash
+  git mv captest1/Features/Sleep/Data/ServerSleepDTO.swift captest1/Features/Sleep/Data/SleepDTO.swift
+  git mv captest1/Features/Learning/Data/ServerLearningDTO.swift captest1/Features/Learning/Data/LearningDTO.swift
+  sed -i '' 's|//  ServerSleepDTO.swift|//  SleepDTO.swift|' captest1/Features/Sleep/Data/SleepDTO.swift
+  sed -i '' 's|//  ServerLearningDTO.swift|//  LearningDTO.swift|' captest1/Features/Learning/Data/LearningDTO.swift
+  ```
+- [ ] **커밋 3 · 문서** `docs: Feature 내부 계층 폴더 반영 (트리·배치 규칙·검증 grep)`.
+  `CLAUDE.md`·`README.md`·`AGENTS.md` 세 벌: 트리 블록을 §2와 같게(`Features/` 주석의 "한 폴더에" 삭제), 의존 규칙에 6번 "Feature 내부는 `Views → Store → Data·Model`, 배치는 단계 9 표"를 추가하고
+  규칙 3 옆에 §4의 grep을 붙인다. 이 문서는 §9 진행 기록에 커밋 해시 기입.
+
+**Done**: 빌드·단위 테스트 67개 통과(코드 변경은 헤더 주석 2줄뿐). §4의 새 grep 2개 OK.
+`git show --stat -M --format= <커밋 1>`에 rename 44개·내용 변경 0. 문서 트리 3벌이 `find captest1/Features -name "*.swift"` 결과와 일치.
+
+**하지 않는 것**: Spring식 `view/store/repository/dto/model` 5분할(Settings가 폴더당 1개꼴이 됨), 포트와 어댑터를 다른 폴더에 두기,
+`captest1Tests` 미러링(평면 유지), `AuthManager`·`SettingsManager` → `XStore` 개명(§2에서 "이름 유지"로 결정. 바꾸면 참조 24곳 + 규칙 1 grep 패턴 수정).
+
 ## 4. 검증 명령
 
 ```bash
@@ -320,6 +383,12 @@ grep -nE "reduce|filter" captest1/Features/Sleep/SleepModels.swift && echo "재�
 
 # yyyy-MM-dd 포매터가 Core/Networking 한 곳뿐인지
 grep -rn 'dateFormat = "yyyy-MM-dd"' captest1 | grep -v "Core/Networking/ServerDateCoding.swift" && echo "포매터 사본 잔존" || echo "OK"
+
+# [단계 9 이후] View는 Repository를 직접 호출하지 않는다 (#Preview의 페이크 주입 줄은 예외)
+grep -rn "Repository" captest1/Features/*/Views | grep -v "Preview" && echo "규칙 위반" || echo "OK"
+
+# [단계 9 이후] Feature 폴더 직속에 미분류 파일이 없는지 (Views/Store/Data/Model 중 하나에 있어야 함)
+find captest1/Features -mindepth 2 -maxdepth 2 -name "*.swift" | grep . && echo "미분류 파일" || echo "OK"
 ```
 
 ## 5. 일정 · 커밋 순서
@@ -335,6 +404,7 @@ grep -rn 'dateFormat = "yyyy-MM-dd"' captest1 | grep -v "Core/Networking/ServerD
 | 6 | 레거시 삭제·문서 | 1h | `chore: 서버 이관 잔재 삭제 + 구조 문서 갱신` |
 | 7 | 테스트 | 3h | `test: 스토어 단위 테스트 추가` |
 | 8 | 선택 | 1~2h | `chore: BASE_URL 빌드 구성 분리` |
+| 9 | Feature 내부 계층 폴더 | 0.5h | `refactor: Feature 내부를 Views/Store/Data/Model로 분류 (이동만)` / `refactor: DTO 파일명 통일` / `docs: Feature 내부 계층 폴더 반영` |
 
 핵심(1~4)은 하루, 전체는 이틀. 단계 1은 단독으로도 배포 가치가 있으므로 먼저 끝내고 main에 올린다.
 
@@ -384,5 +454,26 @@ SPM 멀티모듈·Tuist, TCA·RIBs 도입, UseCase 계층, 오프라인 동기�
 | 6 | `6847f16` chore(레거시 삭제·문서) | README·CLAUDE.md·AGENTS.md 트리·의존 규칙 교체 |
 | 7 | `12ac5f0` test(스토어 테스트) | 단위 테스트 67개 통과. `SettingsManager(defaults:)` 주입, `CaffeineCutoffResult: Equatable` |
 | 8 | 미착수 | BASE_URL 빌드 구성 분리, didSet 리셋 명시화, 차트 취침시각 통일 여부는 사용자 결정 |
+| 9 | 계획만 수립 | 2026-09-05 §3 단계 9·§10. 커밋 3개 예정(이동 44개 / DTO 파일명 2개 / 문서 3벌), 코드 변경은 헤더 주석 2줄 |
 
 남은 사용자 확인: (1) `Config/Info.plist` 커밋 여부, (2) 로컬 서버에서 앱 로그인→홈→기록 추가→로그아웃, (3) 실기기 수면 탭 숫자 비교, (4) EC2 서버가 봉투 버전인지 확인 후 재배포.
+
+## 10. 2026-09-05 개정 2 — Feature 내부 계층 폴더 (단계 9 결정 기록)
+
+**계기**: 단계 2~7을 마치자 Feature 폴더가 5~14개 파일로 늘어, 뷰·스토어·DTO·포트가 한 폴더에 섞여 한눈에 안 들어옴.
+
+| 대안 | 결론 | 이유 |
+|---|---|---|
+| 현행 유지(Feature 폴더 평면) | 기각 | Caffeine 14개는 스캔 한계를 넘었고, 앞으로 파일이 줄 일은 없음 |
+| Spring식 5분할 `view/store/repository/dto/model` | 기각 | Settings(5개)가 폴더당 1개꼴. 항상 같이 고치는 포트와 어댑터가 갈라짐 |
+| **계층 4분할 `Views/Store/Data/Model`** | **채택** | §1 용어표의 계층(View / ViewModel / 포트+어댑터+DTO / 표시 모델)과 1:1이라 폴더 트리가 곧 아키텍처 설명. 작은 Feature도 3폴더로 어색하지 않음 |
+
+**근거**
+
+- 상위 축(Feature-first, 서버 `domain/<X>`와 1:1)은 유지. 서버도 `domain/caffeine/{controller,dto,entity,repository,service}`로 도메인 안을 종류별로 나누므로,
+  앱의 하위 분류는 서버 구조와 더 정확히 대응된다. 단계 2의 "한 폴더에"는 축 교체가 요지였지 하위 분류 금지가 아님.
+- Swift는 한 타깃 안에서 폴더가 코드에 영향이 없다(Java의 패키지 = 폴더 = 가시성·import 단위와 다른 점). import 변경 0, 접근제어 변경 0, `git mv`만.
+  따라서 판단 기준은 아키텍처 순수성이 아니라 가독성 하나.
+- 비용 0.5h. 리스크는 Xcode를 연 채 이동하는 것뿐이며 단계 2에서 무해함을 확인.
+
+발표용 한 줄 보강: "Feature-first(서버 domain과 1:1) × 계층(Views/Store/Data/Model)의 2축 구조. 의존 규칙은 grep으로 검증."
