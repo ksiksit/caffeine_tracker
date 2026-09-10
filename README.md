@@ -40,7 +40,20 @@
 
 ## 스크린샷
 
-스크린샷은 추후 추가 예정입니다. 화면별 구성은 위 [프로젝트 소개](#프로젝트-소개)의 탭 표를 참고하세요.
+화면별 구성은 위 [프로젝트 소개](#프로젝트-소개)의 탭 표를 참고하세요.
+화면 목업과 상태 변형은 디자인 캔버스로 관리하며, 원본 아트보드는 [`design/`](design)에 있습니다(캔버스 링크는 `docs/feature-roadmap.md` §7).
+
+<!-- PNG를 docs/screenshots/ 에 넣은 뒤 아래 주석을 해제하세요. 캔버스 툴바의 Export에서 아트보드별로 뽑습니다.
+     학습 탭은 '학습 상세 보기'를 접은 뒤 export하는 편이 README에 넣기 좋은 높이가 됩니다.
+
+| 홈 | 수면 분석 |
+| --- | --- |
+| ![홈](docs/screenshots/home.png) | ![수면 분석](docs/screenshots/sleep.png) |
+
+| 내 학습 데이터 | 설정 |
+| --- | --- |
+| ![내 학습 데이터](docs/screenshots/learning.png) | ![설정](docs/screenshots/settings.png) |
+-->
 
 ## 기술 스택
 

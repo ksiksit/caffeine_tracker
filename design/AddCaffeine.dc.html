@@ -1,0 +1,107 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; }
+    .ios { font-family: -apple-system, "SF Pro Text", "Apple SD Gothic Neo", "Pretendard Variable", Pretendard, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    .rounded { font-family: "SF Pro Rounded", ui-rounded, -apple-system, "Apple SD Gothic Neo", system-ui, sans-serif; font-variant-numeric: tabular-nums; }
+    .sectionheader { font-size: 13px; font-weight: 600; color: rgba(60,60,67,0.6); }
+    .tile { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 16px 0; background: #FFFFFF; border-radius: 12px; box-sizing: border-box; border: 2px solid transparent; cursor: pointer; }
+    .tilename { font-size: 15px; font-weight: 500; }
+    .tilemg { font-size: 12px; color: rgba(60,60,67,0.6); }
+    .badge36 { width: 36px; height: 36px; border-radius: 18px; background: #8B5E3C; display: flex; align-items: center; justify-content: center; }
+    .field { background: rgba(60,60,67,0.08); border-radius: 10px; padding: 10px; font-size: 17px; color: rgba(60,60,67,0.3); }
+    a { color: #8B5E3C; text-decoration: none; }
+    a:hover { color: #6E4A2F; }
+  </style>
+</helmet>
+
+<div class="ios" style="width: 402px; min-height: 900px; background: #C8C7CC; color: #000000; display: flex; flex-direction: column; box-sizing: border-box;">
+
+  <!-- 시트 뒤 화면(어둡게) -->
+  <div style="height: 20px; flex-shrink: 0;"></div>
+
+  <div style="flex-grow: 1; background: #F2F2F7; border-radius: 10px 10px 0 0; display: flex; flex-direction: column; overflow: hidden;">
+
+    <!-- 인라인 네비게이션 바 -->
+    <div style="height: 44px; flex-shrink: 0; display: flex; align-items: center; padding: 0 16px;">
+      <div style="font-size: 17px; color: #007AFF; width: 88px;">취소</div>
+      <div style="font-size: 17px; font-weight: 600; flex-grow: 1; text-align: center;">카페인 추가</div>
+      <div style="font-size: 17px; font-weight: 600; color: #007AFF; width: 88px; text-align: right;">추가</div>
+    </div>
+
+    <!-- 즉시 미리보기 배너 (safeAreaInset) -->
+    <div style="flex-shrink: 0; background: #F2F2F7; padding: 10px 16px; display: flex; align-items: center; gap: 10px;">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="#FF3B30" aria-hidden="true"><path d="M10.7 3.3 1.6 19a1.5 1.5 0 0 0 1.3 2.3h18.2a1.5 1.5 0 0 0 1.3-2.3L13.3 3.3a1.5 1.5 0 0 0-2.6 0Z"/><path d="M11 8.6h2v6h-2Z" fill="#FFFFFF"/><circle cx="12" cy="17.8" r="1.2" fill="#FFFFFF"/></svg>
+      <div style="font-size: 15px; font-weight: 500; color: #FF3B30;">추가하면 취침 시 62 mg — 수면에 영향</div>
+    </div>
+
+    <!-- 본문 -->
+    <div style="flex-grow: 1; padding: 16px; display: flex; flex-direction: column; gap: 16px; box-sizing: border-box;">
+
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div class="sectionheader">음료 선택</div>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;">
+          <div class="tile" style="border-color: #8B5E3C;">
+            <div class="badge36"><svg width="19" height="19" viewBox="0 0 24 24" fill="#FFFFFF" aria-hidden="true"><path d="M3 5.2h11.2v4.6a5.6 5.6 0 0 1-11.2 0V5.2Z"/><path d="M14.6 6.4h1.7a2.5 2.5 0 0 1 0 5h-1.7v-1.6h1.7a.9.9 0 0 0 0-1.8h-1.7Z"/><path d="M2.4 17.4h15.2a.9.9 0 0 1 0 1.8H2.4a.9.9 0 0 1 0-1.8Z"/></svg></div>
+            <div class="tilename">아메리카노</div>
+            <div class="rounded tilemg">150 mg</div>
+          </div>
+          <div class="tile">
+            <div class="badge36"><svg width="19" height="19" viewBox="0 0 24 24" fill="#FFFFFF" aria-hidden="true"><path d="M3 5.2h11.2v4.6a5.6 5.6 0 0 1-11.2 0V5.2Z"/><path d="M14.6 6.4h1.7a2.5 2.5 0 0 1 0 5h-1.7v-1.6h1.7a.9.9 0 0 0 0-1.8h-1.7Z"/><path d="M2.4 17.4h15.2a.9.9 0 0 1 0 1.8H2.4a.9.9 0 0 1 0-1.8Z"/></svg></div>
+            <div class="tilename">에스프레소</div>
+            <div class="rounded tilemg">75 mg</div>
+          </div>
+          <div class="tile">
+            <div class="badge36"><svg width="19" height="19" viewBox="0 0 24 24" fill="#FFFFFF" aria-hidden="true"><path d="M3 5.2h11.2v4.6a5.6 5.6 0 0 1-11.2 0V5.2Z"/><path d="M14.6 6.4h1.7a2.5 2.5 0 0 1 0 5h-1.7v-1.6h1.7a.9.9 0 0 0 0-1.8h-1.7Z"/><path d="M2.4 17.4h15.2a.9.9 0 0 1 0 1.8H2.4a.9.9 0 0 1 0-1.8Z"/></svg></div>
+            <div class="tilename">라떼</div>
+            <div class="rounded tilemg">150 mg</div>
+          </div>
+          <div class="tile">
+            <div class="badge36"><svg width="19" height="19" viewBox="0 0 24 24" fill="#FFFFFF" aria-hidden="true"><path d="M20.6 3.4C10.4 3.4 4.6 6.6 4.6 13a6.6 6.6 0 0 0 1.5 4.4C8.7 13 12.4 10 16.8 8.7c-4 2-7.2 5.2-9 9.3-.3.7-.6 1.4-.8 2.1a.95.95 0 0 0 1.8.6c.2-.6.4-1.2.7-1.8.9.3 1.9.4 2.9.4 6.4 0 9.2-5.3 8.2-15.9Z"/></svg></div>
+            <div class="tilename">녹차</div>
+            <div class="rounded tilemg">30 mg</div>
+          </div>
+          <div class="tile">
+            <div class="badge36"><svg width="19" height="19" viewBox="0 0 24 24" fill="#FFFFFF" aria-hidden="true"><path d="M20.6 3.4C10.4 3.4 4.6 6.6 4.6 13a6.6 6.6 0 0 0 1.5 4.4C8.7 13 12.4 10 16.8 8.7c-4 2-7.2 5.2-9 9.3-.3.7-.6 1.4-.8 2.1a.95.95 0 0 0 1.8.6c.2-.6.4-1.2.7-1.8.9.3 1.9.4 2.9.4 6.4 0 9.2-5.3 8.2-15.9Z"/></svg></div>
+            <div class="tilename">홍차</div>
+            <div class="rounded tilemg">50 mg</div>
+          </div>
+          <div class="tile">
+            <div class="badge36"><svg width="19" height="19" viewBox="0 0 24 24" fill="#FFFFFF" aria-hidden="true"><path d="M9.6 2.2h4.8v2.1c0 .8.3 1.5.9 2.1l.6.6c.7.7 1.1 1.6 1.1 2.6v9.3a3 3 0 0 1-3 3h-5a3 3 0 0 1-3-3v-9.3c0-1 .4-1.9 1.1-2.6l.6-.6c.6-.6.9-1.3.9-2.1Z"/></svg></div>
+            <div class="tilename">콜라</div>
+            <div class="rounded tilemg">35 mg</div>
+          </div>
+          <div class="tile">
+            <div class="badge36"><svg width="19" height="19" viewBox="0 0 24 24" fill="#FFFFFF" aria-hidden="true"><path d="M13.6 2.6 5.8 13.2c-.4.5 0 1.2.6 1.2h4.2l-1.4 6.8c-.1.7.8 1.1 1.2.5l7.8-10.6c.4-.5 0-1.2-.6-1.2h-4.2l1.4-6.8c.1-.7-.8-1.1-1.2-.5Z"/></svg></div>
+            <div class="tilename">에너지드링크</div>
+            <div class="rounded tilemg">80 mg</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div class="sectionheader">직접 입력</div>
+        <div style="background: #FFFFFF; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 12px; border: 2px solid transparent; box-sizing: border-box;">
+          <div class="field">음료 이름 (선택)</div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div class="field" style="flex-grow: 1;">카페인 (mg)</div>
+            <div style="font-size: 15px; color: rgba(60,60,67,0.6);">mg</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div style="height: 34px; flex-shrink: 0;"></div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

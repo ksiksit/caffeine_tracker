@@ -1,0 +1,192 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; }
+    .ios { font-family: -apple-system, "SF Pro Text", "Apple SD Gothic Neo", "Pretendard Variable", Pretendard, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    .rounded { font-family: "SF Pro Rounded", ui-rounded, -apple-system, "Apple SD Gothic Neo", system-ui, sans-serif; font-variant-numeric: tabular-nums; }
+    .sechead { font-size: 13px; font-weight: 600; color: rgba(60,60,67,0.6); padding: 22px 36px 6px; }
+    .seccard { margin: 0 20px; background: #FFFFFF; border-radius: 10px; display: flex; flex-direction: column; }
+    .row { padding: 11px 16px; display: flex; flex-direction: column; gap: 8px; }
+    .rowline { display: flex; align-items: center; gap: 12px; min-height: 22px; }
+    .label { font-size: 17px; flex-grow: 1; }
+    .value { font-size: 17px; color: rgba(60,60,67,0.6); }
+    .hint { font-size: 12px; color: rgba(60,60,67,0.6); line-height: 1.4; }
+    .hint2 { font-size: 11px; color: rgba(60,60,67,0.3); }
+    .rule { height: 1px; background: rgba(60,60,67,0.29); margin-left: 16px; }
+    .tabitem { flex-grow: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .tablabel { font-size: 10px; font-weight: 500; color: rgba(60,60,67,0.6); line-height: 12px; }
+    a { color: #8B5E3C; text-decoration: none; }
+    a:hover { color: #6E4A2F; }
+  </style>
+</helmet>
+
+<div class="ios" style="width: 402px; min-height: 1250px; background: #F2F2F7; color: #000000; display: flex; flex-direction: column; box-sizing: border-box;">
+
+  <div style="height: 62px; flex-shrink: 0;"></div>
+  <div style="padding: 4px 16px 7px; flex-shrink: 0;">
+    <div style="font-size: 34px; font-weight: 700; letter-spacing: -0.02em; line-height: 41px;">설정</div>
+  </div>
+
+  <div style="flex-grow: 1; display: flex; flex-direction: column; padding-bottom: 32px;">
+
+    <!-- 카페인 대사 -->
+    <div class="sechead">카페인 대사</div>
+    <div class="seccard">
+      <div class="row">
+        <div class="rowline">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.2 12a8.2 8.2 0 1 1-2.5-5.9"/><path d="M20.4 3.6v3.9h-3.9"/><path d="M12 7.4V12l3 1.9"/></svg>
+          <div class="label">카페인 반감기</div>
+          <div class="rounded value">5.0시간</div>
+        </div>
+        <div style="position: relative; height: 28px; display: flex; align-items: center;">
+          <div style="height: 4px; border-radius: 2px; background: rgba(60,60,67,0.18); width: 100%;"></div>
+          <div style="position: absolute; left: 0; height: 4px; border-radius: 2px; background: #8B5E3C; width: 50%;"></div>
+          <div style="position: absolute; left: 50%; margin-left: -14px; width: 28px; height: 28px; border-radius: 14px; background: #FFFFFF; box-shadow: 0 1px 4px rgba(0,0,0,0.22);"></div>
+        </div>
+        <div class="hint">일반 성인 평균 5시간</div>
+        <div class="hint2">슬라이더를 조작하면 자동 학습이 초기화됩니다.</div>
+      </div>
+      <div class="rule"></div>
+      <div class="row">
+        <div class="rowline">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true"><rect x="3.2" y="3.2" width="17.6" height="17.6" rx="4"/><path d="M12 17.2s-4.4-2.8-4.4-5.7a2.5 2.5 0 0 1 4.4-1.6 2.5 2.5 0 0 1 4.4 1.6c0 2.9-4.4 5.7-4.4 5.7Z"/></svg>
+          <div class="label">건강 상태</div>
+          <div class="value">해당 없음</div>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(60,60,67,0.6)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.5 9.5 12 5l4.5 4.5M7.5 14.5 12 19l4.5-4.5"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- 개인화 학습 -->
+    <div class="sechead">개인화 학습</div>
+    <div class="seccard">
+      <div class="row">
+        <div class="rowline">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.2 12.4c0-4.4 3.5-7.9 8-7.9 4.3 0 7.6 3.2 7.6 7.4 0 2.7-1.4 4.1-3 5.2-.6.4-.9.9-.9 1.6v2.1H7.1v-2.9c0-.7-.2-1.1-.7-1.6-1.3-1.2-2.2-2.6-2.2-3.9Z"/><path d="M9 9.4c1.2-.9 2.6-.5 3 .6.4 1.1-.5 1.9-1.4 1.9M11.4 14.3c1.4.2 2.3-.6 2.3-1.6"/></svg>
+          <div class="label">자동 학습</div>
+          <div style="width: 51px; height: 31px; border-radius: 16px; background: #8B5E3C; position: relative; flex-shrink: 0;">
+            <div style="position: absolute; top: 2px; left: 22px; width: 27px; height: 27px; border-radius: 14px; background: #FFFFFF; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"></div>
+          </div>
+        </div>
+      </div>
+      <div class="rule"></div>
+      <div class="row" style="gap: 6px;">
+        <div class="rowline">
+          <div class="label">현재 추정 반감기</div>
+          <div class="rounded" style="font-size: 17px; font-weight: 600; color: #8B5E3C;">5.57 h</div>
+        </div>
+        <div class="hint">95% CI: ± 0.46 h</div>
+        <div class="hint2">마지막 학습: 9월 10일</div>
+      </div>
+    </div>
+
+    <!-- 수면 -->
+    <div class="sechead">수면</div>
+    <div class="seccard">
+      <div class="row">
+        <div class="rowline">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="#000000" aria-hidden="true"><path d="M11.2 3.2A9 9 0 1 0 20.8 15 9.4 9.4 0 0 1 11.2 3.2Z"/></svg>
+          <div class="label">취침 시간</div>
+          <div class="rounded" style="font-size: 17px; background: rgba(60,60,67,0.08); border-radius: 7px; padding: 5px 11px;">오후 11:00</div>
+        </div>
+        <div class="hint">취침 시간을 설정하면 카페인 차트에 표시됩니다.</div>
+      </div>
+      <div class="rule"></div>
+      <div class="row">
+        <div class="rowline">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true"><path d="M3.8 6h11v4.4a5.5 5.5 0 0 1-11 0Z"/><path d="M14.8 7.2h1.6a2.4 2.4 0 0 1 0 4.8h-1.6"/><path d="M3 17.6h15.6"/></svg>
+          <div class="label">기준 섭취량</div>
+          <div class="rounded value">75 mg</div>
+          <div style="display: flex; background: rgba(60,60,67,0.08); border-radius: 7px; overflow: hidden; flex-shrink: 0;">
+            <div style="width: 46px; height: 32px; display: flex; align-items: center; justify-content: center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round"><path d="M5 12h14"/></svg></div>
+            <div style="width: 1px; background: rgba(60,60,67,0.2);"></div>
+            <div style="width: 46px; height: 32px; display: flex; align-items: center; justify-content: center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></div>
+          </div>
+        </div>
+        <div class="hint">홈 화면의 카페인 마감 시간 계산에 사용됩니다. (아메리카노 1잔 ≈ 75 mg)</div>
+      </div>
+    </div>
+
+    <!-- 건강 데이터 -->
+    <div class="sechead">건강 데이터</div>
+    <div class="seccard">
+      <div class="row">
+        <div class="rowline">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="#000000" aria-hidden="true"><path d="M12 20.4S3.4 14.9 3.4 9.4a4.9 4.9 0 0 1 8.6-3.2 4.9 4.9 0 0 1 8.6 3.2c0 5.5-8.6 11-8.6 11Z"/></svg>
+          <div class="label">HealthKit 접근 요청 완료</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 알림 -->
+    <div class="sechead">알림</div>
+    <div class="seccard">
+      <div class="row">
+        <div class="rowline">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="#000000" aria-hidden="true"><path d="M12 2.6a1.3 1.3 0 0 1 1.3 1.3v.7a6.2 6.2 0 0 1 4.9 6v2.9l1.5 2.4c.4.7-.1 1.6-.9 1.6H5.2c-.8 0-1.3-.9-.9-1.6l1.5-2.4v-2.9a6.2 6.2 0 0 1 4.9-6v-.7A1.3 1.3 0 0 1 12 2.6ZM9.6 19.1h4.8a2.4 2.4 0 0 1-4.8 0Z"/></svg>
+          <div class="label">카페인 알림 설정</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 계정 -->
+    <div class="sechead">계정</div>
+    <div class="seccard">
+      <div class="row">
+        <div class="rowline">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="#8B5E3C" aria-hidden="true"><path fill-rule="evenodd" d="M12 2.4a9.6 9.6 0 1 0 0 19.2 9.6 9.6 0 0 0 0-19.2Zm0 3.9a3.1 3.1 0 1 1 0 6.2 3.1 3.1 0 0 1 0-6.2Zm0 13.4a7.7 7.7 0 0 1-5.2-2c.3-2.2 2.6-3.4 5.2-3.4s4.9 1.2 5.2 3.4a7.7 7.7 0 0 1-5.2 2Z"/></svg>
+          <div class="label">hong@example.com</div>
+        </div>
+      </div>
+      <div class="rule"></div>
+      <div class="row">
+        <div class="rowline">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FF3B30" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.6 4.2H6.4a1.6 1.6 0 0 0-1.6 1.6v12.4a1.6 1.6 0 0 0 1.6 1.6h7.2"/><path d="M15.4 8.6 18.8 12l-3.4 3.4M10.4 12h8.4"/></svg>
+          <div class="label" style="color: #FF3B30;">로그아웃</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 정보 -->
+    <div class="sechead">정보</div>
+    <div class="seccard">
+      <div class="row">
+        <div class="rowline">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8.8"/><path d="M12 11v5.4"/><circle cx="12" cy="7.9" r="1" fill="#000000" stroke="none"/></svg>
+          <div class="label">앱 버전 1.0</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="flex-shrink: 0; background: rgba(249,249,249,0.94); border-top: 1px solid rgba(60,60,67,0.29); display: flex; padding: 6px 0 0; height: 49px; box-sizing: border-box;">
+    <div class="tabitem">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="rgba(60,60,67,0.6)" aria-hidden="true"><path d="M3 5.2h11.2v4.6a5.6 5.6 0 0 1-11.2 0V5.2Z"/><path d="M14.6 6.4h1.7a2.5 2.5 0 0 1 0 5h-1.7v-1.6h1.7a.9.9 0 0 0 0-1.8h-1.7Z"/><path d="M2.4 17.4h15.2a.9.9 0 0 1 0 1.8H2.4a.9.9 0 0 1 0-1.8Z"/></svg>
+      <div class="tablabel">홈</div>
+    </div>
+    <div class="tabitem">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="rgba(60,60,67,0.6)" aria-hidden="true"><path d="M9.8 6.8A7.4 7.4 0 1 0 17.4 18 7.9 7.9 0 0 1 9.8 6.8Z"/><path d="M13.6 2.8h4.8v1.5l-3 3.4h3v1.5h-5.1V7.7l3-3.4h-2.7Z"/></svg>
+      <div class="tablabel">수면 분석</div>
+    </div>
+    <div class="tabitem">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="rgba(60,60,67,0.6)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.2 12.4c0-4.4 3.5-7.9 8-7.9 4.3 0 7.6 3.2 7.6 7.4 0 2.7-1.4 4.1-3 5.2-.6.4-.9.9-.9 1.6v2.1H7.1v-2.9c0-.7-.2-1.1-.7-1.6-1.3-1.2-2.2-2.6-2.2-3.9Z"/><path d="M9 9.4c1.2-.9 2.6-.5 3 .6.4 1.1-.5 1.9-1.4 1.9M11.4 14.3c1.4.2 2.3-.6 2.3-1.6"/></svg>
+      <div class="tablabel">내 학습</div>
+    </div>
+    <div class="tabitem">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="#007AFF" aria-hidden="true"><path fill-rule="evenodd" d="M12 5.6a6.4 6.4 0 1 0 0 12.8 6.4 6.4 0 0 0 0-12.8Zm0 3.8a2.6 2.6 0 1 1 0 5.2 2.6 2.6 0 0 1 0-5.2Z"/><rect x="10.8" y="1.6" width="2.4" height="3.6" rx="1.1"/><rect x="10.8" y="18.8" width="2.4" height="3.6" rx="1.1"/><rect x="10.8" y="1.6" width="2.4" height="3.6" rx="1.1" transform="rotate(45 12 12)"/><rect x="10.8" y="18.8" width="2.4" height="3.6" rx="1.1" transform="rotate(45 12 12)"/><rect x="10.8" y="1.6" width="2.4" height="3.6" rx="1.1" transform="rotate(90 12 12)"/><rect x="10.8" y="18.8" width="2.4" height="3.6" rx="1.1" transform="rotate(90 12 12)"/><rect x="10.8" y="1.6" width="2.4" height="3.6" rx="1.1" transform="rotate(135 12 12)"/><rect x="10.8" y="18.8" width="2.4" height="3.6" rx="1.1" transform="rotate(135 12 12)"/></svg>
+      <div class="tablabel" style="color: #007AFF;">설정</div>
+    </div>
+  </div>
+  <div style="height: 34px; flex-shrink: 0; background: rgba(249,249,249,0.94);"></div>
+</div>
+</x-dc>
+</body>
+</html>
