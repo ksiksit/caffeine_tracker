@@ -28,14 +28,14 @@ struct AddCaffeineView: View {
     }
 
     private let columns = [
-        GridItem(.flexible()),
-        GridItem(.flexible()),
+        GridItem(.flexible(), spacing: 8),
+        GridItem(.flexible(), spacing: 8),
     ]
 
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 16) {
+                VStack(spacing: Theme.Spacing.section) {
                     presetSection
                     customSection
                     if isEditMode {
@@ -144,7 +144,7 @@ struct AddCaffeineView: View {
         VStack(alignment: .leading, spacing: 10) {
             SectionHeader("음료 선택")
 
-            LazyVGrid(columns: columns, spacing: 12) {
+            LazyVGrid(columns: columns, spacing: 8) {
                 ForEach(DrinkPreset.all) { preset in
                     presetButton(preset)
                 }
@@ -158,21 +158,20 @@ struct AddCaffeineView: View {
             viewModel.selectPreset(preset)
             focusedField = nil
         } label: {
-            VStack(spacing: 8) {
-                CategoryIconBadge(
-                    symbol: preset.icon,
-                    tint: Theme.Colors.accent,
-                    size: 36
-                )
+            HStack(spacing: 4) {
                 Text(preset.name)
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(.primary)
+                    .font(.subheadline.weight(isSelected ? .semibold : .regular))
+                    .foregroundStyle(Theme.Colors.ink)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                Spacer(minLength: 4)
                 Text("\(preset.caffeineAmount) mg")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(.footnote)
+                    .foregroundStyle(Theme.Colors.inkSecondary)
+                    .monospacedDigit()
             }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 16)
+            .padding(.horizontal, 14)
+            .frame(maxWidth: .infinity, minHeight: 56)
             .background(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .fill(Theme.Colors.canvas)
@@ -184,8 +183,10 @@ struct AddCaffeineView: View {
                         lineWidth: isSelected ? 2 : 1
                     )
             )
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 
     private var timeSection: some View {
@@ -210,7 +211,7 @@ struct AddCaffeineView: View {
         VStack(alignment: .leading, spacing: 10) {
             SectionHeader("직접 입력")
 
-            HealthCard {
+            Group {
                 VStack(spacing: 12) {
                     TextField("음료 이름 (선택)", text: $viewModel.customName)
                         .textFieldStyle(.plain)
@@ -245,11 +246,12 @@ struct AddCaffeineView: View {
                     }
                 }
             }
+            .padding(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .stroke(
-                        viewModel.isCustomMode ? Theme.Colors.accent : Color.clear,
-                        lineWidth: 2
+                        viewModel.isCustomMode ? Theme.Colors.accent : Theme.Colors.hairline,
+                        lineWidth: viewModel.isCustomMode ? 2 : 1
                     )
             )
         }

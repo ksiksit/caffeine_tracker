@@ -74,7 +74,7 @@ struct SleepAnalysisView: View {
                     .fontWeight(.semibold)
             }
             .buttonStyle(.borderedProminent)
-            .tint(.indigo)
+            .tint(Theme.Colors.accent)
         }
     }
 
@@ -99,7 +99,7 @@ struct SleepAnalysisView: View {
 
     private func sleepDataView(summary: SleepSummary) -> some View {
         ScrollView {
-            LazyVStack(spacing: 16) {
+            LazyVStack(alignment: .leading, spacing: Theme.Spacing.section) {
                 LastNightCard(summary: summary)
                 StageBreakdownView(summary: summary)
                 RecentNightsView(summaries: store.recentSummaries)
