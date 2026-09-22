@@ -32,7 +32,7 @@ struct SettingsView: View {
                         in: AppConstants.Pharmacokinetics.minHalfLifeHours...AppConstants.Pharmacokinetics.maxHalfLifeHours,
                         step: 0.5
                     )
-                    .tint(Color("EspressoBrown"))
+                    .tint(Theme.Colors.accent)
 
                     Text("일반 성인 평균 5시간")
                         .font(.caption)
@@ -69,7 +69,7 @@ struct SettingsView: View {
                             Text(String(format: "%.1f시간", settings.effectiveHalfLifeHours))
                                 .font(.subheadline)
                                 .fontWeight(.semibold)
-                                .foregroundStyle(Color("EspressoBrown"))
+                                .foregroundStyle(Theme.Colors.accent)
                         }
                     }
                 }
@@ -79,7 +79,7 @@ struct SettingsView: View {
                 Toggle(isOn: $settings.isLearningEnabled) {
                     Label("자동 학습", systemImage: "brain.head.profile")
                 }
-                .tint(Color("EspressoBrown"))
+                .tint(Theme.Colors.signalOK)
 
                 if settings.isLearningEnabled {
                     VStack(alignment: .leading, spacing: 6) {
@@ -88,7 +88,7 @@ struct SettingsView: View {
                             Spacer()
                             Text(String(format: "%.2f h", settings.learnedHalfLifeMean))
                                 .fontWeight(.semibold)
-                                .foregroundStyle(Color("EspressoBrown"))
+                                .foregroundStyle(Theme.Colors.accent)
                         }
                         Text(String(format: "95%% CI: ± %.2f h",
                                     settings.halfLifeCredibleIntervalHalfWidth))
@@ -172,7 +172,7 @@ struct SettingsView: View {
                 if case .authenticated(let me) = auth.state {
                     HStack {
                         Image(systemName: "person.crop.circle.fill")
-                            .foregroundStyle(Color("EspressoBrown"))
+                            .foregroundStyle(Theme.Colors.accent)
                         Text(me.email)
                             .lineLimit(1)
                             .truncationMode(.middle)

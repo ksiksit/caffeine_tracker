@@ -63,7 +63,7 @@ struct CalibrationScatterChart: View {
                     x: .value("예측 SOL", p.predicted),
                     y: .value("측정 SOL", p.observed)
                 )
-                .foregroundStyle(Color("EspressoBrown"))
+                .foregroundStyle(Theme.Colors.accent)
                 .symbolSize(80)
             }
         }

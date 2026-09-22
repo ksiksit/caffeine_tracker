@@ -63,17 +63,17 @@ struct CutoffPreviewBanner: View {
                 case .info(let symbol, let message):
                     Image(systemName: symbol)
                         .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(Color("EspressoBrown"))
+                        .foregroundStyle(Theme.Colors.accent)
                     Text(message)
                         .font(.subheadline.weight(.medium))
                         .foregroundStyle(.primary)
                 case .warning(let symbol, let message):
                     Image(systemName: symbol)
                         .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.red)
+                        .foregroundStyle(Theme.Colors.signalStop)
                     Text(message)
                         .font(.subheadline.weight(.medium))
-                        .foregroundStyle(.red)
+                        .foregroundStyle(Theme.Colors.signalStop)
                 }
                 Spacer(minLength: 0)
             }

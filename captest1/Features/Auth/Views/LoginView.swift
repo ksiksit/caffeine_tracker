@@ -50,7 +50,7 @@ struct LoginView: View {
                                 .foregroundStyle(.secondary)
                             Text("회원가입")
                                 .fontWeight(.semibold)
-                                .foregroundStyle(Color("EspressoBrown"))
+                                .foregroundStyle(Theme.Colors.accent)
                         }
                         .font(.subheadline)
                         .frame(maxWidth: .infinity)
@@ -99,12 +99,12 @@ struct LoginView: View {
                 if !email.isEmpty && !isEmailValid {
                     Text("이메일 형식이 올바르지 않아요")
                         .font(.caption2)
-                        .foregroundStyle(.red)
+                        .foregroundStyle(Theme.Colors.signalStop)
                 }
                 if let msg = auth.lastError?.fieldMessages["email"] {
                     Text(msg)
                         .font(.caption2)
-                        .foregroundStyle(.red)
+                        .foregroundStyle(Theme.Colors.signalStop)
                 }
             }
 
@@ -124,12 +124,12 @@ struct LoginView: View {
                 if !password.isEmpty && !isPasswordValid {
                     Text("비밀번호는 8~72자여야 해요")
                         .font(.caption2)
-                        .foregroundStyle(.red)
+                        .foregroundStyle(Theme.Colors.signalStop)
                 }
                 if let msg = auth.lastError?.fieldMessages["password"] {
                     Text(msg)
                         .font(.caption2)
-                        .foregroundStyle(.red)
+                        .foregroundStyle(Theme.Colors.signalStop)
                 }
             }
         }
@@ -143,7 +143,7 @@ struct LoginView: View {
             ZStack {
                 if auth.isProcessing {
                     ProgressView()
-                        .tint(.white)
+                        .tint(Theme.Colors.onAccent)
                 } else {
                     Text("로그인")
                         .fontWeight(.semibold)
@@ -151,8 +151,8 @@ struct LoginView: View {
             }
             .frame(maxWidth: .infinity)
             .frame(height: 50)
-            .background(canSubmit ? Color("EspressoBrown") : Color.gray.opacity(0.4))
-            .foregroundStyle(.white)
+            .background(canSubmit ? Theme.Colors.accent : Color.gray.opacity(0.4))
+            .foregroundStyle(Theme.Colors.onAccent)
             .clipShape(RoundedRectangle(cornerRadius: 12))
         }
         .disabled(!canSubmit)
@@ -161,7 +161,7 @@ struct LoginView: View {
     private func errorBanner(_ error: AuthErrorMessage) -> some View {
         HStack(alignment: .top, spacing: 8) {
             Image(systemName: "exclamationmark.circle.fill")
-                .foregroundStyle(.red)
+                .foregroundStyle(Theme.Colors.signalStop)
             VStack(alignment: .leading, spacing: 2) {
                 Text(error.title).font(.subheadline).fontWeight(.semibold)
                 Text(error.body).font(.caption)
@@ -169,7 +169,7 @@ struct LoginView: View {
             Spacer()
         }
         .padding(12)
-        .background(Color.red.opacity(0.08))
+        .background(Theme.Colors.signalStop.opacity(0.08))
         .clipShape(RoundedRectangle(cornerRadius: 10))
     }
 }

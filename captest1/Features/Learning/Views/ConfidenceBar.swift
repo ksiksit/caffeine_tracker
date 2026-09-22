@@ -20,14 +20,14 @@ struct ConfidenceBar: View {
                 Spacer()
                 Text("\(Int((score * 100).rounded()))%")
                     .font(.caption.weight(.semibold).monospacedDigit())
-                    .foregroundStyle(Color("EspressoBrown"))
+                    .foregroundStyle(Theme.Colors.accent)
             }
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 4)
                         .fill(Color(.tertiarySystemFill))
                     RoundedRectangle(cornerRadius: 4)
-                        .fill(Color("EspressoBrown"))
+                        .fill(Theme.Colors.accent)
                         .frame(width: max(4, geo.size.width * CGFloat(min(max(score, 0), 1))))
                 }
             }

@@ -13,7 +13,7 @@ struct CaffeineChartView: View {
     var bedtimeHour: Int = 23
     var bedtimeMinute: Int = 0
 
-    private let espressoBrown = Color("EspressoBrown")
+    private let espressoBrown = Theme.Colors.accent
 
     var body: some View {
         Chart {

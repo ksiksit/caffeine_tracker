@@ -161,7 +161,7 @@ struct AddCaffeineView: View {
             VStack(spacing: 8) {
                 CategoryIconBadge(
                     symbol: preset.icon,
-                    tint: Color("EspressoBrown"),
+                    tint: Theme.Colors.accent,
                     size: 36
                 )
                 Text(preset.name)
@@ -180,7 +180,7 @@ struct AddCaffeineView: View {
             .overlay(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .stroke(
-                        isSelected ? Color("EspressoBrown") : Color.clear,
+                        isSelected ? Theme.Colors.accent : Color.clear,
                         lineWidth: 2
                     )
             )
@@ -240,7 +240,7 @@ struct AddCaffeineView: View {
                     if let message = viewModel.validationMessage {
                         Text(message)
                             .font(.caption)
-                            .foregroundStyle(.red)
+                            .foregroundStyle(Theme.Colors.signalStop)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
@@ -248,7 +248,7 @@ struct AddCaffeineView: View {
             .overlay(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .stroke(
-                        viewModel.isCustomMode ? Color("EspressoBrown") : Color.clear,
+                        viewModel.isCustomMode ? Theme.Colors.accent : Color.clear,
                         lineWidth: 2
                     )
             )

@@ -35,7 +35,7 @@ struct CutoffHeroCard: View {
                 primary: "지금 OK",
                 primarySize: 44,
                 caption: "취침까지 \(referenceDoseMg) mg 한 잔 OK",
-                signalColor: .green,
+                signalColor: Theme.Colors.signalOK,
                 signalSymbol: "checkmark"
             )
 
@@ -47,7 +47,7 @@ struct CutoffHeroCard: View {
                 caption: imminent
                     ? "곧 마감 — 지금이 마지막 \(referenceDoseMg) mg 한 잔"
                     : "이 시각까지 \(referenceDoseMg) mg 한 잔 OK",
-                signalColor: imminent ? .orange : .green,
+                signalColor: imminent ? Theme.Colors.signalWarn : Theme.Colors.signalOK,
                 signalSymbol: imminent ? "exclamationmark" : "checkmark"
             )
 
@@ -56,7 +56,7 @@ struct CutoffHeroCard: View {
                 primary: "지금은 패스",
                 primarySize: 44,
                 caption: "카페인 마감 시각이 지났어요",
-                signalColor: .red,
+                signalColor: Theme.Colors.signalStop,
                 signalSymbol: "xmark"
             )
 
@@ -65,7 +65,7 @@ struct CutoffHeroCard: View {
                 primary: "오늘은 NO",
                 primarySize: 44,
                 caption: "취침 시 예상 \(Int(predicted.rounded())) mg",
-                signalColor: .red,
+                signalColor: Theme.Colors.signalStop,
                 signalSymbol: "xmark"
             )
         }

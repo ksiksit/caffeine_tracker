@@ -41,7 +41,7 @@ struct HomeView: View {
                     HealthCard(
                         "시간대별 카페인",
                         symbol: "chart.line.uptrend.xyaxis",
-                        tint: Color("EspressoBrown"),
+                        tint: Theme.Colors.accent,
                         collapsible: true
                     ) {
                         CaffeineChartView(
@@ -94,18 +94,19 @@ struct HomeView: View {
         } label: {
             Label("카페인 추가", systemImage: "plus.circle.fill")
                 .font(.headline)
+                .foregroundStyle(Theme.Colors.onAccent)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 6)
         }
         .buttonStyle(.borderedProminent)
         .controlSize(.large)
-        .tint(Color("EspressoBrown"))
+        .tint(Theme.Colors.accent)
     }
 
     // MARK: - 오늘의 기록 카드
 
     private var todayRecordsCard: some View {
-        HealthCard("오늘의 기록", symbol: "list.bullet", tint: Color("EspressoBrown")) {
+        HealthCard("오늘의 기록", symbol: "list.bullet", tint: Theme.Colors.accent) {
             VStack(spacing: 0) {
                 ForEach(Array(store.todayRecords.enumerated()), id: \.element.id) { index, record in
                     if index > 0 {
@@ -119,7 +120,7 @@ struct HomeView: View {
 
     private func recordRow(_ record: CaffeineRecordDTO) -> some View {
         HStack(spacing: 12) {
-            CategoryIconBadge(symbol: "cup.and.saucer.fill", tint: Color("EspressoBrown"), size: 32)
+            CategoryIconBadge(symbol: "cup.and.saucer.fill", tint: Theme.Colors.accent, size: 32)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(record.drinkName)

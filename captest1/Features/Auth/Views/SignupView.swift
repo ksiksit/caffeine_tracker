@@ -117,7 +117,7 @@ struct SignupView: View {
                     .font(.subheadline)
             }
             .toggleStyle(.switch)
-            .tint(Color("EspressoBrown"))
+            .tint(Theme.Colors.accent)
 
             Button("보기") {
                 // 약관 화면은 후속 작업
@@ -137,15 +137,15 @@ struct SignupView: View {
         } label: {
             ZStack {
                 if auth.isProcessing {
-                    ProgressView().tint(.white)
+                    ProgressView().tint(Theme.Colors.onAccent)
                 } else {
                     Text("가입하기").fontWeight(.semibold)
                 }
             }
             .frame(maxWidth: .infinity)
             .frame(height: 50)
-            .background(canSubmit ? Color("EspressoBrown") : Color.gray.opacity(0.4))
-            .foregroundStyle(.white)
+            .background(canSubmit ? Theme.Colors.accent : Color.gray.opacity(0.4))
+            .foregroundStyle(Theme.Colors.onAccent)
             .clipShape(RoundedRectangle(cornerRadius: 12))
         }
         .disabled(!canSubmit)
@@ -168,10 +168,10 @@ struct SignupView: View {
                 .background(Color(.secondarySystemGroupedBackground))
                 .clipShape(RoundedRectangle(cornerRadius: 10))
             if !isValid {
-                Text(invalidMessage).font(.caption2).foregroundStyle(.red)
+                Text(invalidMessage).font(.caption2).foregroundStyle(Theme.Colors.signalStop)
             }
             if let msg = auth.lastError?.fieldMessages[fieldKey] {
-                Text(msg).font(.caption2).foregroundStyle(.red)
+                Text(msg).font(.caption2).foregroundStyle(Theme.Colors.signalStop)
             }
         }
     }
@@ -190,10 +190,10 @@ struct SignupView: View {
                 .background(Color(.secondarySystemGroupedBackground))
                 .clipShape(RoundedRectangle(cornerRadius: 10))
             if !isValid {
-                Text(invalidMessage).font(.caption2).foregroundStyle(.red)
+                Text(invalidMessage).font(.caption2).foregroundStyle(Theme.Colors.signalStop)
             }
             if let msg = auth.lastError?.fieldMessages[fieldKey] {
-                Text(msg).font(.caption2).foregroundStyle(.red)
+                Text(msg).font(.caption2).foregroundStyle(Theme.Colors.signalStop)
             }
         }
     }
@@ -201,7 +201,7 @@ struct SignupView: View {
     private func errorBanner(_ error: AuthErrorMessage) -> some View {
         HStack(alignment: .top, spacing: 8) {
             Image(systemName: "exclamationmark.circle.fill")
-                .foregroundStyle(.red)
+                .foregroundStyle(Theme.Colors.signalStop)
             VStack(alignment: .leading, spacing: 2) {
                 Text(error.title).font(.subheadline).fontWeight(.semibold)
                 Text(error.body).font(.caption)
@@ -209,7 +209,7 @@ struct SignupView: View {
             Spacer()
         }
         .padding(12)
-        .background(Color.red.opacity(0.08))
+        .background(Theme.Colors.signalStop.opacity(0.08))
         .clipShape(RoundedRectangle(cornerRadius: 10))
     }
 }

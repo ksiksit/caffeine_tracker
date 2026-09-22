@@ -73,7 +73,7 @@ private struct LearningDetailsDisclosure<Content: View>: View {
                 withAnimation { isExpanded.toggle() }
             } label: {
                 HStack(spacing: 10) {
-                    CategoryIconBadge(symbol: "chart.xyaxis.line", tint: Color("EspressoBrown"), size: 28)
+                    CategoryIconBadge(symbol: "chart.xyaxis.line", tint: Theme.Colors.accent, size: 28)
                     Text("학습 상세 보기")
                         .font(.headline)
                         .foregroundStyle(.primary)
@@ -107,12 +107,12 @@ private struct HeroEstimateCard: View {
     let lastLearnedDate: Date?
 
     var body: some View {
-        HealthCard("현재 추정 반감기", symbol: "scope", tint: Color("EspressoBrown")) {
+        HealthCard("현재 추정 반감기", symbol: "scope", tint: Theme.Colors.accent) {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(alignment: .firstTextBaseline, spacing: 4) {
                     Text(String(format: "%.2f", latest.posteriorMean))
                         .font(.system(size: 48, weight: .bold, design: .rounded))
-                        .foregroundStyle(Color("EspressoBrown"))
+                        .foregroundStyle(Theme.Colors.accent)
                         .monospacedDigit()
                     Text("h").font(.title2.weight(.semibold)).foregroundStyle(.secondary)
                 }
@@ -145,7 +145,7 @@ private struct LearningTrendCard: View {
     let observations: [ObservationItem]
 
     var body: some View {
-        HealthCard("학습 추세", symbol: "chart.line.uptrend.xyaxis", tint: Color("EspressoBrown")) {
+        HealthCard("학습 추세", symbol: "chart.line.uptrend.xyaxis", tint: Theme.Colors.accent) {
             VStack(alignment: .leading, spacing: 8) {
                 Text("사후 평균과 95% 신뢰구간이 모집단 prior(5.0h)에서 어떻게 멀어졌는지 확인하세요.")
                     .font(.caption).foregroundStyle(.secondary)
@@ -157,10 +157,10 @@ private struct LearningTrendCard: View {
                             yStart: .value("하한", obs.posteriorMean - 1.96 * sqrt(obs.posteriorVariance)),
                             yEnd: .value("상한", obs.posteriorMean + 1.96 * sqrt(obs.posteriorVariance))
                         )
-                        .foregroundStyle(Color("EspressoBrown").opacity(0.15))
+                        .foregroundStyle(Theme.Colors.accent.opacity(0.15))
 
                         LineMark(x: .value("날짜", obs.parsedDate), y: .value("반감기", obs.posteriorMean))
-                            .foregroundStyle(Color("EspressoBrown"))
+                            .foregroundStyle(Theme.Colors.accent)
                             .interpolationMethod(.monotone)
                             .symbol(.circle)
                     }
@@ -195,7 +195,7 @@ private struct CalibrationCard: View {
         }
         let domain = calibration.domainLower...max(calibration.domainUpper, calibration.domainLower + 1)
 
-        HealthCard("모델 정확도", symbol: "target", tint: Color("EspressoBrown")) {
+        HealthCard("모델 정확도", symbol: "target", tint: Theme.Colors.accent) {
             VStack(alignment: .leading, spacing: 12) {
                 Text("점이 대각선에 가까울수록 모델 예측이 정확합니다. 회색 띠 = ±10분 노이즈 범위.")
                     .font(.caption).foregroundStyle(.secondary)
@@ -218,7 +218,7 @@ private struct CalibrationCard: View {
             Text(label).font(.caption2).foregroundStyle(.secondary)
             HStack(alignment: .firstTextBaseline, spacing: 2) {
                 Text(value).font(.system(size: 24, weight: .bold, design: .rounded))
-                    .monospacedDigit().foregroundStyle(Color("EspressoBrown"))
+                    .monospacedDigit().foregroundStyle(Theme.Colors.accent)
                 if let unit { Text(unit).font(.caption.weight(.semibold)).foregroundStyle(.secondary) }
             }
         }
@@ -232,7 +232,7 @@ private struct InputDistributionCard: View {
     let sol: [HistogramBinItem]
 
     var body: some View {
-        HealthCard("입력 데이터 분포", symbol: "chart.bar.fill", tint: Color("EspressoBrown")) {
+        HealthCard("입력 데이터 분포", symbol: "chart.bar.fill", tint: Theme.Colors.accent) {
             VStack(alignment: .leading, spacing: 12) {
                 Text("학습에 사용된 카페인 잔량과 SOL의 분포입니다. 한쪽으로 치우쳐 있다면 더 다양한 조건의 데이터가 필요합니다.")
                     .font(.caption).foregroundStyle(.secondary)
@@ -251,7 +251,7 @@ private struct InputDistributionCard: View {
             Text(title).font(.caption.weight(.semibold))
             Chart(bins) { bin in
                 BarMark(x: .value("범위", bin.label), y: .value("개수", bin.count))
-                    .foregroundStyle(Color("EspressoBrown").opacity(0.7))
+                    .foregroundStyle(Theme.Colors.accent.opacity(0.7))
                     .cornerRadius(2)
             }
             .chartXAxis { AxisMarks { _ in AxisValueLabel(orientation: .vertical).font(.system(size: 8)) } }
@@ -269,7 +269,7 @@ private struct ObservationListCard: View {
     let observations: [ObservationItem]
 
     var body: some View {
-        HealthCard("전체 기록", symbol: "list.bullet.rectangle", tint: Color("EspressoBrown")) {
+        HealthCard("전체 기록", symbol: "list.bullet.rectangle", tint: Theme.Colors.accent) {
             VStack(spacing: 0) {
                 ForEach(Array(observations.reversed().enumerated()), id: \.element.id) { index, obs in
                     if index > 0 { Divider() }
