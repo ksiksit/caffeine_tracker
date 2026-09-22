@@ -24,7 +24,7 @@ struct SettingsView: View {
                         Label("카페인 반감기", systemImage: "clock.arrow.circlepath")
                         Spacer()
                         Text(String(format: "%.1f시간", settings.halfLife))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Theme.Colors.inkSecondary)
                     }
 
                     Slider(
@@ -36,7 +36,7 @@ struct SettingsView: View {
 
                     Text("일반 성인 평균 5시간")
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Theme.Colors.inkSecondary)
 
                     if settings.isLearningEnabled {
                         Text("슬라이더를 조작하면 자동 학습이 초기화됩니다.")
@@ -60,7 +60,7 @@ struct SettingsView: View {
                     if settings.condition != .none {
                         Text(settings.condition.description)
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Theme.Colors.inkSecondary)
 
                         HStack {
                             Text("적용된 반감기")
@@ -93,7 +93,7 @@ struct SettingsView: View {
                         Text(String(format: "95%% CI: ± %.2f h",
                                     settings.halfLifeCredibleIntervalHalfWidth))
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Theme.Colors.inkSecondary)
                         if let last = settings.lastLearnedDate {
                             Text("마지막 학습: \(last, format: .dateTime.month().day())")
                                 .font(.caption2)
@@ -101,7 +101,7 @@ struct SettingsView: View {
                         } else {
                             Text("아직 학습된 데이터가 없어요. 수면 기록이 쌓이면 자동으로 갱신됩니다.")
                                 .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Theme.Colors.inkSecondary)
                         }
                     }
 
@@ -124,7 +124,7 @@ struct SettingsView: View {
 
                     Text("취침 시간을 설정하면 카페인 차트에 표시됩니다.")
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Theme.Colors.inkSecondary)
                 }
 
                 VStack(alignment: .leading, spacing: 8) {
@@ -133,13 +133,13 @@ struct SettingsView: View {
                             Label("기준 섭취량", systemImage: "cup.and.saucer")
                             Spacer()
                             Text("\(settings.referenceDoseMg) mg")
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Theme.Colors.inkSecondary)
                         }
                     }
 
                     Text("홈 화면의 카페인 마감 시간 계산에 사용됩니다. (아메리카노 1잔 ≈ 75 mg)")
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Theme.Colors.inkSecondary)
                 }
             }
 
@@ -190,6 +190,9 @@ struct SettingsView: View {
                 Label("앱 버전 1.0", systemImage: "info.circle")
             }
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .background(Theme.Colors.canvas.ignoresSafeArea())
         .navigationTitle("설정")
         .confirmationDialog(
             "정말 로그아웃하시겠어요?",
