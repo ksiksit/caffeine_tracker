@@ -4,6 +4,8 @@
 //
 //  Created on 3/28/26.
 //
+//  미니멀 방향 홈: 마감 문장 → 타임라인 → 지표 줄 → 오늘 기록, 기록 버튼은 하단 고정.
+//
 
 import SwiftUI
 import Charts
@@ -16,52 +18,55 @@ struct HomeView: View {
     @State private var editingRecord: CaffeineRecordDTO?
     @State private var pendingDelete: CaffeineRecordDTO?
 
-    var body: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                CutoffHeroCard(
-                    cutoffResult: store.cutoffResult,
-                    now: store.currentTime,
-                    currentResidual: store.currentResidual,
-                    predictedAtBedtime: store.predictedAtBedtime,
-                    referenceDoseMg: settings.referenceDoseMg,
-                    todayTotalMg: store.todayTotal
-                )
+    private static let timeFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ko_KR")
+        formatter.dateFormat = "a h:mm"
+        return formatter
+    }()
 
-                addButton
+    var body: some View {
+        let hero = CutoffHeroCard(
+            cutoffResult: store.cutoffResult,
+            now: store.currentTime,
+            referenceDoseMg: settings.referenceDoseMg
+        )
+
+        ScrollView {
+            VStack(alignment: .leading, spacing: Theme.Spacing.section) {
+                hero
+
+                if !store.todayRecords.isEmpty {
+                    CaffeineChartView(
+                        dataPoints: store.chartDataPoints,
+                        doses: store.chartDoses,
+                        currentTime: store.currentTime,
+                        bedtimeHour: settings.bedtimeHour,
+                        bedtimeMinute: settings.bedtimeMinute,
+                        cutoffTime: upcomingCutoff,
+                        cutoffColor: hero.style.color
+                    )
+                }
+
+                metricStrip
 
                 if let message = store.errorMessage {
                     Text(message)
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Theme.Colors.inkSecondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
 
-                if !store.todayRecords.isEmpty {
-                    HealthCard(
-                        "시간대별 카페인",
-                        symbol: "chart.line.uptrend.xyaxis",
-                        tint: Theme.Colors.accent,
-                        collapsible: true
-                    ) {
-                        CaffeineChartView(
-                            dataPoints: store.chartDataPoints,
-                            doses: store.chartDoses,
-                            currentTime: store.currentTime,
-                            bedtimeHour: settings.bedtimeHour,
-                            bedtimeMinute: settings.bedtimeMinute
-                        )
-                    }
-
-                    todayRecordsCard
-                }
+                todayRecordsSection
             }
             .padding(.horizontal, Theme.Spacing.screen)
-            .padding(.vertical, 16)
+            .padding(.top, 8)
+            .padding(.bottom, 16)
         }
         .background(Theme.Colors.canvas.ignoresSafeArea())
+        .safeAreaInset(edge: .bottom) { addButton }
         .navigationTitle("홈")
-        .navigationBarTitleDisplayMode(.large)
+        .navigationBarTitleDisplayMode(.inline)
         .refreshable { await store.refresh() }
         .sheet(isPresented: $showingAddSheet) {
             AddCaffeineView()
@@ -86,33 +91,70 @@ struct HomeView: View {
         }
     }
 
-    // MARK: - 추가 버튼
+    /// 아직 지나지 않은 마감 시각(차트 세로선용)
+    private var upcomingCutoff: Date? {
+        if case .cutoff(let time) = store.cutoffResult, time > store.currentTime {
+            return time
+        }
+        return nil
+    }
+
+    // MARK: - 지표 줄
+
+    private var metricStrip: some View {
+        let limit = AppConstants.Caffeine.dailyRecommendedLimitMg
+        return MetricStrip([
+            .init(label: "지금 체내", value: "\(Int(store.currentResidual.rounded()))", unit: "mg"),
+            .init(label: "취침 시 예상", value: "\(Int(store.predictedAtBedtime.rounded()))", unit: "mg"),
+            .init(
+                label: "오늘 섭취",
+                value: "\(store.todayTotal)",
+                unit: "/ \(limit) mg",
+                valueColor: store.todayTotal > limit ? Theme.Colors.signalStop : Theme.Colors.ink
+            ),
+        ])
+    }
+
+    // MARK: - 기록 버튼(하단 고정)
 
     private var addButton: some View {
         Button {
             showingAddSheet = true
         } label: {
-            Label("카페인 추가", systemImage: "plus.circle.fill")
-                .font(.headline)
+            Label("카페인 기록", systemImage: "plus")
+                .font(.body.weight(.semibold))
                 .foregroundStyle(Theme.Colors.onAccent)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 6)
+                .frame(maxWidth: .infinity, minHeight: 54)
+                .background(
+                    Theme.Colors.accent,
+                    in: RoundedRectangle(cornerRadius: Theme.Spacing.cornerRadius, style: .continuous)
+                )
         }
-        .buttonStyle(.borderedProminent)
-        .controlSize(.large)
-        .tint(Theme.Colors.accent)
+        .buttonStyle(.plain)
+        .padding(.horizontal, Theme.Spacing.screen)
+        .padding(.top, 8)
+        .padding(.bottom, 8)
+        .background(Theme.Colors.canvas)
     }
 
-    // MARK: - 오늘의 기록 카드
+    // MARK: - 오늘 기록
 
-    private var todayRecordsCard: some View {
-        HealthCard("오늘의 기록", symbol: "list.bullet", tint: Theme.Colors.accent) {
-            VStack(spacing: 0) {
-                ForEach(Array(store.todayRecords.enumerated()), id: \.element.id) { index, record in
-                    if index > 0 {
-                        Divider().padding(.leading, 44)
+    private var todayRecordsSection: some View {
+        HealthCard("오늘 기록", showsDivider: false) {
+            if store.todayRecords.isEmpty {
+                Text("아직 오늘 마신 기록이 없어요.")
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.Colors.inkSecondary)
+            } else {
+                VStack(spacing: 0) {
+                    ForEach(Array(store.todayRecords.enumerated()), id: \.element.id) { index, record in
+                        if index > 0 {
+                            Rectangle()
+                                .fill(Theme.Colors.hairline)
+                                .frame(height: 1)
+                        }
+                        recordRow(record)
                     }
-                    recordRow(record)
                 }
             }
         }
@@ -120,26 +162,26 @@ struct HomeView: View {
 
     private func recordRow(_ record: CaffeineRecordDTO) -> some View {
         HStack(spacing: 12) {
-            CategoryIconBadge(symbol: "cup.and.saucer.fill", tint: Theme.Colors.accent, size: 32)
-
             VStack(alignment: .leading, spacing: 2) {
                 Text(record.drinkName)
-                    .font(.body)
-                    .foregroundStyle(.primary)
-                Text(record.timestamp, format: .dateTime.hour().minute())
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(.body.weight(.medium))
+                    .foregroundStyle(Theme.Colors.ink)
+                Text(Self.timeFormatter.string(from: record.timestamp))
+                    .font(.footnote)
+                    .foregroundStyle(Theme.Colors.inkSecondary)
             }
 
             Spacer()
 
             Text("\(record.amount) mg")
-                .font(.subheadline.weight(.medium))
-                .foregroundStyle(.secondary)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Theme.Colors.ink)
                 .monospacedDigit()
         }
-        .padding(.vertical, 10)
+        .padding(.vertical, Theme.Spacing.row)
         .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
+        .accessibilityHint("길게 눌러 수정하거나 삭제")
         .contextMenu {
             Button {
                 editingRecord = record
