@@ -2,9 +2,13 @@
 //  HealthCard.swift
 //  captest1
 //
+//  미니멀 방향의 공통 섹션 컴포넌트. 카드 배경 대신 "섹션 제목 + 내용 + 아래 구분선"으로 구역을 나눈다.
+//  기존 호출부 호환을 위해 이니셜라이저(symbol·tint 포함)는 그대로 둔다.
+//
 
 import SwiftUI
 
+/// 작은 원형 아이콘. 미니멀 방향에서는 옅은 면 위에 잉크색 심볼만 쓴다(tint는 심볼 색).
 struct CategoryIconBadge: View {
     let symbol: String
     let tint: Color
@@ -12,29 +16,33 @@ struct CategoryIconBadge: View {
 
     var body: some View {
         Image(systemName: symbol)
-            .font(.system(size: size * 0.54, weight: .semibold))
-            .foregroundStyle(.white)
+            .font(.system(size: size * 0.46, weight: .semibold))
+            .foregroundStyle(tint)
             .frame(width: size, height: size)
-            .background(Circle().fill(tint))
+            .background(Circle().fill(Theme.Colors.surfaceMuted))
     }
 }
 
 struct HealthCard<Content: View>: View {
     let title: String?
+    /// 호환용. 미니멀 방향에서는 섹션 제목 옆에 아이콘을 그리지 않는다.
     let symbol: String?
+    /// 호환용. 섹션 자체는 색을 갖지 않는다.
     let tint: Color
     let trailing: AnyView?
     let collapsible: Bool
+    let showsDivider: Bool
     @State private var isExpanded: Bool
     @ViewBuilder let content: () -> Content
 
     init(
         _ title: String? = nil,
         symbol: String? = nil,
-        tint: Color = .accentColor,
+        tint: Color = Theme.Colors.accent,
         trailing: AnyView? = nil,
         collapsible: Bool = false,
         initiallyExpanded: Bool = false,
+        showsDivider: Bool = true,
         @ViewBuilder content: @escaping () -> Content
     ) {
         self.title = title
@@ -42,37 +50,37 @@ struct HealthCard<Content: View>: View {
         self.tint = tint
         self.trailing = trailing
         self.collapsible = collapsible
+        self.showsDivider = showsDivider
         self._isExpanded = State(initialValue: initiallyExpanded)
         self.content = content
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            if title != nil || symbol != nil || trailing != nil || collapsible {
+            if title != nil || trailing != nil || collapsible {
                 header
             }
             if !collapsible || isExpanded {
                 content()
             }
         }
-        .padding(16)
+        .padding(.vertical, 16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Color(.secondarySystemGroupedBackground))
-        )
+        .overlay(alignment: .bottom) {
+            if showsDivider {
+                Rectangle()
+                    .fill(Theme.Colors.hairline)
+                    .frame(height: 1)
+            }
+        }
     }
 
     @ViewBuilder
     private var header: some View {
-        let row = HStack(spacing: 10) {
-            if let symbol {
-                CategoryIconBadge(symbol: symbol, tint: tint, size: 28)
-            }
+        let row = HStack(spacing: 8) {
             if let title {
-                Text(title)
-                    .font(.headline)
-                    .foregroundStyle(.primary)
+                SectionHeader(title)
+                    .fixedSize()
             }
             Spacer(minLength: 0)
             if let trailing {
@@ -80,11 +88,12 @@ struct HealthCard<Content: View>: View {
             }
             if collapsible {
                 Image(systemName: "chevron.right")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.secondary)
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(Theme.Colors.inkSecondary)
                     .rotationEffect(.degrees(isExpanded ? 90 : 0))
             }
         }
+        .frame(minHeight: collapsible ? 44 : nil)
 
         if collapsible {
             Button {
@@ -93,43 +102,11 @@ struct HealthCard<Content: View>: View {
                 row.contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            .accessibilityLabel(Text(title ?? ""))
+            .accessibilityValue(Text(isExpanded ? "펼쳐짐" : "접힘"))
         } else {
             row
         }
-    }
-}
-
-struct HealthMetric: View {
-    let label: String
-    let value: String
-    let unit: String?
-    var valueColor: Color = .primary
-
-    init(label: String, value: String, unit: String? = nil, valueColor: Color = .primary) {
-        self.label = label
-        self.value = value
-        self.unit = unit
-        self.valueColor = valueColor
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(label)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-            HStack(alignment: .firstTextBaseline, spacing: 4) {
-                Text(value)
-                    .font(.system(size: 34, weight: .bold, design: .rounded))
-                    .foregroundStyle(valueColor)
-                    .monospacedDigit()
-                if let unit {
-                    Text(unit)
-                        .font(.title3.weight(.semibold))
-                        .foregroundStyle(.secondary)
-                }
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
@@ -142,8 +119,8 @@ struct SectionHeader: View {
 
     var body: some View {
         Text(title)
-            .font(.footnote.weight(.semibold))
-            .foregroundStyle(.secondary)
+            .font(Theme.Fonts.sectionTitle)
+            .foregroundStyle(Theme.Colors.inkSecondary)
             .textCase(nil)
             .frame(maxWidth: .infinity, alignment: .leading)
     }

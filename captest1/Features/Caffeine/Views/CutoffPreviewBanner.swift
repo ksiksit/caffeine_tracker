@@ -80,7 +80,7 @@ struct CutoffPreviewBanner: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color(.tertiarySystemGroupedBackground))
+            .background(Theme.Colors.surfaceMuted)
             .transition(.opacity.combined(with: .move(edge: .top)))
         }
     }

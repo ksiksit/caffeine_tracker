@@ -104,10 +104,10 @@ struct SleepAnalysisView: View {
                 StageBreakdownView(summary: summary)
                 RecentNightsView(summaries: store.recentSummaries)
             }
-            .padding(.horizontal)
+            .padding(.horizontal, Theme.Spacing.screen)
             .padding(.vertical, 16)
         }
-        .background(Color(.systemGroupedBackground).ignoresSafeArea())
+        .background(Theme.Colors.canvas.ignoresSafeArea())
         .refreshable {
             await store.loadData()
         }

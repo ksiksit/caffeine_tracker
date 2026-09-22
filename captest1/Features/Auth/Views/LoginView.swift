@@ -61,7 +61,7 @@ struct LoginView: View {
                 .padding(.vertical, 32)
             }
             .scrollDismissesKeyboard(.interactively)
-            .background(Color(.systemGroupedBackground))
+            .background(Theme.Colors.canvas)
             .navigationBarHidden(true)
             .onChange(of: email) { auth.clearError() }
             .onChange(of: password) { auth.clearError() }
@@ -94,7 +94,7 @@ struct LoginView: View {
                     .submitLabel(.next)
                     .onSubmit { focused = .password }
                     .padding(12)
-                    .background(Color(.secondarySystemGroupedBackground))
+                    .background(Theme.Colors.surfaceMuted)
                     .clipShape(RoundedRectangle(cornerRadius: 10))
                 if !email.isEmpty && !isEmailValid {
                     Text("이메일 형식이 올바르지 않아요")
@@ -119,7 +119,7 @@ struct LoginView: View {
                         if canSubmit { Task { await auth.login(email: email, password: password) } }
                     }
                     .padding(12)
-                    .background(Color(.secondarySystemGroupedBackground))
+                    .background(Theme.Colors.surfaceMuted)
                     .clipShape(RoundedRectangle(cornerRadius: 10))
                 if !password.isEmpty && !isPasswordValid {
                     Text("비밀번호는 8~72자여야 해요")
@@ -151,8 +151,8 @@ struct LoginView: View {
             }
             .frame(maxWidth: .infinity)
             .frame(height: 50)
-            .background(canSubmit ? Theme.Colors.accent : Color.gray.opacity(0.4))
-            .foregroundStyle(Theme.Colors.onAccent)
+            .background(canSubmit ? Theme.Colors.accent : Theme.Colors.surfaceMuted)
+            .foregroundStyle(canSubmit ? Theme.Colors.onAccent : Theme.Colors.inkSecondary)
             .clipShape(RoundedRectangle(cornerRadius: 12))
         }
         .disabled(!canSubmit)

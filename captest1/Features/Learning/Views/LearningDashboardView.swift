@@ -26,10 +26,10 @@ struct LearningDashboardView: View {
                     EmptyLearningStateCard(message: store.skipMessage)
                 }
             }
-            .padding(.horizontal)
+            .padding(.horizontal, Theme.Spacing.screen)
             .padding(.vertical, 16)
         }
-        .background(Color(.systemGroupedBackground).ignoresSafeArea())
+        .background(Theme.Colors.canvas.ignoresSafeArea())
         .navigationTitle("내 학습 데이터")
         .navigationBarTitleDisplayMode(.large)
         .refreshable { await store.refresh() }
@@ -73,22 +73,22 @@ private struct LearningDetailsDisclosure<Content: View>: View {
                 withAnimation { isExpanded.toggle() }
             } label: {
                 HStack(spacing: 10) {
-                    CategoryIconBadge(symbol: "chart.xyaxis.line", tint: Theme.Colors.accent, size: 28)
                     Text("학습 상세 보기")
-                        .font(.headline)
-                        .foregroundStyle(.primary)
+                        .font(.body.weight(.semibold))
+                        .foregroundStyle(Theme.Colors.ink)
                     Spacer(minLength: 0)
                     Image(systemName: "chevron.right")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.secondary)
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(Theme.Colors.inkSecondary)
                         .rotationEffect(.degrees(isExpanded ? 90 : 0))
                 }
-                .padding(16)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(Color(.secondarySystemGroupedBackground))
+                .padding(.horizontal, 16)
+                .frame(maxWidth: .infinity, minHeight: 50, alignment: .leading)
+                .overlay(
+                    RoundedRectangle(cornerRadius: Theme.Spacing.cornerRadius, style: .continuous)
+                        .stroke(Theme.Colors.hairline, lineWidth: 1)
                 )
+                .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
 

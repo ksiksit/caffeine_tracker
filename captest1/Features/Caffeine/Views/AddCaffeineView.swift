@@ -42,10 +42,10 @@ struct AddCaffeineView: View {
                         timeSection
                     }
                 }
-                .padding(.horizontal)
+                .padding(.horizontal, Theme.Spacing.screen)
                 .padding(.vertical, 16)
             }
-            .background(Color(.systemGroupedBackground).ignoresSafeArea())
+            .background(Theme.Colors.canvas.ignoresSafeArea())
             .safeAreaInset(edge: .top, spacing: 0) {
                 if let preview = cutoffPreview {
                     CutoffPreviewBanner(
@@ -175,13 +175,13 @@ struct AddCaffeineView: View {
             .padding(.vertical, 16)
             .background(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(Color(.secondarySystemGroupedBackground))
+                    .fill(Theme.Colors.canvas)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .stroke(
-                        isSelected ? Theme.Colors.accent : Color.clear,
-                        lineWidth: 2
+                        isSelected ? Theme.Colors.accent : Theme.Colors.hairline,
+                        lineWidth: isSelected ? 2 : 1
                     )
             )
         }
@@ -217,7 +217,7 @@ struct AddCaffeineView: View {
                         .padding(10)
                         .background(
                             RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                .fill(Color(.tertiarySystemGroupedBackground))
+                                .fill(Theme.Colors.surfaceMuted)
                         )
                         .focused($focusedField, equals: .name)
 
@@ -228,7 +228,7 @@ struct AddCaffeineView: View {
                             .padding(10)
                             .background(
                                 RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                    .fill(Color(.tertiarySystemGroupedBackground))
+                                    .fill(Theme.Colors.surfaceMuted)
                             )
                             .focused($focusedField, equals: .amount)
 

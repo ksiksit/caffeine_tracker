@@ -56,10 +56,10 @@ struct HomeView: View {
                     todayRecordsCard
                 }
             }
-            .padding(.horizontal)
+            .padding(.horizontal, Theme.Spacing.screen)
             .padding(.vertical, 16)
         }
-        .background(Color(.systemGroupedBackground).ignoresSafeArea())
+        .background(Theme.Colors.canvas.ignoresSafeArea())
         .navigationTitle("홈")
         .navigationBarTitleDisplayMode(.large)
         .refreshable { await store.refresh() }

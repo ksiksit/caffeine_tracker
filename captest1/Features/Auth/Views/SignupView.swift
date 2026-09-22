@@ -51,7 +51,7 @@ struct SignupView: View {
             .padding(.vertical, 24)
         }
         .scrollDismissesKeyboard(.interactively)
-        .background(Color(.systemGroupedBackground))
+        .background(Theme.Colors.canvas)
         .navigationTitle("회원가입")
         .navigationBarTitleDisplayMode(.inline)
         .onChange(of: email) { auth.clearError() }
@@ -106,7 +106,7 @@ struct SignupView: View {
             consentRow(text: "[필수] 개인정보 처리방침 동의", isOn: $agreedToPrivacy)
         }
         .padding(12)
-        .background(Color(.secondarySystemGroupedBackground))
+        .background(Theme.Colors.surfaceMuted)
         .clipShape(RoundedRectangle(cornerRadius: 10))
     }
 
@@ -117,7 +117,7 @@ struct SignupView: View {
                     .font(.subheadline)
             }
             .toggleStyle(.switch)
-            .tint(Theme.Colors.accent)
+            .tint(Theme.Colors.signalOK)
 
             Button("보기") {
                 // 약관 화면은 후속 작업
@@ -144,8 +144,8 @@ struct SignupView: View {
             }
             .frame(maxWidth: .infinity)
             .frame(height: 50)
-            .background(canSubmit ? Theme.Colors.accent : Color.gray.opacity(0.4))
-            .foregroundStyle(Theme.Colors.onAccent)
+            .background(canSubmit ? Theme.Colors.accent : Theme.Colors.surfaceMuted)
+            .foregroundStyle(canSubmit ? Theme.Colors.onAccent : Theme.Colors.inkSecondary)
             .clipShape(RoundedRectangle(cornerRadius: 12))
         }
         .disabled(!canSubmit)
@@ -165,7 +165,7 @@ struct SignupView: View {
             Text(title).font(.caption).foregroundStyle(.secondary)
             modifier(TextField(placeholder, text: text))
                 .padding(12)
-                .background(Color(.secondarySystemGroupedBackground))
+                .background(Theme.Colors.surfaceMuted)
                 .clipShape(RoundedRectangle(cornerRadius: 10))
             if !isValid {
                 Text(invalidMessage).font(.caption2).foregroundStyle(Theme.Colors.signalStop)
@@ -187,7 +187,7 @@ struct SignupView: View {
                 .submitLabel(.next)
                 .onSubmit { focused = .nickname }
                 .padding(12)
-                .background(Color(.secondarySystemGroupedBackground))
+                .background(Theme.Colors.surfaceMuted)
                 .clipShape(RoundedRectangle(cornerRadius: 10))
             if !isValid {
                 Text(invalidMessage).font(.caption2).foregroundStyle(Theme.Colors.signalStop)
