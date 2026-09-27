@@ -42,6 +42,15 @@ struct LoginView: View {
 
                     submitButton
 
+                    #if DEBUG
+                    Button("로그인 건너뛰기 (디버그)") {
+                        focused = nil
+                        auth.skipLoginForDebug()
+                    }
+                    .font(.subheadline)
+                    .frame(maxWidth: .infinity)
+                    #endif
+
                     NavigationLink {
                         SignupView()
                     } label: {

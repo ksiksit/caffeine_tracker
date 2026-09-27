@@ -16,6 +16,11 @@ struct RootView: View {
                 Text("로그인 정보 확인 중...")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
+                #if DEBUG
+                Button("건너뛰기 (디버그)") { auth.skipLoginForDebug() }
+                    .font(.subheadline)
+                    .padding(.top, 8)
+                #endif
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Theme.Colors.canvas)

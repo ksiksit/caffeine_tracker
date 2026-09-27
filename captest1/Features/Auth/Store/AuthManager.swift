@@ -23,6 +23,15 @@ final class AuthManager {
         self.tokenStore = tokenStore
     }
 
+    #if DEBUG
+    /// 디버그 빌드 전용: 서버 없이 로그인 화면을 넘어가 나머지 화면을 본다.
+    /// 토큰이 없으므로 서버를 부르는 화면은 오류를 보여준다.
+    func skipLoginForDebug() {
+        lastError = nil
+        state = .authenticated(MeResponse(userId: 0, email: "debug@local"))
+    }
+    #endif
+
     /// 앱 시작 시 자동 로그인 시도
     func bootstrap() async {
         await installSessionExpiredHandler()
@@ -35,19 +44,25 @@ final class AuthManager {
         do {
             _ = try await repository.refresh(refreshToken: refresh)
             let me = try await repository.me()
-            state = .authenticated(me)
+            finishBootstrap(.authenticated(me))
         } catch APIError.invalidRefreshToken, APIError.sessionExpired {
             await tokenStore.clear()
             await session.setAccessToken(nil)
             await session.setRefreshToken(nil)
-            state = .unauthenticated
+            finishBootstrap(.unauthenticated)
         } catch APIError.network {
             // 오프라인 부팅: 토큰 보존, 다음 시도에 재진입
-            state = .unauthenticated
-            lastError = .offlineBootstrap
+            finishBootstrap(.unauthenticated, error: .offlineBootstrap)
         } catch {
-            state = .unauthenticated
+            finishBootstrap(.unauthenticated)
         }
+    }
+
+    /// 자동 로그인 결과는 아직 확인 중일 때만 반영한다 — 그사이 사용자가 로그인했거나(디버그) 건너뛰었으면 덮어쓰지 않는다.
+    private func finishBootstrap(_ newState: AuthState, error: AuthErrorMessage? = nil) {
+        guard state == .checking else { return }
+        state = newState
+        if let error { lastError = error }
     }
 
     func login(email: String, password: String) async {
