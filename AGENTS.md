@@ -38,7 +38,7 @@ xcodebuild -scheme captest1 -destination 'platform=iOS Simulator,name=iPhone 17 
 질 좋은 수면을 위한 카페인 관리 앱. SwiftUI + HealthKit + Charts 기반의 **thin-client**.
 
 > **풀스택 프로젝트**: 이 iOS 앱 + Spring 백엔드(`../server`). 도메인 연산(약동학·수면 병합·베이지안 학습)은
-> **서버가 수행**하고, 앱은 입력 전송 + 서버 계산 결과 표시. **앱 실행 시 서버 필요**(`BASE_URL` 기본 `http://localhost:8080`).
+> **서버가 수행**하고, 앱은 입력 전송 + 서버 계산 결과 표시. **앱 실행 시 서버 필요**(`BASE_URL` 기본 `http://localhost:8080`, gitignore된 `captest1/Resources/Secrets.plist`가 있으면 우선 — 배포 서버 주소는 커밋 금지).
 
 - **카페인 관리**: 기록 → 서버 저장, 서버가 계산한 잔류량 차트·마감시각 표시
 - **수면**: HealthKit 원시 샘플을 읽어 **서버 업로드**, 병합·SOL·요약은 서버 계산

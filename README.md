@@ -188,6 +188,9 @@ captest1UITests/      # 기본 탭 이동과 런치 성능 UI 테스트
 > **먼저 서버를 실행**해야 합니다. [`../server`](../server)의 README를 따라 백엔드를 `http://localhost:8080`에 띄우세요
 > (앱의 `BASE_URL` 기본값). 회원가입/로그인 후 기능을 사용할 수 있습니다.
 
+배포 서버에 붙이려면 `Config/Secrets.example.plist`를 `captest1/Resources/Secrets.plist`로 복사해 `BASE_URL`을 넣으세요.
+이 파일은 gitignore라 저장소에 올라가지 않고, 있으면 `Info.plist`의 기본값보다 우선합니다(공개 저장소에 서버 주소를 남기지 않기 위함).
+
 1. 서버(`../server`)를 로컬에서 실행합니다.
 2. Xcode에서 `captest1.xcodeproj`를 엽니다.
 3. Scheme을 `captest1`로 선택하고, 실행 대상은 `iPhone 17 Pro` 시뮬레이터를 기준으로 합니다.
