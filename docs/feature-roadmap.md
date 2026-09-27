@@ -85,6 +85,7 @@
 | 기준 섭취량 | 20~300mg, 5 단위. "이 양 한 잔"을 기준으로 마감시각 계산 | 서버 저장 | `SettingsView` |
 | 건강 데이터 | HealthKit 연동 상태·요청 버튼 | 앱 | `SettingsView` |
 | 알림 | 권한 상태 줄 + 종류별 on/off 3개(섭취 마감·취침 잔량 예고·기록 리마인더). 서버 알림 계획을 로컬 알림으로 예약 | 서버 계획 + 앱 예약 | `SettingsView`, `NotificationPermissionRow`, `NotificationStore` |
+| 카페 근처 알림 | on/off + 알림 받을 동(최대 2개, 전국 검색) + 위치 '항상 허용' 안내 + 감시 중인 구역 수. 두 동의 카페 구역 상위 17개를 지오펜스로 감시하다가, 서버 금지 구간(마감 지남·하루 권장량 초과·취침 잔량 초과) 안에 들어서면 즉시 알림. 전체 60분에 1번 | 서버 구간 + 앱 판정(오프라인) | `CafeNearbyRows`, `DongPickerView`, `CafeNearbyStore`, `Core/Location` |
 | 계정 | 이메일 표시, 로그아웃(확인 다이얼로그) | 서버 | `SettingsView` |
 
 ### 1.7 앱 실행 시 자동 흐름 (현재)
@@ -196,6 +197,7 @@
 |---|---|---|---|
 | 상관 리포트 | `Features/Insight/{Views,Store,Data}` — `InsightStore`, `InsightRepository`, `APIClient+Insight`, `InsightDTO` | `domain/insight/{controller,service,dto}`, 순수 계산은 `calc/InsightCalc` | Feature ↔ domain 1:1 유지 |
 | 마감 알림 | 시스템 래퍼 `Core/Notifications/LocalNotificationScheduler`(Features 모름) + 스케줄 결정은 `Features/Caffeine/Store/CaffeineStore` | 없음 | 알림 on/off·시각은 `SettingsManager`에 추가(서버 settings 필드 동반 시 PUT) |
+| 카페 근처 알림 | `Core/Location`(`GeofenceMonitor`·`LocationPermissionManager`) + `Features/Notification`(`CafeNearbyStore`·`CafeZoneCatalog`·`CafeNearbyGate`·`DongPickerView`), 감시 재개는 `App/AppDelegate` | `notification` 도메인의 `cafeNearbyWindows`(언제만) | 카페 좌표는 번들 `CafeZones.json`(`tools/cafe-zones`), 동·위치는 서버로 보내지 않음 |
 | today 캐시·위젯 | `Core/Networking`에 응답 캐시(App Group `UserDefaults` 또는 파일), 위젯 타겟은 캐시만 읽음 | 없음 | 위젯은 네트워크 호출 없이 캐시 표시 |
 | 아침 체크인 | `Features/Sleep/Views/MorningCheckInSheet`, `SleepStore.submitCheckIn`, `SleepDTO`에 self-report | `domain/sleep` 엔티티·DTO, `learning`의 `BedtimeExtractor` fallback | 관측 분산은 `calc` 상수로, 클라 미러 없음 |
 | 교란 태그 | `Features/Sleep`(태그 UI·DTO) | `domain/sleep` 태그 엔티티, `LearningSkipReason.CONFOUNDED` | 학습 제외는 서버 게이트에서만 |
@@ -223,6 +225,7 @@
 
 ## 변경 이력
 
+- 2026-09-27 신규: 카페 근처 알림 — 전국 카페 구역 데이터(공공데이터 → 동별 150m 구역 상위 17개, `tools/cafe-zones`) 번들, 동 최대 2개 선택, 지오펜스 진입 시 서버 금지 구간 안이면 즉시 알림(전체 60분에 1번). 실기기에서 앱 종료·재부팅 후 진입은 아직 미확인
 - 2026-09-25 §4 5번(마감 알림) 구현 — 서버 알림 계획(종류 3개)을 받아 로컬 알림으로 예약. 함께 발견·수정: 설정 PUT에 서버 필수 필드 `notifications`가 빠져 있어 서버 설정 저장이 400으로 실패하던 문제
 
 - 2026-09-05 최초 작성 — 현황(§1) 코드 기준 정리, 개선안 18건(§2), 신규 후보 12건(§3), 착수 순서(§4)
