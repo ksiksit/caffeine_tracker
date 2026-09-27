@@ -17,6 +17,8 @@ final class FakeLocalNotificationScheduler: LocalNotificationScheduling {
     /// 현재 예약된 알림(교체·삭제 결과).
     private(set) var pending: [LocalNotification] = []
     private(set) var replaceCount = 0
+    /// 즉시 띄운 알림(카페 근처).
+    private(set) var posted: [LocalNotification] = []
 
     func permission() async -> LocalNotificationPermission { currentPermission }
 
@@ -33,5 +35,9 @@ final class FakeLocalNotificationScheduler: LocalNotificationScheduling {
 
     func removeAll() async {
         pending = []
+    }
+
+    func postNow(_ notification: LocalNotification) async {
+        posted.append(notification)
     }
 }

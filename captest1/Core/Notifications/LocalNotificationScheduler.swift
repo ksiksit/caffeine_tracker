@@ -33,11 +33,15 @@ protocol LocalNotificationScheduling: AnyObject {
     func replaceAll(with notifications: [LocalNotification]) async
     /// 이 예약기로 넣은 알림만 지운다(다른 경로의 알림은 건드리지 않는다).
     func removeAll() async
+    /// 지금 바로 띄운다(카페 근처 알림 — 구역 진입 순간 기기에서 판정). `fireAt`은 쓰지 않는다. 예약 교체·삭제와 섞이지 않는다.
+    func postNow(_ notification: LocalNotification) async
 }
 
 final class LocalNotificationScheduler: LocalNotificationScheduling {
-    /// 서버 알림 계획으로 넣은 알림의 식별자 접두어. 나중에 생길 다른 알림(카페 근처 알림 등)과 섞이지 않게 한다.
+    /// 서버 알림 계획으로 넣은 알림의 식별자 접두어. 즉시 알림(`immediatePrefix`)과 섞이지 않게 한다.
     static let identifierPrefix = "plan."
+    /// 즉시 알림(카페 근처)의 식별자 접두어.
+    static let immediatePrefix = "now."
 
     private let center: UNUserNotificationCenter
 
@@ -80,5 +84,25 @@ final class LocalNotificationScheduler: LocalNotificationScheduling {
         let pending = await center.pendingNotificationRequests()
         let ids = pending.map(\.identifier).filter { $0.hasPrefix(Self.identifierPrefix) }
         center.removePendingNotificationRequests(withIdentifiers: ids)
+    }
+
+    func postNow(_ notification: LocalNotification) async {
+        let content = UNMutableNotificationContent()
+        content.title = notification.title
+        content.body = notification.body
+        content.sound = .default
+        let request = UNNotificationRequest(
+            identifier: Self.immediatePrefix + notification.id, content: content, trigger: nil)
+        try? await center.add(request)
+    }
+}
+
+/// 앱이 앞에 떠 있을 때도 배너를 보여준다(기본은 앞에 있으면 알림을 숨긴다). 앱 실행 시 알림 센터 델리게이트로 설정한다.
+final class LocalNotificationPresenter: NSObject, UNUserNotificationCenterDelegate {
+    nonisolated func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification
+    ) async -> UNNotificationPresentationOptions {
+        [.banner, .sound, .list]
     }
 }

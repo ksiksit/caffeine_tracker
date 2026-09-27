@@ -23,4 +23,5 @@ final class PreviewLocalNotificationScheduler: LocalNotificationScheduling {
     func requestPermission() async -> Bool { current == .authorized }
     func replaceAll(with notifications: [LocalNotification]) async {}
     func removeAll() async {}
+    func postNow(_ notification: LocalNotification) async {}
 }
