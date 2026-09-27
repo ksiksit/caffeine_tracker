@@ -10,6 +10,8 @@ import HealthKit
 
 @main
 struct captest1App: App {
+    // 위치 이벤트로 백그라운드에서 다시 실행될 때 화면 없이 카페 근처 알림을 판정하려고 앱 델리게이트를 둔다.
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @State private var settings: SettingsManager
     @State private var healthKitManager: HealthKitManager
     @State private var auth: AuthManager
@@ -17,6 +19,7 @@ struct captest1App: App {
     @State private var learningStore: LearningStore
     @State private var sleepStore: SleepStore
     @State private var notificationStore: NotificationStore
+    @State private var locationPermission = LocationPermissionManager()
     private let tokenStore: TokenStore
     private let apiClient: APIClient
 
@@ -56,6 +59,8 @@ struct captest1App: App {
                 .environment(learningStore)
                 .environment(sleepStore)
                 .environment(notificationStore)
+                .environment(appDelegate.cafeNearby)
+                .environment(locationPermission)
                 .task {
                     await tokenStore.bootstrap()
                     await apiClient.setAccessToken(tokenStore.accessToken)

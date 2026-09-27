@@ -7,9 +7,10 @@
 
 import SwiftUI
 
-/// `NotificationStatus`: "알림" 섹션 맨 위에 들어갈 권한 상태 줄. 알림 기능의 화면이라 App 조립층이 끼워 넣는다
+/// `NotificationStatus`: "알림" 섹션 맨 위에 들어갈 권한 상태 줄. `CafeNearbyDetail`: 카페 근처 알림을 켰을 때 토글 아래에
+/// 붙는 동 선택·위치 권한 줄. 둘 다 알림 기능의 화면이라 App 조립층이 끼워 넣는다
 /// (설정 기능이 다른 기능을 직접 참조하지 않게 — CLAUDE.md 의존 규칙 2).
-struct SettingsView<NotificationStatus: View>: View {
+struct SettingsView<NotificationStatus: View, CafeNearbyDetail: View>: View {
     @Environment(SettingsManager.self) private var settings
     @Environment(HealthKitManager.self) private var healthKit
     @Environment(SleepStore.self) private var sleepStore
@@ -17,9 +18,12 @@ struct SettingsView<NotificationStatus: View>: View {
     @State private var bedtimeDate = Date()
     @State private var showLogoutConfirm = false
     private let notificationStatus: NotificationStatus
+    private let cafeNearbyDetail: CafeNearbyDetail
 
-    init(@ViewBuilder notificationStatus: () -> NotificationStatus) {
+    init(@ViewBuilder notificationStatus: () -> NotificationStatus,
+         @ViewBuilder cafeNearbyDetail: () -> CafeNearbyDetail) {
         self.notificationStatus = notificationStatus()
+        self.cafeNearbyDetail = cafeNearbyDetail()
     }
 
     var body: some View {
@@ -188,10 +192,19 @@ struct SettingsView<NotificationStatus: View>: View {
                     Label("기록 리마인더", systemImage: "square.and.pencil")
                 }
                 .tint(Theme.Colors.signalOK)
+
+                Toggle(isOn: $settings.notifyCafeNearby) {
+                    Label("카페 근처 알림", systemImage: "location.circle")
+                }
+                .tint(Theme.Colors.signalOK)
+
+                if settings.notifyCafeNearby {
+                    cafeNearbyDetail
+                }
             } header: {
                 Text("알림")
             } footer: {
-                Text("잔량 예고는 취침 때 50mg 이상 남을 것 같을 때만, 기록 리마인더는 평소 첫 잔보다 2시간이 지나도록 기록이 없을 때만 울려요.")
+                Text("잔량 예고는 취침 때 50mg 이상 남을 것 같을 때만, 기록 리마인더는 평소 첫 잔보다 2시간이 지나도록 기록이 없을 때만 울려요. 카페 근처 알림은 마감이 지났거나 하루 권장량을 넘긴 날, 고른 동의 카페 구역에 들어서면 울려요.")
             }
 
             Section("계정") {
@@ -254,13 +267,14 @@ struct SettingsView<NotificationStatus: View>: View {
         .onChange(of: settings.notifyCutoff) { settings.scheduleSync() }
         .onChange(of: settings.notifyBedtimeResidual) { settings.scheduleSync() }
         .onChange(of: settings.notifyRecordReminder) { settings.scheduleSync() }
+        .onChange(of: settings.notifyCafeNearby) { settings.scheduleSync() }
     }
 }
 
-extension SettingsView where NotificationStatus == EmptyView {
-    /// 권한 상태 줄 없이(프리뷰 등).
+extension SettingsView where NotificationStatus == EmptyView, CafeNearbyDetail == EmptyView {
+    /// 슬롯 없이(프리뷰 등).
     init() {
-        self.init { EmptyView() }
+        self.init(notificationStatus: { EmptyView() }, cafeNearbyDetail: { EmptyView() })
     }
 }
 

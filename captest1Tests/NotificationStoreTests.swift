@@ -115,6 +115,44 @@ struct NotificationStoreTests {
         #expect(repo.planCalls == 1)
     }
 
+    @Test func refresh_success_exposesCafeNearbyWindowsAndBumpsRevision() async {
+        let window = CafeNearbyWindowDTO(reason: "CUTOFF_PASSED", activeFrom: Date(), activeUntil: Date().addingTimeInterval(3600),
+                                         title: "카페 근처예요", body: "b")
+        let repo = FakeNotificationRepository()
+        repo.planResult = .success(NotificationPlanResponse(now: Date(), items: [], cafeNearbyWindows: [window]))
+        let store = makeStore(repo: repo)
+
+        await store.refresh()
+
+        #expect(store.cafeNearbyWindows == [window])
+        #expect(store.planRevision == 1)
+    }
+
+    @Test func refresh_emptyWindows_stillBumpsRevision() async {
+        // 금지 구간이 사라진 것도 조립층이 저장해야 하므로, 빈 목록이 두 번 와도 신호는 오른다.
+        let repo = FakeNotificationRepository()
+        let store = makeStore(repo: repo)
+        await store.refresh()
+        await store.refresh()
+        #expect(store.cafeNearbyWindows.isEmpty)
+        #expect(store.planRevision == 2)
+    }
+
+    @Test func refresh_failure_keepsCafeNearbyWindows() async {
+        let window = CafeNearbyWindowDTO(reason: "ALREADY_EXCEEDED", activeFrom: Date(), activeUntil: Date().addingTimeInterval(3600),
+                                         title: "카페 근처예요", body: "b")
+        let repo = FakeNotificationRepository()
+        repo.planResult = .success(NotificationPlanResponse(now: Date(), items: [], cafeNearbyWindows: [window]))
+        let store = makeStore(repo: repo)
+        await store.refresh()
+
+        repo.planResult = .failure(FakeError())
+        await store.refresh()
+
+        #expect(store.cafeNearbyWindows == [window])
+        #expect(store.planRevision == 1)
+    }
+
     @Test func clear_removesScheduledNotifications() async {
         let repo = FakeNotificationRepository()
         repo.planResult = .success(NotificationPlanResponse(now: Date(), items: [.fixture()]))

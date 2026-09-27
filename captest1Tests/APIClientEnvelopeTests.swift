@@ -32,6 +32,18 @@ struct APIClientEnvelopeTests {
     ] }, "error": null, "message": null }
     """
 
+    /// 카페 근처 알림 이후 서버(api.md 알림 절 예시).
+    private static let planWithCafeNearbyJSON = """
+    { "success": true, "data": { "now": "2026-06-01T05:00:00Z", "items": [], "cafeNearbyWindows": [
+      { "reason": "CUTOFF_PASSED", "activeFrom": "2026-06-01T11:04:30.675Z", "activeUntil": "2026-06-01T20:00:00Z", "title": "카페 근처예요", "body": "오늘 마감 20:04이 지났어요. 지금 75mg 한 잔이면 취침 때 기준(50mg)을 넘어요. 들어간다면 디카페인으로!" },
+      { "reason": "CUTOFF_PASSED", "activeFrom": "2026-06-02T11:04:30.675Z", "activeUntil": "2026-06-02T20:00:00Z", "title": "카페 근처예요", "body": "b" }
+    ] }, "error": null, "message": null }
+    """
+
+    private static let settingsWithCafeNearbyJSON = """
+    { "success": true, "data": { "halfLife": 5.0, "condition": 0, "bedtimeHour": 23, "bedtimeMinute": 0, "referenceDoseMg": 75, "isLearningEnabled": true, "learnedMean": 5.0, "learnedVariance": 2.25, "lastLearnedDate": null, "inferredBaseHalfLife": 5.0, "effectiveHalfLifeHours": 5.0, "notifications": { "cutoff": true, "bedtimeResidual": true, "recordReminder": true, "cafeNearby": true } }, "error": null, "message": null }
+    """
+
     private static let unauthorizedJSON = #"{ "success": false, "data": null, "error": { "code": "UNAUTHORIZED" }, "message": "인증이 필요합니다." }"#
 
     @Test func successEnvelope_returnsPayload() async throws {
@@ -113,6 +125,48 @@ struct APIClientEnvelopeTests {
         StubURLProtocol.install { _ in .init(status: 200, json: Self.settingsJSON) }
         let settings = try await makeClient().settings()
         #expect(settings.notifications == NotificationSettingsDTO(cutoff: true, bedtimeResidual: true, recordReminder: true))
+    }
+
+    @Test func notificationPlan_withoutCafeNearbyWindows_decodesAsEmpty() async throws {
+        // 카페 근처 알림 이전 서버 응답(planJSON에는 cafeNearbyWindows가 없다).
+        defer { StubURLProtocol.reset() }
+        StubURLProtocol.install { _ in .init(status: 200, json: Self.planJSON) }
+        let plan = try await makeClient().plan(now: Date(), timeZone: TimeZone(identifier: "Asia/Seoul")!)
+        #expect(plan.cafeNearbyWindows.isEmpty)
+    }
+
+    @Test func notificationPlan_decodesCafeNearbyWindows() async throws {
+        defer { StubURLProtocol.reset() }
+        StubURLProtocol.install { _ in .init(status: 200, json: Self.planWithCafeNearbyJSON) }
+        let plan = try await makeClient().plan(now: Date(), timeZone: TimeZone(identifier: "Asia/Seoul")!)
+        #expect(plan.cafeNearbyWindows.count == 2)
+        let first = try #require(plan.cafeNearbyWindows.first)
+        #expect(first.reason == "CUTOFF_PASSED")
+        #expect(first.title == "카페 근처예요")
+        #expect(first.activeUntil == Date(timeIntervalSince1970: 1_780_344_000))   // 2026-06-01T20:00:00Z
+        #expect(first.activeFrom < first.activeUntil)
+    }
+
+    @Test func settings_withoutCafeNearby_decodesAsOff() async throws {
+        defer { StubURLProtocol.reset() }
+        StubURLProtocol.install { _ in .init(status: 200, json: Self.settingsJSON) }
+        let settings = try await makeClient().settings()
+        #expect(settings.notifications.cafeNearby == false)
+    }
+
+    @Test func settings_decodesCafeNearby() async throws {
+        defer { StubURLProtocol.reset() }
+        StubURLProtocol.install { _ in .init(status: 200, json: Self.settingsWithCafeNearbyJSON) }
+        let settings = try await makeClient().settings()
+        #expect(settings.notifications.cafeNearby == true)
+    }
+
+    @Test func notificationSettings_alwaysEncodesCafeNearby() throws {
+        // 서버는 cafeNearby를 생략하면 기존 값을 유지한다 — 앱은 끈 것도 전하려고 항상 싣는다.
+        let data = try JSONEncoder().encode(NotificationSettingsDTO(cutoff: true, bedtimeResidual: false,
+                                                                     recordReminder: true, cafeNearby: false))
+        let object = try #require(try JSONSerialization.jsonObject(with: data) as? [String: Bool])
+        #expect(object == ["cutoff": true, "bedtimeResidual": false, "recordReminder": true, "cafeNearby": false])
     }
 
     @Test func unauthorized_refreshesOnceThenRetriesWithNewToken() async throws {

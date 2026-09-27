@@ -16,6 +16,10 @@ final class NotificationStore {
     /// 마지막으로 예약에 성공한 목록(설정 화면 표시용).
     private(set) var scheduled: [LocalNotification] = []
     private(set) var lastSyncedAt: Date?
+    /// 마지막으로 받은 카페 근처 금지 구간. 판정은 카페 근처 알림 스토어가 하므로 여기서는 전달만 한다.
+    private(set) var cafeNearbyWindows: [CafeNearbyWindowDTO] = []
+    /// 계획 조회에 성공할 때마다 1씩 오른다. 금지 구간이 이전과 같아도(빈 목록 포함) 조립층이 저장하도록 신호로 쓴다.
+    private(set) var planRevision = 0
     var errorMessage: String?
 
     private let repository: any NotificationRepository
@@ -53,6 +57,8 @@ final class NotificationStore {
             await scheduler.replaceAll(with: items)
             scheduled = items
             lastSyncedAt = plan.now
+            cafeNearbyWindows = plan.cafeNearbyWindows
+            planRevision += 1
             errorMessage = nil
         } catch is CancellationError {
             // 무시
@@ -78,6 +84,7 @@ final class NotificationStore {
         await scheduler.removeAll()
         scheduled = []
         lastSyncedAt = nil
+        cafeNearbyWindows = []
     }
 
     /// 종류당 한 건이므로 종류 + 시각으로 식별자를 만든다.

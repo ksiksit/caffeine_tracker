@@ -20,6 +20,7 @@ final class SettingsManager {
         static let notifyCutoff = "notifyCutoff"
         static let notifyBedtimeResidual = "notifyBedtimeResidual"
         static let notifyRecordReminder = "notifyRecordReminder"
+        static let notifyCafeNearby = "notifyCafeNearby"
     }
 
     /// Koletzko 2021 모집단 표준편차 (h). prior reset 시 사용.
@@ -84,6 +85,11 @@ final class SettingsManager {
         didSet { defaults.set(notifyRecordReminder, forKey: Keys.notifyRecordReminder) }
     }
 
+    /// 카페 근처 알림 on/off (서버 notifications.cafeNearby, 기본 꺼짐). 동 선택·위치 권한은 알림 기능이 따로 관리한다.
+    var notifyCafeNearby: Bool {
+        didSet { defaults.set(notifyCafeNearby, forKey: Keys.notifyCafeNearby) }
+    }
+
     /// 서버 권위 값을 반영할 때마다 1씩 오른다. 알림 계획처럼 "설정이 바뀌면 다시 받아야 하는" 쪽이 관찰한다.
     private(set) var serverRevision = 0
 
@@ -126,6 +132,7 @@ final class SettingsManager {
         self.notifyCutoff = (defaults.object(forKey: Keys.notifyCutoff) as? Bool) ?? true
         self.notifyBedtimeResidual = (defaults.object(forKey: Keys.notifyBedtimeResidual) as? Bool) ?? true
         self.notifyRecordReminder = (defaults.object(forKey: Keys.notifyRecordReminder) as? Bool) ?? true
+        self.notifyCafeNearby = (defaults.object(forKey: Keys.notifyCafeNearby) as? Bool) ?? false
     }
 
     /// 로그아웃 등 사용자 전환 시 베이지안 학습 결과를 초기화한다.
@@ -154,7 +161,7 @@ final class SettingsManager {
 
     private var notificationSettings: NotificationSettingsDTO {
         NotificationSettingsDTO(cutoff: notifyCutoff, bedtimeResidual: notifyBedtimeResidual,
-                                recordReminder: notifyRecordReminder)
+                                recordReminder: notifyRecordReminder, cafeNearby: notifyCafeNearby)
     }
 
     private func currentSnapshot() -> Snapshot {
@@ -215,6 +222,7 @@ final class SettingsManager {
         notifyCutoff = dto.notifications.cutoff
         notifyBedtimeResidual = dto.notifications.bedtimeResidual
         notifyRecordReminder = dto.notifications.recordReminder
+        notifyCafeNearby = dto.notifications.cafeNearby
         lastSyncedSnapshot = currentSnapshot()
         serverRevision += 1
     }

@@ -104,6 +104,34 @@ struct SettingsManagerTests {
         #expect(settings.notifyRecordReminder == false)
     }
 
+    @Test func cafeNearbyToggle_isSentWithPutAndAppliedFromServer() async throws {
+        let repo = FakeSettingsRepository()
+        let settings = makeManager()
+        settings.attach(repository: repo)
+        await settings.loadFromServer()
+        #expect(settings.notifyCafeNearby == false)   // 서버 기본 꺼짐
+
+        settings.notifyCafeNearby = true
+        settings.scheduleSync()
+        try await Task.sleep(for: .milliseconds(900))
+
+        #expect(repo.updateRequests.count == 1)
+        #expect(repo.updateRequests.first?.notifications.cafeNearby == true)
+        #expect(settings.notifyCafeNearby == true)
+    }
+
+    @Test func loadFromServer_appliesCafeNearby() async {
+        let repo = FakeSettingsRepository()
+        repo.getResult = .success(.fixture(notifications: NotificationSettingsDTO(
+            cutoff: true, bedtimeResidual: true, recordReminder: true, cafeNearby: true)))
+        let settings = makeManager()
+        settings.attach(repository: repo)
+
+        await settings.loadFromServer()
+
+        #expect(settings.notifyCafeNearby == true)
+    }
+
     @Test func effectiveHalfLife_appliesConditionMultiplier() {
         let settings = makeManager()
         settings.isLearningEnabled = false
