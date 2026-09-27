@@ -59,7 +59,8 @@ extension SettingsResponse {
         isLearningEnabled: Bool = true,
         learnedMean: Double = 5.0,
         learnedVariance: Double = 2.25,
-        lastLearnedDate: String? = nil
+        lastLearnedDate: String? = nil,
+        notifications: NotificationSettingsDTO = NotificationSettingsDTO(cutoff: true, bedtimeResidual: true, recordReminder: true)
     ) -> SettingsResponse {
         SettingsResponse(
             halfLife: halfLife, condition: condition, bedtimeHour: bedtimeHour, bedtimeMinute: bedtimeMinute,
@@ -67,8 +68,16 @@ extension SettingsResponse {
             learnedMean: learnedMean, learnedVariance: learnedVariance, lastLearnedDate: lastLearnedDate,
             inferredBaseHalfLife: isLearningEnabled ? learnedMean : halfLife,
             effectiveHalfLifeHours: (isLearningEnabled ? learnedMean : halfLife)
-                * (CaffeineCondition(rawValue: condition) ?? .none).multiplier
+                * (CaffeineCondition(rawValue: condition) ?? .none).multiplier,
+            notifications: notifications
         )
+    }
+}
+
+extension NotificationItemDTO {
+    static func fixture(type: String = "CUTOFF", fireAt: Date = Date().addingTimeInterval(3600),
+                        title: String = "섭취 마감 30분 전", body: String = "본문") -> NotificationItemDTO {
+        NotificationItemDTO(type: type, fireAt: fireAt, title: title, body: body)
     }
 }
 

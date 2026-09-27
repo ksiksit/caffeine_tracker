@@ -2,7 +2,7 @@
 //  SettingsDTO.swift
 //  captest1
 //
-//  사용자 설정(반감기·건강 상태·취침·기준용량·학습 ON/OFF) 요청/응답 DTO. 서버가 권위 값이며 앱은 로컬 미러.
+//  사용자 설정(반감기·건강 상태·취침·기준용량·학습 ON/OFF·알림 종류별 ON/OFF) 요청/응답 DTO. 서버가 권위 값이며 앱은 로컬 미러.
 //
 
 import Foundation
@@ -19,6 +19,14 @@ nonisolated struct SettingsResponse: Decodable, Sendable {
     let lastLearnedDate: String?   // 서버 LocalDate("2026-05-30"). ServerDateCoding.localDate로 파싱.
     let inferredBaseHalfLife: Double
     let effectiveHalfLifeHours: Double
+    let notifications: NotificationSettingsDTO
+}
+
+/// 알림 종류별 on/off. 서버 NotificationType 과 1:1이며, 꺼진 종류는 알림 계획에서 생략된다.
+nonisolated struct NotificationSettingsDTO: Codable, Sendable, Equatable {
+    let cutoff: Bool
+    let bedtimeResidual: Bool
+    let recordReminder: Bool
 }
 
 nonisolated struct UpdateSettingsRequest: Encodable, Sendable {
@@ -28,6 +36,8 @@ nonisolated struct UpdateSettingsRequest: Encodable, Sendable {
     let bedtimeMinute: Int
     let referenceDoseMg: Int
     let isLearningEnabled: Bool
+    /// 서버 필수 필드(세 값 모두). 빠지면 400.
+    let notifications: NotificationSettingsDTO
     var learnedMean: Double? = nil
     var learnedVariance: Double? = nil
     var lastLearnedDate: String? = nil

@@ -23,7 +23,13 @@ struct APIClientEnvelopeTests {
     }
 
     private static let settingsJSON = """
-    { "success": true, "data": { "halfLife": 5.0, "condition": 0, "bedtimeHour": 23, "bedtimeMinute": 0, "referenceDoseMg": 75, "isLearningEnabled": true, "learnedMean": 5.0, "learnedVariance": 2.25, "lastLearnedDate": null, "inferredBaseHalfLife": 5.0, "effectiveHalfLifeHours": 5.0 }, "error": null, "message": null }
+    { "success": true, "data": { "halfLife": 5.0, "condition": 0, "bedtimeHour": 23, "bedtimeMinute": 0, "referenceDoseMg": 75, "isLearningEnabled": true, "learnedMean": 5.0, "learnedVariance": 2.25, "lastLearnedDate": null, "inferredBaseHalfLife": 5.0, "effectiveHalfLifeHours": 5.0, "notifications": { "cutoff": true, "bedtimeResidual": true, "recordReminder": true } }, "error": null, "message": null }
+    """
+
+    private static let planJSON = """
+    { "success": true, "data": { "now": "2026-06-01T05:00:00Z", "items": [
+      { "type": "CUTOFF", "fireAt": "2026-06-01T10:34:30.675Z", "title": "섭취 마감 30분 전", "body": "23:00 취침 기준, 75mg를 마실 수 있는 마지막 시각은 20:04이에요." }
+    ] }, "error": null, "message": null }
     """
 
     private static let unauthorizedJSON = #"{ "success": false, "data": null, "error": { "code": "UNAUTHORIZED" }, "message": "인증이 필요합니다." }"#
@@ -84,6 +90,29 @@ struct APIClientEnvelopeTests {
         await #expect(throws: APIError.decoding) {
             try await makeClient().me()
         }
+    }
+
+    @Test func notificationPlan_decodesItemsAndSendsNowAndTz() async throws {
+        defer { StubURLProtocol.reset() }
+        StubURLProtocol.install { _ in .init(status: 200, json: Self.planJSON) }
+        let now = Date(timeIntervalSince1970: 1_780_290_000)
+
+        let plan = try await makeClient().plan(now: now, timeZone: TimeZone(identifier: "Asia/Seoul")!)
+
+        #expect(plan.items.count == 1)
+        #expect(plan.items.first?.type == "CUTOFF")
+        #expect(plan.items.first?.title == "섭취 마감 30분 전")
+        let query = StubURLProtocol.requests.first?.url?.query ?? ""
+        #expect(StubURLProtocol.requests.first?.url?.path == "/api/notifications/plan")
+        #expect(query.contains("tz=Asia/Seoul"))
+        #expect(query.contains("now="))
+    }
+
+    @Test func settings_decodesNotificationToggles() async throws {
+        defer { StubURLProtocol.reset() }
+        StubURLProtocol.install { _ in .init(status: 200, json: Self.settingsJSON) }
+        let settings = try await makeClient().settings()
+        #expect(settings.notifications == NotificationSettingsDTO(cutoff: true, bedtimeResidual: true, recordReminder: true))
     }
 
     @Test func unauthorized_refreshesOnceThenRetriesWithNewToken() async throws {

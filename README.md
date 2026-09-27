@@ -140,13 +140,18 @@ captest1/
 │   │   ├── Views/    # LearningDashboardView·CalibrationScatterChart·ConfidenceBar
 │   │   ├── Store/    # LearningStore
 │   │   └── Data/     # LearningRepository·APIClient+Learning·LearningDTO
+│   ├── Notification/
+│   │   ├── Views/    # NotificationPermissionRow(설정 화면 슬롯에 ContentView가 끼워 넣음)
+│   │   ├── Store/    # NotificationStore(서버 알림 계획 → 로컬 예약 교체)
+│   │   └── Data/     # NotificationRepository·APIClient+Notification·NotificationDTO·PreviewNotificationRepository
 │   └── Settings/
-│       ├── Views/    # SettingsView
-│       ├── Store/    # SettingsManager(서버 권위 + 로컬 미러)
+│       ├── Views/    # SettingsView(알림 섹션 맨 위 권한 줄은 슬롯으로 받음)
+│       ├── Store/    # SettingsManager(서버 권위 + 로컬 미러, 알림 종류별 on/off 포함)
 │       └── Data/     # SettingsRepository·APIClient+Settings·SettingsDTO
 ├── Core/             # ↔ 서버 global/. Features를 참조하지 않는다
 │   ├── Networking/   # APIClient(전송·JWT·401 refresh·봉투 해제), APIEnvelope·APIError, ServerDateCoding, TokenStore, AuthSession
 │   ├── HealthKit/    # HealthKitManager(가용성·권한만), SleepFetchService(읽기), SleepSampleSource 포트
+│   ├── Notifications/ # LocalNotificationScheduler(로컬 알림 예약·권한), LocalNotification 값, LocalNotificationScheduling 포트
 │   ├── Security/     # KeychainHelper
 │   ├── DesignSystem/ # HealthCard·CategoryIconBadge·HealthMetric·SectionHeader
 │   └── Model/        # CaffeineCondition, AppConstants
@@ -161,7 +166,7 @@ captest1UITests/      # 기본 탭 이동과 런치 성능 UI 테스트
 `XStore`(@Observable) = ViewModel 역할, `XRepository` = 포트, `extension APIClient: XRepository` = 어댑터, UseCase·Entity는 생략(연산은 서버).
 
 **의존 규칙**
-1. `Core`는 `Features`를 참조하지 않는다. (`grep -rnE "SettingsManager|CaffeineStore|LearningStore|SleepStore|AuthManager" captest1/Core` 결과 없음)
+1. `Core`는 `Features`를 참조하지 않는다. (`grep -rnE "SettingsManager|CaffeineStore|LearningStore|SleepStore|AuthManager|NotificationStore" captest1/Core` 결과 없음)
 2. Feature 간 참조는 `SettingsManager` 읽기만 허용. 그 외 공유가 필요하면 `Core/Model`로 올린다.
 3. View는 Repository를 직접 호출하지 않는다. 항상 Store를 거친다. (`grep -rn "Repository" captest1/Features/*/Views | grep -v Preview` 결과 없음. `#Preview`의 페이크 주입만 예외)
 4. `APIClient` 본체에는 엔드포인트를 두지 않는다. 각 Feature의 `APIClient+X.swift` 확장이 `XRepository`를 채택하고, 조립은 `captest1App.init` 한 곳에서 한다.
@@ -171,6 +176,8 @@ captest1UITests/      # 기본 탭 이동과 런치 성능 UI 테스트
 **데이터 흐름**: 사용자 입력 → `Store` → `XRepository`(= `APIClient` 확장) → 서버 연산 → `Store(@Observable)` → View
 **수면**: HealthKit 원시 샘플(`SleepSampleSource`) → `SleepStore`가 서버 업로드 → 서버 병합·요약 → `SleepSummary`(서버값 그대로) → View
 **설정**: 서버 권위 + `SettingsManager` 로컬 미러(변경 시 디바운스 PUT)
+**알림**: 서버 `/api/notifications/plan`(무엇을·언제·어떤 문구로) → `NotificationStore`가 기존 예약을 전부 지우고 교체 → `Core/Notifications`가 로컬 알림 예약.
+재조회 신호(today 갱신·설정 서버 반영·포그라운드 진입)는 기능끼리 부르지 않고 `ContentView`가 관찰해 잇는다. 조회 실패 시 기존 예약 유지
 
 ## 실행 방법
 

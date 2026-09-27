@@ -24,7 +24,8 @@ final class FakeSettingsRepository: SettingsRepository, @unchecked Sendable {
             halfLife: req.halfLife, condition: req.condition,
             bedtimeHour: req.bedtimeHour, bedtimeMinute: req.bedtimeMinute,
             referenceDoseMg: req.referenceDoseMg, isLearningEnabled: req.isLearningEnabled,
-            learnedMean: base.learnedMean, learnedVariance: base.learnedVariance, lastLearnedDate: base.lastLearnedDate
+            learnedMean: base.learnedMean, learnedVariance: base.learnedVariance, lastLearnedDate: base.lastLearnedDate,
+            notifications: req.notifications
         )
     }
 }

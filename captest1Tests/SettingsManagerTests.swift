@@ -71,6 +71,39 @@ struct SettingsManagerTests {
         #expect(repo.updateRequests.isEmpty)
     }
 
+    @Test func loadFromServer_appliesNotificationTogglesAndBumpsRevision() async {
+        let repo = FakeSettingsRepository()
+        repo.getResult = .success(.fixture(
+            notifications: NotificationSettingsDTO(cutoff: false, bedtimeResidual: true, recordReminder: false)))
+        let settings = makeManager()
+        settings.attach(repository: repo)
+        let before = settings.serverRevision
+
+        await settings.loadFromServer()
+
+        #expect(settings.notifyCutoff == false)
+        #expect(settings.notifyBedtimeResidual == true)
+        #expect(settings.notifyRecordReminder == false)
+        #expect(settings.serverRevision == before + 1)   // 알림 계획 재조회 신호
+    }
+
+    @Test func notificationToggle_isSentWithPut() async throws {
+        let repo = FakeSettingsRepository()
+        let settings = makeManager()
+        settings.attach(repository: repo)
+        await settings.loadFromServer()
+
+        settings.notifyRecordReminder = false
+        settings.scheduleSync()
+        try await Task.sleep(for: .milliseconds(900))
+
+        // 서버는 notifications 세 필드를 필수로 받는다 — 빠지면 400.
+        #expect(repo.updateRequests.count == 1)
+        #expect(repo.updateRequests.first?.notifications
+                == NotificationSettingsDTO(cutoff: true, bedtimeResidual: true, recordReminder: false))
+        #expect(settings.notifyRecordReminder == false)
+    }
+
     @Test func effectiveHalfLife_appliesConditionMultiplier() {
         let settings = makeManager()
         settings.isLearningEnabled = false

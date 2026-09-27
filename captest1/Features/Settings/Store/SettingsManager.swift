@@ -17,6 +17,9 @@ final class SettingsManager {
         static let learnedVariance = "learnedHalfLifeVariance"
         static let isLearningEnabled = "isLearningEnabled"
         static let lastLearnedDate = "lastLearnedDate"
+        static let notifyCutoff = "notifyCutoff"
+        static let notifyBedtimeResidual = "notifyBedtimeResidual"
+        static let notifyRecordReminder = "notifyRecordReminder"
     }
 
     /// Koletzko 2021 모집단 표준편차 (h). prior reset 시 사용.
@@ -68,6 +71,22 @@ final class SettingsManager {
         didSet { defaults.set(lastLearnedDate, forKey: Keys.lastLearnedDate) }
     }
 
+    /// 알림 종류별 on/off (서버 notifications.*). 꺼진 종류는 서버 알림 계획에서 빠진다.
+    var notifyCutoff: Bool {
+        didSet { defaults.set(notifyCutoff, forKey: Keys.notifyCutoff) }
+    }
+
+    var notifyBedtimeResidual: Bool {
+        didSet { defaults.set(notifyBedtimeResidual, forKey: Keys.notifyBedtimeResidual) }
+    }
+
+    var notifyRecordReminder: Bool {
+        didSet { defaults.set(notifyRecordReminder, forKey: Keys.notifyRecordReminder) }
+    }
+
+    /// 서버 권위 값을 반영할 때마다 1씩 오른다. 알림 계획처럼 "설정이 바뀌면 다시 받아야 하는" 쪽이 관찰한다.
+    private(set) var serverRevision = 0
+
     var condition: CaffeineCondition {
         CaffeineCondition(rawValue: conditionRawValue) ?? .none
     }
@@ -104,6 +123,9 @@ final class SettingsManager {
             ?? Self.populationPriorVariance
         self.isLearningEnabled = (defaults.object(forKey: Keys.isLearningEnabled) as? Bool) ?? true
         self.lastLearnedDate = defaults.object(forKey: Keys.lastLearnedDate) as? Date
+        self.notifyCutoff = (defaults.object(forKey: Keys.notifyCutoff) as? Bool) ?? true
+        self.notifyBedtimeResidual = (defaults.object(forKey: Keys.notifyBedtimeResidual) as? Bool) ?? true
+        self.notifyRecordReminder = (defaults.object(forKey: Keys.notifyRecordReminder) as? Bool) ?? true
     }
 
     /// 로그아웃 등 사용자 전환 시 베이지안 학습 결과를 초기화한다.
@@ -127,12 +149,18 @@ final class SettingsManager {
         let bedtimeMinute: Int
         let referenceDoseMg: Int
         let isLearningEnabled: Bool
+        let notifications: NotificationSettingsDTO
+    }
+
+    private var notificationSettings: NotificationSettingsDTO {
+        NotificationSettingsDTO(cutoff: notifyCutoff, bedtimeResidual: notifyBedtimeResidual,
+                                recordReminder: notifyRecordReminder)
     }
 
     private func currentSnapshot() -> Snapshot {
         Snapshot(halfLife: halfLife, condition: conditionRawValue, bedtimeHour: bedtimeHour,
                  bedtimeMinute: bedtimeMinute, referenceDoseMg: referenceDoseMg,
-                 isLearningEnabled: isLearningEnabled)
+                 isLearningEnabled: isLearningEnabled, notifications: notificationSettings)
     }
 
     func attach(repository: any SettingsRepository) {
@@ -164,7 +192,8 @@ final class SettingsManager {
         let req = UpdateSettingsRequest(
             halfLife: halfLife, condition: conditionRawValue,
             bedtimeHour: bedtimeHour, bedtimeMinute: bedtimeMinute,
-            referenceDoseMg: referenceDoseMg, isLearningEnabled: isLearningEnabled)
+            referenceDoseMg: referenceDoseMg, isLearningEnabled: isLearningEnabled,
+            notifications: notificationSettings)
         if let dto = try? await repository.updateSettings(req) {
             applyServer(dto)
         }
@@ -183,6 +212,10 @@ final class SettingsManager {
         learnedHalfLifeMean = dto.learnedMean
         learnedHalfLifeVariance = dto.learnedVariance
         lastLearnedDate = dto.lastLearnedDate.flatMap { ServerDateCoding.localDate.date(from: $0) }
+        notifyCutoff = dto.notifications.cutoff
+        notifyBedtimeResidual = dto.notifications.bedtimeResidual
+        notifyRecordReminder = dto.notifications.recordReminder
         lastSyncedSnapshot = currentSnapshot()
+        serverRevision += 1
     }
 }

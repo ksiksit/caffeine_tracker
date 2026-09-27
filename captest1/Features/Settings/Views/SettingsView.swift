@@ -7,13 +7,20 @@
 
 import SwiftUI
 
-struct SettingsView: View {
+/// `NotificationStatus`: "알림" 섹션 맨 위에 들어갈 권한 상태 줄. 알림 기능의 화면이라 App 조립층이 끼워 넣는다
+/// (설정 기능이 다른 기능을 직접 참조하지 않게 — CLAUDE.md 의존 규칙 2).
+struct SettingsView<NotificationStatus: View>: View {
     @Environment(SettingsManager.self) private var settings
     @Environment(HealthKitManager.self) private var healthKit
     @Environment(SleepStore.self) private var sleepStore
     @Environment(AuthManager.self) private var auth
     @State private var bedtimeDate = Date()
     @State private var showLogoutConfirm = false
+    private let notificationStatus: NotificationStatus
+
+    init(@ViewBuilder notificationStatus: () -> NotificationStatus) {
+        self.notificationStatus = notificationStatus()
+    }
 
     var body: some View {
         @Bindable var settings = settings
@@ -164,8 +171,27 @@ struct SettingsView: View {
                 }
             }
 
-            Section("알림") {
-                Label("카페인 알림 설정", systemImage: "bell.fill")
+            Section {
+                notificationStatus
+
+                Toggle(isOn: $settings.notifyCutoff) {
+                    Label("섭취 마감 30분 전", systemImage: "hourglass")
+                }
+                .tint(Theme.Colors.signalOK)
+
+                Toggle(isOn: $settings.notifyBedtimeResidual) {
+                    Label("취침 1시간 전 잔량 예고", systemImage: "moon.zzz")
+                }
+                .tint(Theme.Colors.signalOK)
+
+                Toggle(isOn: $settings.notifyRecordReminder) {
+                    Label("기록 리마인더", systemImage: "square.and.pencil")
+                }
+                .tint(Theme.Colors.signalOK)
+            } header: {
+                Text("알림")
+            } footer: {
+                Text("잔량 예고는 취침 때 50mg 이상 남을 것 같을 때만, 기록 리마인더는 평소 첫 잔보다 2시간이 지나도록 기록이 없을 때만 울려요.")
             }
 
             Section("계정") {
@@ -225,6 +251,16 @@ struct SettingsView: View {
         .onChange(of: settings.referenceDoseMg) { settings.scheduleSync() }
         .onChange(of: settings.bedtimeHour) { settings.scheduleSync() }
         .onChange(of: settings.bedtimeMinute) { settings.scheduleSync() }
+        .onChange(of: settings.notifyCutoff) { settings.scheduleSync() }
+        .onChange(of: settings.notifyBedtimeResidual) { settings.scheduleSync() }
+        .onChange(of: settings.notifyRecordReminder) { settings.scheduleSync() }
+    }
+}
+
+extension SettingsView where NotificationStatus == EmptyView {
+    /// 권한 상태 줄 없이(프리뷰 등).
+    init() {
+        self.init { EmptyView() }
     }
 }
 
