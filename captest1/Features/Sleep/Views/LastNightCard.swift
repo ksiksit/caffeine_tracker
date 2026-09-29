@@ -65,7 +65,7 @@ struct LastNightCard: View {
             HStack(spacing: 2) {
                 ForEach(summary.stageBreakdown, id: \.stage) { item in
                     let ratio = summary.timeInBed > 0 ? item.duration / summary.timeInBed : 0
-                    RoundedRectangle(cornerRadius: 2)
+                    RoundedRectangle(cornerRadius: Theme.Radius.bar)
                         .fill(item.stage.color)
                         .frame(width: max(3, geometry.size.width * ratio - 2))
                 }

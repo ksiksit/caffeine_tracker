@@ -49,8 +49,8 @@ struct LearningDashboardView: View {
             .padding(.vertical, 16)
         }
         .background(Theme.Colors.canvas.ignoresSafeArea())
-        .navigationTitle("내 학습 데이터")
-        .navigationBarTitleDisplayMode(.large)
+        .navigationTitle("내 학습")
+        .navigationBarTitleDisplayMode(.inline)
         .refreshable { await store.refresh() }
         .task { await store.refresh() }
     }
@@ -101,15 +101,9 @@ private struct LearningDetailsDisclosure<Content: View>: View {
                         .foregroundStyle(Theme.Colors.inkSecondary)
                         .rotationEffect(.degrees(isExpanded ? 90 : 0))
                 }
-                .padding(.horizontal, 16)
-                .frame(maxWidth: .infinity, minHeight: 50, alignment: .leading)
-                .overlay(
-                    RoundedRectangle(cornerRadius: Theme.Spacing.cornerRadius, style: .continuous)
-                        .stroke(Theme.Colors.hairline, lineWidth: 1)
-                )
-                .contentShape(Rectangle())
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.outline)
 
             if isExpanded {
                 content()
@@ -254,8 +248,8 @@ private struct CalibrationCard: View {
         VStack(alignment: .leading, spacing: 2) {
             Text(label).font(.caption2).foregroundStyle(Theme.Colors.inkSecondary)
             HStack(alignment: .firstTextBaseline, spacing: 2) {
-                Text(value).font(.system(size: 24, weight: .bold, design: .rounded))
-                    .monospacedDigit().foregroundStyle(Theme.Colors.accent)
+                Text(value).font(Theme.Fonts.metricValue)
+                    .foregroundStyle(Theme.Colors.ink)
                 if let unit { Text(unit).font(.caption.weight(.semibold)).foregroundStyle(Theme.Colors.inkSecondary) }
             }
         }
@@ -276,7 +270,7 @@ private struct InputDistributionCard: View {
 
                 HStack(alignment: .top, spacing: 12) {
                     histogramColumn(title: "취침 시 카페인 잔량", unit: "mg", bins: residual)
-                    Divider().frame(maxHeight: 180)
+                    HairlineDivider(vertical: true).frame(maxHeight: 180)
                     histogramColumn(title: "측정된 SOL", unit: "분", bins: sol)
                 }
             }
@@ -291,7 +285,7 @@ private struct InputDistributionCard: View {
                     .foregroundStyle(Theme.Colors.accent.opacity(0.7))
                     .cornerRadius(2)
             }
-            .chartXAxis { AxisMarks { _ in AxisValueLabel(orientation: .vertical).font(.system(size: 8)) } }
+            .chartXAxis { AxisMarks { _ in AxisValueLabel(orientation: .vertical).font(Theme.Fonts.chartAxisDense) } }
             .chartYAxis { AxisMarks(values: .automatic(desiredCount: 3)) }
             .frame(height: 140)
             Text("\(unit) 기준").font(.caption2).foregroundStyle(Theme.Colors.inkSecondary)
@@ -309,7 +303,7 @@ private struct ObservationListCard: View {
         HealthCard("전체 기록", symbol: "list.bullet.rectangle", tint: Theme.Colors.accent) {
             VStack(spacing: 0) {
                 ForEach(Array(observations.reversed().enumerated()), id: \.element.id) { index, obs in
-                    if index > 0 { Divider() }
+                    if index > 0 { HairlineDivider() }
                     row(obs)
                 }
             }
@@ -340,20 +334,18 @@ private struct ObservationListCard: View {
 private struct EmptyLearningStateCard: View {
     let message: String?
 
+    // 수면 탭의 권한·빈 상태와 같은 시스템 빈 화면 형식을 쓴다.
     var body: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "brain.head.profile")
-                .font(.system(size: 56)).foregroundStyle(Theme.Colors.inkSecondary)
-            Text("아직 학습된 데이터가 없어요").font(.headline)
-            Text("HealthKit 수면 기록과 카페인 섭취 기록이 쌓이면\n매일 자동으로 반감기가 갱신됩니다.")
-                .font(.subheadline).foregroundStyle(Theme.Colors.inkSecondary).multilineTextAlignment(.center)
+        ContentUnavailableView {
+            Label("아직 학습된 데이터가 없어요", systemImage: "brain.head.profile")
+        } description: {
             if let message {
-                Text("학습되지 않은 이유: \(message)")
-                    .font(.caption).foregroundStyle(Theme.Colors.inkSecondary)
-                    .multilineTextAlignment(.center).padding(.top, 4)
+                Text("HealthKit 수면 기록과 카페인 섭취 기록이 쌓이면\n매일 자동으로 반감기가 갱신됩니다.\n\n학습되지 않은 이유: \(message)")
+            } else {
+                Text("HealthKit 수면 기록과 카페인 섭취 기록이 쌓이면\n매일 자동으로 반감기가 갱신됩니다.")
             }
         }
-        .frame(maxWidth: .infinity).padding(.vertical, 60)
+        .padding(.vertical, 40)
     }
 }
 

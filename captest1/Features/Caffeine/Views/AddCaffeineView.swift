@@ -172,11 +172,11 @@ struct AddCaffeineView: View {
             .padding(.horizontal, 14)
             .frame(maxWidth: .infinity, minHeight: 56)
             .background(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                RoundedRectangle(cornerRadius: Theme.Radius.tile, style: .continuous)
                     .fill(Theme.Colors.canvas)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                RoundedRectangle(cornerRadius: Theme.Radius.tile, style: .continuous)
                     .stroke(
                         isSelected ? Theme.Colors.accent : Theme.Colors.hairline,
                         lineWidth: isSelected ? 2 : 1
@@ -229,27 +229,19 @@ struct AddCaffeineView: View {
                 VStack(spacing: 12) {
                     TextField("음료 이름 (선택)", text: $viewModel.customName)
                         .textFieldStyle(.plain)
-                        .padding(10)
-                        .background(
-                            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                .fill(Theme.Colors.surfaceMuted)
-                        )
+                        .themedField()
                         .focused($focusedField, equals: .name)
 
                     HStack {
                         TextField("카페인 (mg)", text: $viewModel.customAmount)
                             .textFieldStyle(.plain)
                             .keyboardType(.numberPad)
-                            .padding(10)
-                            .background(
-                                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                    .fill(Theme.Colors.surfaceMuted)
-                            )
+                            .themedField()
                             .focused($focusedField, equals: .amount)
 
                         Text("mg")
                             .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Theme.Colors.inkSecondary)
                     }
 
                     if let message = viewModel.validationMessage {
@@ -260,9 +252,9 @@ struct AddCaffeineView: View {
                     }
                 }
             }
-            .padding(12)
+            .padding(Theme.Spacing.field)
             .overlay(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                RoundedRectangle(cornerRadius: Theme.Radius.tile, style: .continuous)
                     .stroke(
                         viewModel.isCustomMode ? Theme.Colors.accent : Theme.Colors.hairline,
                         lineWidth: viewModel.isCustomMode ? 2 : 1

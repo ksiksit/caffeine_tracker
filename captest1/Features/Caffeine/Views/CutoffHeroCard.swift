@@ -139,17 +139,8 @@ struct CutoffUnavailableHero: View {
                         }
                         Text("다시 시도")
                     }
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Theme.Colors.ink)
-                    .padding(.horizontal, 16)
-                    .frame(minHeight: 44)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: Theme.Spacing.cornerRadius, style: .continuous)
-                            .stroke(Theme.Colors.hairline, lineWidth: 1)
-                    )
-                    .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.outline)
                 .disabled(isRetrying)
                 .padding(.top, 4)
             } else {

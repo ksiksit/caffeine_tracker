@@ -56,7 +56,7 @@ struct LoginView: View {
                     } label: {
                         HStack(spacing: 4) {
                             Text("계정이 없으신가요?")
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Theme.Colors.inkSecondary)
                             Text("회원가입")
                                 .fontWeight(.semibold)
                                 .foregroundStyle(Theme.Colors.accent)
@@ -84,7 +84,7 @@ struct LoginView: View {
                 .fontWeight(.bold)
             Text("이메일과 비밀번호로 로그인해주세요.")
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Theme.Colors.inkSecondary)
         }
         .padding(.top, 24)
     }
@@ -94,7 +94,7 @@ struct LoginView: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text("이메일")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Theme.Colors.inkSecondary)
                 // 문자열 리터럴 제목은 마크다운으로 해석되어 이메일 주소가 파란 링크로 보인다 — verbatim으로 넘긴다.
                 TextField(text: $email, prompt: Text(verbatim: "you@example.com")) {
                     Text("이메일")
@@ -105,9 +105,7 @@ struct LoginView: View {
                     .focused($focused, equals: .email)
                     .submitLabel(.next)
                     .onSubmit { focused = .password }
-                    .padding(12)
-                    .background(Theme.Colors.surfaceMuted)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .themedField()
                 if !email.isEmpty && !isEmailValid {
                     Text("이메일 형식이 올바르지 않아요")
                         .font(.caption2)
@@ -123,16 +121,14 @@ struct LoginView: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text("비밀번호")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Theme.Colors.inkSecondary)
                 SecureField("8자 이상", text: $password)
                     .focused($focused, equals: .password)
                     .submitLabel(.go)
                     .onSubmit {
                         if canSubmit { Task { await auth.login(email: email, password: password) } }
                     }
-                    .padding(12)
-                    .background(Theme.Colors.surfaceMuted)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .themedField()
                 if !password.isEmpty && !isPasswordValid {
                     Text("비밀번호는 8~72자여야 해요")
                         .font(.caption2)
@@ -152,21 +148,13 @@ struct LoginView: View {
             focused = nil
             Task { await auth.login(email: email, password: password) }
         } label: {
-            ZStack {
-                if auth.isProcessing {
-                    ProgressView()
-                        .tint(Theme.Colors.onAccent)
-                } else {
-                    Text("로그인")
-                        .fontWeight(.semibold)
-                }
+            if auth.isProcessing {
+                ProgressView()
+            } else {
+                Text("로그인")
             }
-            .frame(maxWidth: .infinity)
-            .frame(height: 50)
-            .background(canSubmit ? Theme.Colors.accent : Theme.Colors.surfaceMuted)
-            .foregroundStyle(canSubmit ? Theme.Colors.onAccent : Theme.Colors.inkSecondary)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
         }
+        .buttonStyle(.primary)
         .disabled(!canSubmit)
     }
 
@@ -180,8 +168,10 @@ struct LoginView: View {
             }
             Spacer()
         }
-        .padding(12)
-        .background(Theme.Colors.signalStop.opacity(0.08))
-        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .padding(Theme.Spacing.field)
+        .background(
+            Theme.Colors.signalStop.opacity(0.08),
+            in: RoundedRectangle(cornerRadius: Theme.Radius.field, style: .continuous)
+        )
     }
 }

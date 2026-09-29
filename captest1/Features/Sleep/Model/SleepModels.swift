@@ -30,12 +30,12 @@ nonisolated enum SleepStage: CaseIterable {
 
     var color: Color {
         switch self {
-        case .inBed: .gray
-        case .awake: .orange
-        case .asleepCore: .blue
-        case .asleepDeep: .indigo
-        case .asleepREM: .purple
-        case .asleepUnspecified: .cyan
+        case .inBed: Theme.Colors.SleepStage.inBed
+        case .awake: Theme.Colors.SleepStage.awake
+        case .asleepCore: Theme.Colors.SleepStage.core
+        case .asleepDeep: Theme.Colors.SleepStage.deep
+        case .asleepREM: Theme.Colors.SleepStage.rem
+        case .asleepUnspecified: Theme.Colors.SleepStage.unspecified
         }
     }
 

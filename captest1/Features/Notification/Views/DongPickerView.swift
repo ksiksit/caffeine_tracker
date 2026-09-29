@@ -37,7 +37,7 @@ struct DongPickerView: View {
             if let error = cafeNearby.errorMessage {
                 Text(error)
                     .font(.caption)
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(Theme.Colors.inkSecondary)
             }
         }
         .navigationTitle("알림 받을 동")

@@ -141,15 +141,8 @@ struct HomeView: View {
             showingAddSheet = true
         } label: {
             Label("카페인 기록", systemImage: "plus")
-                .font(.body.weight(.semibold))
-                .foregroundStyle(Theme.Colors.onAccent)
-                .frame(maxWidth: .infinity, minHeight: 54)
-                .background(
-                    Theme.Colors.accent,
-                    in: RoundedRectangle(cornerRadius: Theme.Spacing.cornerRadius, style: .continuous)
-                )
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.primary)
         .padding(.horizontal, Theme.Spacing.screen)
         .padding(.top, 8)
         .padding(.bottom, 8)
@@ -172,9 +165,7 @@ struct HomeView: View {
                 VStack(spacing: 0) {
                     ForEach(Array(store.todayRecords.enumerated()), id: \.element.id) { index, record in
                         if index > 0 {
-                            Rectangle()
-                                .fill(Theme.Colors.hairline)
-                                .frame(height: 1)
+                            HairlineDivider()
                         }
                         recordRow(record)
                     }

@@ -24,9 +24,9 @@ struct ConfidenceBar: View {
             }
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 4)
+                    RoundedRectangle(cornerRadius: Theme.Radius.bar)
                         .fill(Theme.Colors.hairline)
-                    RoundedRectangle(cornerRadius: 4)
+                    RoundedRectangle(cornerRadius: Theme.Radius.bar)
                         .fill(Theme.Colors.accent)
                         .frame(width: max(4, geo.size.width * CGFloat(min(max(score, 0), 1))))
                 }

@@ -32,14 +32,14 @@ struct CalibrationScatterChart: View {
                 yEnd:   .value("hi", domain.lowerBound + noiseBandMinutes),
                 series: .value("series", "band")
             )
-            .foregroundStyle(Color.secondary.opacity(0.10))
+            .foregroundStyle(Theme.Colors.inkSecondary.opacity(0.10))
             AreaMark(
                 x: .value("x", domain.upperBound),
                 yStart: .value("lo", domain.upperBound - noiseBandMinutes),
                 yEnd:   .value("hi", domain.upperBound + noiseBandMinutes),
                 series: .value("series", "band")
             )
-            .foregroundStyle(Color.secondary.opacity(0.10))
+            .foregroundStyle(Theme.Colors.inkSecondary.opacity(0.10))
 
             // 2) y=x 대각선 가이드라인 — 두 점 LineMark
             LineMark(
@@ -48,14 +48,14 @@ struct CalibrationScatterChart: View {
                 series: .value("series", "ideal")
             )
             .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [6, 4]))
-            .foregroundStyle(.secondary)
+            .foregroundStyle(Theme.Colors.inkSecondary)
             LineMark(
                 x: .value("x", domain.upperBound),
                 y: .value("y", domain.upperBound),
                 series: .value("series", "ideal")
             )
             .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [6, 4]))
-            .foregroundStyle(.secondary)
+            .foregroundStyle(Theme.Colors.inkSecondary)
 
             // 3) 데이터 점
             ForEach(points) { p in

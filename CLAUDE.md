@@ -71,7 +71,7 @@ captest1/
 │   ├── Notifications/ # LocalNotificationScheduler(로컬 알림 예약·즉시 알림·권한), LocalNotification 값, LocalNotificationScheduling 포트, LocalNotificationPresenter(앞에 있을 때 배너)
 │   ├── Location/     # GeofenceMonitor(CLMonitor 원형 구역 감시, GeofenceMonitoring 포트)·LocationPermissionManager(권한 상태만)
 │   ├── Security/     # KeychainHelper
-│   ├── DesignSystem/ # HealthCard·CategoryIconBadge·HealthMetric·SectionHeader
+│   ├── DesignSystem/ # Theme(색·글꼴·간격·모서리 토큰)·Controls(PrimaryButtonStyle·OutlineButtonStyle·themedField·HairlineDivider)·HealthCard·SectionHeader·MetricStrip
 │   └── Model/        # CaffeineCondition, AppConstants
 └── Resources/        # entitlements, 에셋, 로컬라이제이션
 ```

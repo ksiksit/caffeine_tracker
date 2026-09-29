@@ -25,7 +25,7 @@ struct NotificationPermissionRow: View {
                     if let error = notifications.errorMessage {
                         Text(error)
                             .font(.caption2)
-                            .foregroundStyle(.tertiary)
+                            .foregroundStyle(Theme.Colors.inkSecondary)
                     }
                 }
             case .notDetermined:

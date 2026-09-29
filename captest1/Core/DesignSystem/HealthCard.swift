@@ -68,9 +68,7 @@ struct HealthCard<Content: View>: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .overlay(alignment: .bottom) {
             if showsDivider {
-                Rectangle()
-                    .fill(Theme.Colors.hairline)
-                    .frame(height: 1)
+                HairlineDivider()
             }
         }
     }

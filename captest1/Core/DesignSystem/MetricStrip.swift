@@ -27,9 +27,7 @@ struct MetricStrip: View {
         HStack(alignment: .top, spacing: 0) {
             ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
                 if index > 0 {
-                    Rectangle()
-                        .fill(Theme.Colors.hairline)
-                        .frame(width: 1)
+                    HairlineDivider(vertical: true)
                         .padding(.trailing, 16)
                 }
                 cell(item)
@@ -37,8 +35,8 @@ struct MetricStrip: View {
         }
         .fixedSize(horizontal: false, vertical: true)
         .padding(.vertical, 16)
-        .overlay(alignment: .top) { hairline }
-        .overlay(alignment: .bottom) { hairline }
+        .overlay(alignment: .top) { HairlineDivider() }
+        .overlay(alignment: .bottom) { HairlineDivider() }
     }
 
     private func cell(_ item: Item) -> some View {
@@ -61,12 +59,6 @@ struct MetricStrip: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .combine)
-    }
-
-    private var hairline: some View {
-        Rectangle()
-            .fill(Theme.Colors.hairline)
-            .frame(height: 1)
     }
 }
 

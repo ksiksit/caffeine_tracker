@@ -66,7 +66,7 @@ struct CutoffPreviewBanner: View {
                         .foregroundStyle(Theme.Colors.accent)
                     Text(message)
                         .font(.subheadline.weight(.medium))
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(Theme.Colors.ink)
                 case .warning(let symbol, let message):
                     Image(systemName: symbol)
                         .font(.subheadline.weight(.semibold))

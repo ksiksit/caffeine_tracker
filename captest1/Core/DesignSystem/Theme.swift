@@ -33,6 +33,16 @@ enum Theme {
         static let signalOK = Color("SignalOK")
         static let signalWarn = Color("SignalWarn")
         static let signalStop = Color("SignalStop")
+
+        /// 수면 단계 데이터 색(단계 막대·범례 전용). 시스템 색이라 다크 모드에서 자동으로 밝아진다.
+        enum SleepStage {
+            static let inBed = Color.gray
+            static let awake = Color.orange
+            static let core = Color.blue
+            static let deep = Color.indigo
+            static let rem = Color.purple
+            static let unspecified = Color.cyan
+        }
     }
 
     // MARK: - 글꼴
@@ -48,6 +58,8 @@ enum Theme {
         static let sectionTitle = Font.footnote.weight(.semibold)
         /// 라벨·단위
         static let caption = Font.caption
+        /// 칸이 좁은 차트의 세로 축 라벨(히스토그램 구간 등)
+        static let chartAxisDense = Font.system(size: 8)
     }
 
     // MARK: - 간격
@@ -59,7 +71,29 @@ enum Theme {
         static let section: CGFloat = 24
         /// 리스트 행 위아래
         static let row: CGFloat = 12
-        /// 버튼·칸 모서리
-        static let cornerRadius: CGFloat = 14
+        /// 입력 칸·배너 안쪽 여백
+        static let field: CGFloat = 12
+    }
+
+    // MARK: - 모서리
+
+    enum Radius {
+        /// 주요 버튼·아웃라인 버튼
+        static let button: CGFloat = 14
+        /// 선택 타일·입력 묶음 상자
+        static let tile: CGFloat = 12
+        /// 입력 칸·배너
+        static let field: CGFloat = 10
+        /// 막대 그래프 조각
+        static let bar: CGFloat = 2
+    }
+
+    // MARK: - 크기
+
+    enum Size {
+        /// 주요 버튼 높이
+        static let primaryButton: CGFloat = 52
+        /// 최소 터치 영역(HIG)
+        static let minTouch: CGFloat = 44
     }
 }

@@ -66,7 +66,7 @@ struct SignupView: View {
                 .fontWeight(.bold)
             Text("이메일, 비밀번호, 닉네임을 입력해주세요.")
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Theme.Colors.inkSecondary)
         }
     }
 
@@ -105,9 +105,7 @@ struct SignupView: View {
             consentRow(text: "[필수] 서비스 이용약관 동의", isOn: $agreedToTerms)
             consentRow(text: "[필수] 개인정보 처리방침 동의", isOn: $agreedToPrivacy)
         }
-        .padding(12)
-        .background(Theme.Colors.surfaceMuted)
-        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .themedField()
     }
 
     private func consentRow(text: String, isOn: Binding<Bool>) -> some View {
@@ -123,7 +121,7 @@ struct SignupView: View {
                 // 약관 화면은 후속 작업
             }
             .font(.caption)
-            .foregroundStyle(.secondary)
+            .foregroundStyle(Theme.Colors.inkSecondary)
         }
     }
 
@@ -135,19 +133,13 @@ struct SignupView: View {
                 // 성공 시 RootView가 .authenticated로 전환되며 자동 dismiss됨
             }
         } label: {
-            ZStack {
-                if auth.isProcessing {
-                    ProgressView().tint(Theme.Colors.onAccent)
-                } else {
-                    Text("가입하기").fontWeight(.semibold)
-                }
+            if auth.isProcessing {
+                ProgressView()
+            } else {
+                Text("가입하기")
             }
-            .frame(maxWidth: .infinity)
-            .frame(height: 50)
-            .background(canSubmit ? Theme.Colors.accent : Theme.Colors.surfaceMuted)
-            .foregroundStyle(canSubmit ? Theme.Colors.onAccent : Theme.Colors.inkSecondary)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
         }
+        .buttonStyle(.primary)
         .disabled(!canSubmit)
     }
 
@@ -162,11 +154,9 @@ struct SignupView: View {
         @ViewBuilder modifier: (TextField<Text>) -> Modifier
     ) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(title).font(.caption).foregroundStyle(.secondary)
+            Text(title).font(.caption).foregroundStyle(Theme.Colors.inkSecondary)
             modifier(TextField(placeholder, text: text))
-                .padding(12)
-                .background(Theme.Colors.surfaceMuted)
-                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .themedField()
             if !isValid {
                 Text(invalidMessage).font(.caption2).foregroundStyle(Theme.Colors.signalStop)
             }
@@ -181,14 +171,12 @@ struct SignupView: View {
         isValid: Bool, invalidMessage: String, fieldKey: String
     ) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(title).font(.caption).foregroundStyle(.secondary)
+            Text(title).font(.caption).foregroundStyle(Theme.Colors.inkSecondary)
             SecureField(placeholder, text: text)
                 .focused($focused, equals: .password)
                 .submitLabel(.next)
                 .onSubmit { focused = .nickname }
-                .padding(12)
-                .background(Theme.Colors.surfaceMuted)
-                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .themedField()
             if !isValid {
                 Text(invalidMessage).font(.caption2).foregroundStyle(Theme.Colors.signalStop)
             }
@@ -208,8 +196,10 @@ struct SignupView: View {
             }
             Spacer()
         }
-        .padding(12)
-        .background(Theme.Colors.signalStop.opacity(0.08))
-        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .padding(Theme.Spacing.field)
+        .background(
+            Theme.Colors.signalStop.opacity(0.08),
+            in: RoundedRectangle(cornerRadius: Theme.Radius.field, style: .continuous)
+        )
     }
 }

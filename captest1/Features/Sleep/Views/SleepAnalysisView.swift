@@ -24,7 +24,11 @@ struct SleepAnalysisView: View {
                 emptyStateView
             }
         }
+        // 권한·빈 상태·로딩 화면도 데이터 화면과 같은 바탕색(시스템 순검정이 아니라 Canvas)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Theme.Colors.canvas.ignoresSafeArea())
         .navigationTitle("수면 분석")
+        .navigationBarTitleDisplayMode(.inline)
         .task {
             await healthKit.refreshAccessState()
             if healthKit.canAttemptDataLoad {
@@ -109,7 +113,6 @@ struct SleepAnalysisView: View {
             .padding(.horizontal, Theme.Spacing.screen)
             .padding(.vertical, 16)
         }
-        .background(Theme.Colors.canvas.ignoresSafeArea())
         .refreshable {
             await store.loadData()
         }
