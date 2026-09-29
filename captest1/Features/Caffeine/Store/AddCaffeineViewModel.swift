@@ -14,9 +14,16 @@ final class AddCaffeineViewModel {
     var isCustomMode: Bool = false
     var showingSaveError: Bool = false
 
-    // MARK: - 편집 모드
+    // MARK: - 섭취 시각 / 편집 모드
     var editingRecord: CaffeineRecordDTO?
     var selectedDate: Date = .now
+    /// 사용자가 섭취 시각을 직접 바꿨는가. 신규 추가에서 안 바꿨으면 저장 순간의 "지금"을 쓴다(시트를 오래 열어 둔 경우 대비).
+    var isTimeEdited: Bool = false
+
+    /// 기록에 쓸 섭취 시각. 편집이거나 직접 고른 경우 선택값, 아니면 지금.
+    func intakeTime(now: Date = Date()) -> Date {
+        editingRecord != nil || isTimeEdited ? selectedDate : now
+    }
 
     // MARK: - 유효성 검증
     var parsedAmount: Int? {
@@ -60,7 +67,7 @@ final class AddCaffeineViewModel {
         )
 
         let pendingDose = CaffeineKineticsCalculator.Dose(
-            timestamp: Date(), amountMg: pendingAmount
+            timestamp: intakeTime(), amountMg: pendingAmount
         )
         let projected = caffeineCutoffTime(
             currentDoses: todayDoses + [pendingDose],
@@ -118,7 +125,7 @@ final class AddCaffeineViewModel {
         }
     }
 
-    /// 입력값을 (양, 음료명, 시각)으로 해소. 신규는 지금 시각, 편집은 선택 시각.
+    /// 입력값을 (양, 음료명, 시각)으로 해소. 시각은 `intakeTime` 규칙을 따른다.
     /// - Returns: 유효하지 않으면 nil.
     func resolve() -> (amount: Int, drinkName: String, timestamp: Date)? {
         let amount: Int
@@ -131,7 +138,6 @@ final class AddCaffeineViewModel {
             amount = parsed
             drinkName = customName.isEmpty ? "직접 입력" : customName
         }
-        let timestamp = editingRecord == nil ? Date() : selectedDate
-        return (amount, drinkName, timestamp)
+        return (amount, drinkName, intakeTime())
     }
 }

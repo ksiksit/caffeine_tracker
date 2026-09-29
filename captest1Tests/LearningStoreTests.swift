@@ -39,5 +39,42 @@ struct LearningStoreTests {
         #expect(store.dashboard?.count == 3)
         #expect(repo.calls == ["run", "dashboard"])
         #expect(store.isLoading == false)
+        #expect(store.errorMessage == nil)
+    }
+
+    @Test func refresh_networkFailure_skipsDashboardRetry_andSetsError() async {
+        let repo = FakeLearningRepository()
+        repo.runResult = .failure(APIError.network)
+        let store = LearningStore(repository: repo)
+        await store.refresh()
+        #expect(repo.calls == ["run"])
+        #expect(store.dashboard == nil)
+        #expect(store.errorMessage != nil)
+        #expect(store.hasLoaded)
+    }
+
+    @Test func refresh_bothFail_keepsPreviousDashboard() async {
+        let repo = FakeLearningRepository()
+        repo.dashboardResult = .success(.fixture(count: 2))
+        let store = LearningStore(repository: repo)
+        await store.refresh()
+
+        repo.runResult = .failure(FakeError())
+        repo.dashboardResult = .failure(FakeError())
+        await store.refresh()
+        #expect(store.dashboard?.count == 2)
+        #expect(store.errorMessage != nil)
+    }
+
+    @Test func refresh_success_clearsPreviousError() async {
+        let repo = FakeLearningRepository()
+        repo.runResult = .failure(APIError.network)
+        let store = LearningStore(repository: repo)
+        await store.refresh()
+
+        repo.runResult = .success(LearningRunResponse(updatedCount: 1, skipReason: nil, skipMessage: nil))
+        await store.refresh()
+        #expect(store.errorMessage == nil)
+        #expect(store.dashboard != nil)
     }
 }

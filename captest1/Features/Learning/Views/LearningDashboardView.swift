@@ -17,11 +17,30 @@ struct LearningDashboardView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: Theme.Spacing.section) {
                 if let dashboard = store.dashboard {
+                    if let message = store.errorMessage {
+                        Label(message, systemImage: "exclamationmark.triangle.fill")
+                            .font(.footnote.weight(.medium))
+                            .foregroundStyle(Theme.Colors.signalWarn)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
                     content(dashboard)
-                } else if store.isLoading {
+                } else if store.isLoading || !store.hasLoaded {
                     ProgressView("학습 데이터를 불러오는 중...")
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 60)
+                } else if let message = store.errorMessage {
+                    // 오류를 "아직 학습된 데이터가 없어요"로 보여주면 기록이 부족하다고 오해한다.
+                    ContentUnavailableView {
+                        Label("불러오지 못했어요", systemImage: "wifi.exclamationmark")
+                    } description: {
+                        Text(message)
+                    } actions: {
+                        Button("다시 시도") {
+                            Task { await store.refresh() }
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                    .padding(.vertical, 40)
                 } else {
                     EmptyLearningStateCard(message: store.skipMessage)
                 }

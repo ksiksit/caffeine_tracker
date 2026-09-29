@@ -38,9 +38,7 @@ struct AddCaffeineView: View {
                 VStack(spacing: Theme.Spacing.section) {
                     presetSection
                     customSection
-                    if isEditMode {
-                        timeSection
-                    }
+                    timeSection
                 }
                 .padding(.horizontal, Theme.Spacing.screen)
                 .padding(.vertical, 16)
@@ -56,6 +54,7 @@ struct AddCaffeineView: View {
                     .animation(.easeInOut(duration: 0.2), value: viewModel.selectedPreset?.name)
                     .animation(.easeInOut(duration: 0.2), value: viewModel.customAmount)
                     .animation(.easeInOut(duration: 0.2), value: viewModel.isCustomMode)
+                    .animation(.easeInOut(duration: 0.2), value: viewModel.selectedDate)
                 }
             }
             .navigationTitle(isEditMode ? "기록 수정" : "카페인 추가")
@@ -189,21 +188,36 @@ struct AddCaffeineView: View {
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 
+    /// 신규 추가도 시각을 고를 수 있다("2시에 마신 커피"를 추가 후 수정하지 않고 바로 기록). 기본값은 지금.
     private var timeSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            SectionHeader("섭취 시각")
+            SectionHeader("마신 시각")
 
-            HealthCard {
+            HStack {
                 DatePicker(
-                    "섭취 시각",
-                    selection: $viewModel.selectedDate,
+                    "마신 시각",
+                    selection: Binding(
+                        get: { viewModel.selectedDate },
+                        set: {
+                            viewModel.selectedDate = $0
+                            viewModel.isTimeEdited = true
+                        }
+                    ),
                     in: ...Date(),
                     displayedComponents: [.date, .hourAndMinute]
                 )
                 .labelsHidden()
                 .datePickerStyle(.compact)
-                .frame(maxWidth: .infinity, alignment: .leading)
+
+                Spacer(minLength: 8)
+
+                if !isEditMode && !viewModel.isTimeEdited {
+                    Text("지금")
+                        .font(.footnote)
+                        .foregroundStyle(Theme.Colors.inkSecondary)
+                }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 

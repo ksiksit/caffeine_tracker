@@ -32,7 +32,7 @@ final class CaffeineStore {
         } catch is CancellationError {
             // 무시
         } catch {
-            errorMessage = "현황을 불러오지 못했어요. 연결을 확인해주세요."
+            errorMessage = "현황을 불러오지 못했어요. 서버 연결을 확인해주세요."
         }
     }
 

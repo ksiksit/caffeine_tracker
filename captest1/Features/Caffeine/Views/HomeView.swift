@@ -34,7 +34,17 @@ struct HomeView: View {
 
         ScrollView {
             VStack(alignment: .leading, spacing: Theme.Spacing.section) {
-                hero
+                // 서버 결과가 없으면 cutoffResult가 기본값(.safeAnytime)이라 "괜찮아요"로 잘못 안내하게 된다.
+                if store.today != nil {
+                    hero
+                } else {
+                    CutoffUnavailableHero(
+                        failed: store.errorMessage != nil,
+                        isRetrying: store.isLoading
+                    ) {
+                        Task { await store.refresh() }
+                    }
+                }
 
                 if !store.todayRecords.isEmpty {
                     CaffeineChartView(
@@ -50,10 +60,11 @@ struct HomeView: View {
 
                 metricStrip
 
-                if let message = store.errorMessage {
-                    Text(message)
-                        .font(.caption)
-                        .foregroundStyle(Theme.Colors.inkSecondary)
+                // today가 없을 때는 hero가 이미 실패를 알린다. 여기선 이전 값이 남아 있는데 갱신에 실패한 경우만.
+                if store.today != nil, let message = store.errorMessage {
+                    Label(message, systemImage: "exclamationmark.triangle.fill")
+                        .font(.footnote.weight(.medium))
+                        .foregroundStyle(Theme.Colors.signalWarn)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
 
@@ -103,6 +114,14 @@ struct HomeView: View {
 
     private var metricStrip: some View {
         let limit = AppConstants.Caffeine.dailyRecommendedLimitMg
+        // 서버 값이 없을 때 0 mg를 보여주면 "체내에 없음"으로 읽힌다 — 값 자리를 비운다.
+        guard store.today != nil else {
+            return MetricStrip([
+                .init(label: "지금 체내", value: "–"),
+                .init(label: "취침 시 예상", value: "–"),
+                .init(label: "오늘 섭취", value: "–"),
+            ])
+        }
         return MetricStrip([
             .init(label: "지금 체내", value: "\(Int(store.currentResidual.rounded()))", unit: "mg"),
             .init(label: "취침 시 예상", value: "\(Int(store.predictedAtBedtime.rounded()))", unit: "mg"),
@@ -141,7 +160,11 @@ struct HomeView: View {
 
     private var todayRecordsSection: some View {
         HealthCard("오늘 기록", showsDivider: false) {
-            if store.todayRecords.isEmpty {
+            if store.today == nil {
+                Text(store.errorMessage != nil ? "기록을 불러오지 못했어요." : "불러오는 중…")
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.Colors.inkSecondary)
+            } else if store.todayRecords.isEmpty {
                 Text("아직 오늘 마신 기록이 없어요.")
                     .font(.subheadline)
                     .foregroundStyle(Theme.Colors.inkSecondary)

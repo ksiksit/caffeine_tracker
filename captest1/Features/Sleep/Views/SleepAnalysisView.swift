@@ -70,8 +70,10 @@ struct SleepAnalysisView: View {
                     }
                 }
             } label: {
+                // borderedProminent는 글자를 흰색으로 고정한다 — 다크 모드에서 accent(밝은 잉크) 위에 흰 글자가 되어 보이지 않았다.
                 Text("HealthKit 연동하기")
                     .fontWeight(.semibold)
+                    .foregroundStyle(Theme.Colors.onAccent)
             }
             .buttonStyle(.borderedProminent)
             .tint(Theme.Colors.accent)

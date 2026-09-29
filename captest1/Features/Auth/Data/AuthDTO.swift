@@ -55,8 +55,8 @@ struct AuthErrorMessage: Equatable {
     let fieldMessages: [String: String]
 
     static let offlineBootstrap = AuthErrorMessage(
-        title: "연결 확인",
-        body: "인터넷 연결을 확인하고 다시 로그인해주세요.",
+        title: "서버에 연결할 수 없어요",
+        body: "인터넷 연결을 확인하거나 잠시 후 다시 로그인해주세요.",
         fieldMessages: [:]
     )
 }
@@ -110,8 +110,8 @@ extension APIError {
             )
         case .network:
             return AuthErrorMessage(
-                title: "연결 오류",
-                body: "인터넷 연결을 확인해주세요.",
+                title: "서버에 연결할 수 없어요",
+                body: "인터넷 연결을 확인하거나 잠시 후 다시 시도해주세요.",
                 fieldMessages: [:]
             )
         case .decoding:

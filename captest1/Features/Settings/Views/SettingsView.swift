@@ -66,6 +66,8 @@ struct SettingsView<NotificationStatus: View, CafeNearbyDetail: View>: View {
                             }
                         }
                         .pickerStyle(.menu)
+                        // 왼쪽 Label과 같은 제목이 메뉴 버튼에 한 번 더 붙지 않게
+                        .labelsHidden()
                     }
 
                     if settings.condition != .none {
@@ -148,7 +150,7 @@ struct SettingsView<NotificationStatus: View, CafeNearbyDetail: View>: View {
                         }
                     }
 
-                    Text("홈 화면의 카페인 마감 시간 계산에 사용됩니다. (아메리카노 1잔 ≈ 75 mg)")
+                    Text("홈 화면의 카페인 마감 시간 계산에 사용됩니다. (에스프레소 1샷 ≈ 75 mg, 아메리카노 1잔 ≈ 150 mg)")
                         .font(.caption)
                         .foregroundStyle(Theme.Colors.inkSecondary)
                 }

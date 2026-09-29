@@ -127,3 +127,31 @@ struct DrinkPresetTests {
         #expect(Set(names).count == names.count)
     }
 }
+
+@MainActor
+struct AddCaffeineViewModelTimeTests {
+
+    @Test func newRecord_untouchedTime_usesNowAtSave() {
+        let vm = AddCaffeineViewModel()
+        vm.selectPreset(DrinkPreset.all[0])
+        vm.selectedDate = Date(timeIntervalSince1970: 1_000)
+        let now = Date(timeIntervalSince1970: 2_000)
+        #expect(vm.intakeTime(now: now) == now)
+    }
+
+    @Test func newRecord_editedTime_usesSelectedTime() {
+        let vm = AddCaffeineViewModel()
+        vm.selectPreset(DrinkPreset.all[0])
+        let picked = Date().addingTimeInterval(-2 * 3600)
+        vm.selectedDate = picked
+        vm.isTimeEdited = true
+        #expect(vm.resolve()?.timestamp == picked)
+    }
+
+    @Test func editRecord_usesRecordTime() {
+        let vm = AddCaffeineViewModel()
+        let recorded = Date().addingTimeInterval(-3 * 3600)
+        vm.loadForEdit(.fixture(timestamp: recorded))
+        #expect(vm.resolve()?.timestamp == recorded)
+    }
+}

@@ -95,7 +95,10 @@ struct LoginView: View {
                 Text("이메일")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                TextField("you@example.com", text: $email)
+                // 문자열 리터럴 제목은 마크다운으로 해석되어 이메일 주소가 파란 링크로 보인다 — verbatim으로 넘긴다.
+                TextField(text: $email, prompt: Text(verbatim: "you@example.com")) {
+                    Text("이메일")
+                }
                     .keyboardType(.emailAddress)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
