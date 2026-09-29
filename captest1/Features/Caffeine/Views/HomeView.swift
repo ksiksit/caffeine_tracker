@@ -56,6 +56,8 @@ struct HomeView: View {
                         cutoffTime: upcomingCutoff,
                         cutoffColor: hero.style.color
                     )
+                } else if store.today != nil {
+                    timelinePlaceholder
                 }
 
                 metricStrip
@@ -158,7 +160,7 @@ struct HomeView: View {
                     .font(.subheadline)
                     .foregroundStyle(Theme.Colors.inkSecondary)
             } else if store.todayRecords.isEmpty {
-                Text("아직 오늘 마신 기록이 없어요.")
+                Text("아직 오늘 마신 기록이 없어요. 마시면 바로 기록해 두세요.")
                     .font(.subheadline)
                     .foregroundStyle(Theme.Colors.inkSecondary)
             } else {
@@ -174,7 +176,58 @@ struct HomeView: View {
         }
     }
 
+    // MARK: - 빈 타임라인
+
+    /// 기록이 없는 날, 차트 자리를 비워 두지 않고 무엇이 생길지 알려 준다.
+    private var timelinePlaceholder: some View {
+        VStack(spacing: 10) {
+            Image(systemName: "chart.line.downtrend.xyaxis")
+                .font(.title2)
+                .foregroundStyle(Theme.Colors.inkSecondary)
+            Text("첫 잔을 기록하면\n오늘의 카페인 타임라인이 여기 그려져요")
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(Theme.Colors.ink)
+                .multilineTextAlignment(.center)
+            Text("지금 몸속 카페인이 언제 빠지는지, 취침 때 얼마나 남는지 보여 줘요.")
+                .font(.footnote)
+                .foregroundStyle(Theme.Colors.inkSecondary)
+                .multilineTextAlignment(.center)
+        }
+        .padding(.horizontal, 24)
+        .frame(maxWidth: .infinity, minHeight: 180)
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.Radius.tile, style: .continuous)
+                .strokeBorder(Theme.Colors.hairline, style: StrokeStyle(lineWidth: 1, dash: [4, 4]))
+        )
+        .accessibilityElement(children: .combine)
+    }
+
+    // MARK: - 기록 행
+
+    /// 행을 탭하면 수정 화면(삭제 포함)이 열린다. 길게 누르기 메뉴는 빠른 경로로 남겨 둔다.
     private func recordRow(_ record: CaffeineRecordDTO) -> some View {
+        Button {
+            editingRecord = record
+        } label: {
+            recordRowLabel(record)
+        }
+        .buttonStyle(.plain)
+        .accessibilityHint("탭해서 수정하거나 삭제")
+        .contextMenu {
+            Button {
+                editingRecord = record
+            } label: {
+                Label("수정", systemImage: "pencil")
+            }
+            Button(role: .destructive) {
+                pendingDelete = record
+            } label: {
+                Label("삭제", systemImage: "trash")
+            }
+        }
+    }
+
+    private func recordRowLabel(_ record: CaffeineRecordDTO) -> some View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(record.drinkName)
@@ -191,22 +244,13 @@ struct HomeView: View {
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(Theme.Colors.ink)
                 .monospacedDigit()
+
+            Image(systemName: "chevron.right")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(Theme.Colors.inkSecondary)
         }
         .padding(.vertical, Theme.Spacing.row)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
-        .accessibilityHint("길게 눌러 수정하거나 삭제")
-        .contextMenu {
-            Button {
-                editingRecord = record
-            } label: {
-                Label("수정", systemImage: "pencil")
-            }
-            Button(role: .destructive) {
-                pendingDelete = record
-            } label: {
-                Label("삭제", systemImage: "trash")
-            }
-        }
     }
 }

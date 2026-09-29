@@ -155,3 +155,41 @@ struct AddCaffeineViewModelTimeTests {
         #expect(vm.resolve()?.timestamp == recorded)
     }
 }
+
+@MainActor
+struct AddCaffeineViewModelButtonTests {
+
+    @Test func nothingSelected_asksToChoose() {
+        let vm = AddCaffeineViewModel()
+        #expect(vm.saveButtonTitle == "음료를 선택하세요")
+        #expect(vm.canSave == false)
+    }
+
+    @Test func preset_showsNameAndAmount() {
+        let vm = AddCaffeineViewModel()
+        let preset = DrinkPreset.all[0]
+        vm.selectPreset(preset)
+        #expect(vm.saveButtonTitle == "\(preset.name) \(preset.caffeineAmount) mg 추가")
+    }
+
+    @Test func custom_withoutAmount_asksForAmount() {
+        let vm = AddCaffeineViewModel()
+        vm.activateCustomMode()
+        #expect(vm.saveButtonTitle == "카페인 양을 입력하세요")
+    }
+
+    @Test func custom_withAmount_usesNameOrFallback() {
+        let vm = AddCaffeineViewModel()
+        vm.activateCustomMode()
+        vm.customAmount = "120"
+        #expect(vm.saveButtonTitle == "직접 입력 120 mg 추가")
+        vm.customName = "콜드브루"
+        #expect(vm.saveButtonTitle == "콜드브루 120 mg 추가")
+    }
+
+    @Test func editMode_saysSave() {
+        let vm = AddCaffeineViewModel()
+        vm.loadForEdit(.fixture())
+        #expect(vm.saveButtonTitle == "저장")
+    }
+}

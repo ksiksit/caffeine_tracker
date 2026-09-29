@@ -11,7 +11,7 @@
 // - LearningStoreTests.swift          학습 실행·대시보드 (Fakes/FakeLearningRepository)
 // - SettingsManagerTests.swift        서버 권위 값 적용·디바운스 PUT (Fakes/FakeSettingsRepository)
 // - SleepStoreTests.swift             업로드 조건·서버 요약 매핑 (Fakes/FakeSleepRepository)
-// - ModelTests.swift                  HealthKit 권한 상태, SleepStage·SleepSummary 표시 모델, DrinkPreset, 추가 화면 섭취 시각
+// - ModelTests.swift                  HealthKit 권한 상태, SleepStage·SleepSummary 표시 모델, DrinkPreset, 추가 화면 섭취 시각·저장 버튼 문구
 // - CaffeineCutoffTests.swift         즉시 미리보기·차트 보조 함수
 // - CaffeineKineticsCalculatorTests.swift  즉시 미리보기용 약동학 로컬 미러
 //

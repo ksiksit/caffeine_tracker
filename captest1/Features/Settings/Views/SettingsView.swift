@@ -98,13 +98,13 @@ struct SettingsView<NotificationStatus: View, CafeNearbyDetail: View>: View {
                     if settings.isLearningEnabled {
                         VStack(alignment: .leading, spacing: 6) {
                             HStack {
-                                Text("현재 추정 반감기")
+                                Text("학습된 반감기")
                                 Spacer()
-                                Text(String(format: "%.2f h", settings.learnedHalfLifeMean))
+                                Text(String(format: "%.1f시간", settings.learnedHalfLifeMean))
                                     .fontWeight(.semibold)
                                     .foregroundStyle(Theme.Colors.accent)
                             }
-                            Text(String(format: "95%% CI: ± %.2f h",
+                            Text(String(format: "오차 범위 ±%.1f시간",
                                         settings.halfLifeCredibleIntervalHalfWidth))
                                 .font(.caption)
                                 .foregroundStyle(Theme.Colors.inkSecondary)

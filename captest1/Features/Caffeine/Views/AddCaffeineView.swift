@@ -15,6 +15,7 @@ struct AddCaffeineView: View {
     @State private var viewModel = AddCaffeineViewModel()
     @State private var loaded = false
     @State private var isSaving = false
+    @State private var confirmingDelete = false
     @FocusState private var focusedField: CustomField?
 
     init(editing record: CaffeineRecordDTO? = nil) {
@@ -39,6 +40,9 @@ struct AddCaffeineView: View {
                     presetSection
                     customSection
                     timeSection
+                    if isEditMode {
+                        deleteButton
+                    }
                 }
                 .padding(.horizontal, Theme.Spacing.screen)
                 .padding(.vertical, 16)
@@ -57,18 +61,13 @@ struct AddCaffeineView: View {
                     .animation(.easeInOut(duration: 0.2), value: viewModel.selectedDate)
                 }
             }
+            // 확정 버튼은 엄지가 닿는 하단에. 숫자 키패드가 올라오면 키패드 바로 위에 붙는다.
+            .safeAreaInset(edge: .bottom, spacing: 0) { saveButton }
             .navigationTitle(isEditMode ? "기록 수정" : "카페인 추가")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("취소") { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(isEditMode ? "저장" : "추가") {
-                        save()
-                    }
-                    .disabled(!viewModel.canSave || isSaving)
-                    .fontWeight(.semibold)
                 }
             }
             .task {
@@ -77,10 +76,15 @@ struct AddCaffeineView: View {
                 }
                 loaded = true
             }
-            .alert("저장 실패", isPresented: $viewModel.showingSaveError) {
+            // 저장·삭제 실패 공용
+            .alert("처리하지 못했어요", isPresented: $viewModel.showingSaveError) {
                 Button("확인", role: .cancel) { }
             } message: {
-                Text("카페인 기록을 저장하는데 실패했습니다. 다시 시도해 주세요.")
+                Text("카페인 기록을 처리하지 못했어요. 다시 시도해 주세요.")
+            }
+            .alert("기록을 삭제할까요?", isPresented: $confirmingDelete) {
+                Button("삭제", role: .destructive) { delete() }
+                Button("취소", role: .cancel) { }
             }
             .onChange(of: viewModel.customAmount) { _, newValue in
                 viewModel.filterCustomAmount(newValue)
@@ -137,6 +141,56 @@ struct AddCaffeineView: View {
                 viewModel.showingSaveError = true
             }
         }
+    }
+
+    private func delete() {
+        guard let record = editingRecord else { return }
+        isSaving = true
+        Task {
+            let ok = await store.delete(id: record.id)
+            isSaving = false
+            if ok {
+                dismiss()
+            } else {
+                viewModel.showingSaveError = true
+            }
+        }
+    }
+
+    // MARK: - 하단 버튼
+
+    private var saveButton: some View {
+        Button {
+            focusedField = nil
+            save()
+        } label: {
+            if isSaving {
+                ProgressView()
+            } else {
+                Text(viewModel.saveButtonTitle)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+            }
+        }
+        .buttonStyle(.primary)
+        .disabled(!viewModel.canSave || isSaving)
+        .padding(.horizontal, Theme.Spacing.screen)
+        .padding(.vertical, 8)
+        .background(Theme.Colors.canvas)
+    }
+
+    /// 수정 화면 맨 아래. 길게 누르기 메뉴를 몰라도 기록을 지울 수 있게 한다.
+    private var deleteButton: some View {
+        Button(role: .destructive) {
+            confirmingDelete = true
+        } label: {
+            Label("이 기록 삭제", systemImage: "trash")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Theme.Colors.signalStop)
+                .frame(maxWidth: .infinity, minHeight: Theme.Size.minTouch)
+        }
+        .buttonStyle(.plain)
+        .disabled(isSaving)
     }
 
     private var presetSection: some View {

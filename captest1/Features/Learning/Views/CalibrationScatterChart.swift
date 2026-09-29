@@ -60,8 +60,8 @@ struct CalibrationScatterChart: View {
             // 3) 데이터 점
             ForEach(points) { p in
                 PointMark(
-                    x: .value("예측 SOL", p.predicted),
-                    y: .value("측정 SOL", p.observed)
+                    x: .value("예측", p.predicted),
+                    y: .value("실제", p.observed)
                 )
                 .foregroundStyle(Theme.Colors.accent)
                 .symbolSize(80)
@@ -69,8 +69,8 @@ struct CalibrationScatterChart: View {
         }
         .chartXScale(domain: domain)
         .chartYScale(domain: domain)
-        .chartXAxisLabel("예측 SOL (분)", position: .bottom, alignment: .center)
-        .chartYAxisLabel("측정 SOL (분)", position: .leading, alignment: .center)
+        .chartXAxisLabel("예측 (분)", position: .bottom, alignment: .center)
+        .chartYAxisLabel("실제 (분)", position: .leading, alignment: .center)
         .chartXAxis {
             AxisMarks(position: .bottom) { _ in
                 AxisGridLine()

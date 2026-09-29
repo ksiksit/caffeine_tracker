@@ -37,6 +37,17 @@ final class AddCaffeineViewModel {
         return selectedPreset != nil
     }
 
+    /// 하단 저장 버튼 문구. 무엇이 기록될지 버튼에 바로 보여주고, 못 누르는 이유도 버튼이 말한다.
+    var saveButtonTitle: String {
+        if editingRecord != nil { return "저장" }
+        if isCustomMode {
+            guard let amount = parsedAmount else { return "카페인 양을 입력하세요" }
+            return "\(customName.isEmpty ? "직접 입력" : customName) \(amount) mg 추가"
+        }
+        guard let preset = selectedPreset else { return "음료를 선택하세요" }
+        return "\(preset.name) \(preset.caffeineAmount) mg 추가"
+    }
+
     // MARK: - 마감시각 미리보기
 
     /// 신규 추가 모드에서 "지금 이 음료를 추가하면 마감시각이 어떻게 바뀌는지" 계산.

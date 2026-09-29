@@ -121,7 +121,7 @@ private struct HeroEstimateCard: View {
 
     private let populationMean = AppConstants.Pharmacokinetics.defaultHalfLifeHours
 
-    /// 모집단 평균과 비교한 한 줄 설명
+    /// 일반 성인 평균과 비교한 한 줄 설명
     private var comparison: String {
         let diff = latest.posteriorMean - populationMean
         let base = String(format: "일반 성인 평균(%.1f시간)", populationMean)
@@ -142,7 +142,7 @@ private struct HeroEstimateCard: View {
                     .foregroundStyle(Theme.Colors.inkSecondary)
 
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
-                    Text(String(format: "%.2f", latest.posteriorMean))
+                    Text(String(format: "%.1f", latest.posteriorMean))
                         .font(Theme.Fonts.heroNumber)
                         .foregroundStyle(Theme.Colors.ink)
                     Text("시간")
@@ -155,7 +155,7 @@ private struct HeroEstimateCard: View {
                     .font(.subheadline)
                     .foregroundStyle(Theme.Colors.ink)
 
-                Text(String(format: "95%% 범위 %.2f – %.2f시간", latest.ciLower, latest.ciUpper))
+                Text(String(format: "예상 범위 %.1f–%.1f시간", latest.ciLower, latest.ciUpper))
                     .font(.footnote.monospacedDigit())
                     .foregroundStyle(Theme.Colors.inkSecondary)
             }
@@ -178,7 +178,7 @@ private struct LearningTrendCard: View {
     var body: some View {
         HealthCard("학습 추세", symbol: "chart.line.uptrend.xyaxis", tint: Theme.Colors.accent) {
             VStack(alignment: .leading, spacing: 8) {
-                Text("사후 평균과 95% 신뢰구간이 모집단 prior(5.0h)에서 어떻게 멀어졌는지 확인하세요.")
+                Text("선은 날마다 추정한 내 반감기, 띠는 오차 범위예요. 점선(일반 성인 평균)에서 멀어질수록 나만의 값에 가까워진 거예요.")
                     .font(.caption).foregroundStyle(Theme.Colors.inkSecondary)
 
                 Chart {
@@ -195,18 +195,18 @@ private struct LearningTrendCard: View {
                             .interpolationMethod(.monotone)
                             .symbol(.circle)
                     }
-                    RuleMark(y: .value("Prior", AppConstants.Pharmacokinetics.defaultHalfLifeHours))
+                    RuleMark(y: .value("일반 성인 평균", AppConstants.Pharmacokinetics.defaultHalfLifeHours))
                         .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
                         .foregroundStyle(Theme.Colors.inkSecondary)
                         .annotation(position: .topTrailing, alignment: .trailing) {
-                            Text("모집단 5.0h").font(.caption2).foregroundStyle(Theme.Colors.inkSecondary)
+                            Text(String(format: "평균 %.0f시간", AppConstants.Pharmacokinetics.defaultHalfLifeHours)).font(.caption2).foregroundStyle(Theme.Colors.inkSecondary)
                         }
                 }
                 .chartYScale(domain: 2.5...7.5)
                 .chartYAxis {
                     AxisMarks(values: [3, 4, 5, 6, 7]) { value in
                         AxisGridLine()
-                        AxisValueLabel { if let v = value.as(Double.self) { Text("\(Int(v))h") } }
+                        AxisValueLabel { if let v = value.as(Double.self) { Text("\(Int(v))시간") } }
                     }
                 }
                 .frame(height: 220)
@@ -228,16 +228,16 @@ private struct CalibrationCard: View {
 
         HealthCard("모델 정확도", symbol: "target", tint: Theme.Colors.accent) {
             VStack(alignment: .leading, spacing: 12) {
-                Text("점이 대각선에 가까울수록 모델 예측이 정확합니다. 회색 띠 = ±10분 노이즈 범위.")
+                Text("점 하나가 하룻밤이에요. 앱이 예측한 잠들기까지 걸린 시간과 실제 시간이 같을수록 점이 대각선에 붙어요. 회색 띠는 측정 오차 범위(±10분)예요.")
                     .font(.caption).foregroundStyle(Theme.Colors.inkSecondary)
 
                 CalibrationScatterChart(points: points, domain: domain)
 
                 HStack(spacing: 24) {
-                    metricBlock(label: "R²",
+                    metricBlock(label: "설명력 (R²)",
                                 value: calibration.rSquared.map { String(format: "%.3f", $0) } ?? "—",
                                 unit: nil)
-                    metricBlock(label: "RMSE", value: String(format: "%.1f", calibration.rmse), unit: "분")
+                    metricBlock(label: "평균 오차 (RMSE)", value: String(format: "%.1f", calibration.rmse), unit: "분")
                     Spacer()
                 }
             }
@@ -265,13 +265,13 @@ private struct InputDistributionCard: View {
     var body: some View {
         HealthCard("입력 데이터 분포", symbol: "chart.bar.fill", tint: Theme.Colors.accent) {
             VStack(alignment: .leading, spacing: 12) {
-                Text("학습에 사용된 카페인 잔량과 SOL의 분포입니다. 한쪽으로 치우쳐 있다면 더 다양한 조건의 데이터가 필요합니다.")
+                Text("학습에 쓰인 취침 시 카페인 잔량과 잠들기까지 걸린 시간의 분포예요. 한쪽으로 몰려 있으면 더 다양한 날의 기록이 필요해요.")
                     .font(.caption).foregroundStyle(Theme.Colors.inkSecondary)
 
                 HStack(alignment: .top, spacing: 12) {
                     histogramColumn(title: "취침 시 카페인 잔량", unit: "mg", bins: residual)
                     HairlineDivider(vertical: true).frame(maxHeight: 180)
-                    histogramColumn(title: "측정된 SOL", unit: "분", bins: sol)
+                    histogramColumn(title: "잠들기까지 걸린 시간", unit: "분", bins: sol)
                 }
             }
         }
@@ -316,12 +316,12 @@ private struct ObservationListCard: View {
                 Text(obs.parsedDate, format: .dateTime.month().day())
                     .font(.subheadline.weight(.semibold))
                 Spacer()
-                Text(String(format: "%.2f h → %.2f h", obs.priorMean, obs.posteriorMean))
+                Text(String(format: "%.1f → %.1f시간", obs.priorMean, obs.posteriorMean))
                     .font(.caption.monospacedDigit()).foregroundStyle(Theme.Colors.inkSecondary)
             }
             HStack(spacing: 12) {
                 Label(String(format: "잔량 %.0f mg", obs.predictedResidualAtBedtime), systemImage: "cup.and.saucer")
-                Label(String(format: "SOL %.0f분", obs.observedSolMinutes), systemImage: "moon.zzz")
+                Label(String(format: "잠들기까지 %.0f분", obs.observedSolMinutes), systemImage: "moon.zzz")
             }
             .font(.caption2).foregroundStyle(Theme.Colors.inkSecondary)
         }
