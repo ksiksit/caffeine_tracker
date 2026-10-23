@@ -178,19 +178,33 @@ actor APIClient {
             task = new
         }
 
+        let newTokens: TokenResponse
         do {
-            let newTokens = try await task.value
-            if refreshTask == task { refreshTask = nil }
-
-            var retried = request
-            if authenticated {
-                retried.setValue("Bearer \(newTokens.accessToken)", forHTTPHeaderField: "Authorization")
-            }
-            return try await dataCall(retried)
+            newTokens = try await task.value
         } catch {
             if refreshTask == task { refreshTask = nil }
+            // 서버가 refresh를 거부했을 때만 세션 만료. 네트워크·취소 같은 일시 오류는 그대로 던져 로그인을 유지한다.
+            guard Self.isSessionRejection(error) else { throw error }
             await onSessionExpired?()
             throw APIError.sessionExpired
+        }
+        if refreshTask == task { refreshTask = nil }
+
+        // 재시도 실패(네트워크 등)는 refresh 성공과 무관하므로 세션 만료로 바꾸지 않는다.
+        var retried = request
+        retried.setValue("Bearer \(newTokens.accessToken)", forHTTPHeaderField: "Authorization")
+        return try await dataCall(retried)
+    }
+
+    /// refresh 실패 중 다시 로그인해야 하는 경우(토큰 거부·없음).
+    private static func isSessionRejection(_ error: Error) -> Bool {
+        switch error as? APIError {
+        case .invalidRefreshToken, .unauthorized, .sessionExpired:
+            return true
+        case .unknown(let statusCode, _):
+            return statusCode == 401
+        default:
+            return false
         }
     }
 

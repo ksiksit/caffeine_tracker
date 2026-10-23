@@ -50,18 +50,3 @@ func caffeineCutoffTime(
     let cutoff = bedtime.addingTimeInterval(-hoursBeforeBedtime * 3600)
     return .cutoff(cutoff)
 }
-
-func resolvedBedtimeDate(hour: Int, minute: Int) -> Date? {
-    let calendar = Calendar.current
-    let now = Date()
-    var components = calendar.dateComponents([.year, .month, .day], from: now)
-    components.hour = hour
-    components.minute = minute
-
-    guard let bedtime = calendar.date(from: components) else { return nil }
-
-    if hour < AppConstants.Pharmacokinetics.chartStartHour {
-        return calendar.date(byAdding: .day, value: 1, to: bedtime)
-    }
-    return bedtime
-}

@@ -51,9 +51,9 @@ final class GeofenceMonitor: GeofenceMonitoring {
             do {
                 for try await event in await monitor.events where event.state == .satisfied {
                     // 백그라운드로 깨어난 경우 실행 시간이 짧다 — 알림 등록이 끝날 때까지 시간을 조금 더 받는다.
-                    let taskID = UIApplication.shared.beginBackgroundTask(withName: "cafe-nearby", expirationHandler: nil)
+                    let backgroundTask = BackgroundTask(name: "cafe-nearby")
                     await onEnter(event.identifier)
-                    UIApplication.shared.endBackgroundTask(taskID)
+                    backgroundTask.end()
                 }
             } catch {
                 // 이벤트 스트림이 끝나면 다음 실행 때 다시 구독한다.
@@ -91,5 +91,22 @@ final class GeofenceMonitor: GeofenceMonitoring {
     func monitoredZoneIDs() async -> [String] {
         let monitor = await monitorTask.value
         return Array(await monitor.identifiers)
+    }
+}
+
+/// 백그라운드 실행 시간 연장 한 건. 시간이 다 되면 시스템이 앱을 강제 종료하기 전에 스스로 끝내고, 두 번 끝내지 않는다.
+private final class BackgroundTask {
+    private var id: UIBackgroundTaskIdentifier = .invalid
+
+    init(name: String) {
+        id = UIApplication.shared.beginBackgroundTask(withName: name) { [weak self] in
+            MainActor.assumeIsolated { self?.end() }
+        }
+    }
+
+    func end() {
+        guard id != .invalid else { return }
+        UIApplication.shared.endBackgroundTask(id)
+        id = .invalid
     }
 }

@@ -12,6 +12,9 @@ final class StubURLProtocol: URLProtocol {
     struct Response {
         let status: Int
         let json: String
+
+        /// 응답 대신 연결 실패(타임아웃)를 낸다.
+        static let networkFailure = Response(status: -1, json: "")
     }
 
     private static let lock = NSLock()
@@ -58,6 +61,10 @@ final class StubURLProtocol: URLProtocol {
             return
         }
         let response = handler(request)
+        if response.status < 0 {
+            client?.urlProtocol(self, didFailWithError: URLError(.timedOut))
+            return
+        }
         let http = HTTPURLResponse(
             url: url, statusCode: response.status, httpVersion: "HTTP/1.1",
             headerFields: ["Content-Type": "application/json"]

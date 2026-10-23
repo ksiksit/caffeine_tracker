@@ -51,8 +51,7 @@ struct HomeView: View {
                         dataPoints: store.chartDataPoints,
                         doses: store.chartDoses,
                         currentTime: store.currentTime,
-                        bedtimeHour: settings.bedtimeHour,
-                        bedtimeMinute: settings.bedtimeMinute,
+                        bedtime: store.bedtime,
                         cutoffTime: upcomingCutoff,
                         cutoffColor: hero.style.color
                     )

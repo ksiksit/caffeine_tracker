@@ -210,4 +210,47 @@ struct APIClientEnvelopeTests {
             try await client.me()
         }
     }
+
+    @Test func retryNetworkFailure_afterRefresh_keepsSession() async {
+        defer { StubURLProtocol.reset() }
+        StubURLProtocol.install { request in
+            let auth = request.value(forHTTPHeaderField: "Authorization")
+            switch request.url?.path {
+            case "/api/auth/refresh":
+                return .init(status: 200, json: #"{ "success": true, "data": { "accessToken": "new-access", "refreshToken": "new-refresh", "tokenType": "Bearer", "expiresIn": 3600, "refreshExpiresIn": 1209600 }, "error": null, "message": null }"#)
+            case "/api/me" where auth == "Bearer new-access":
+                return .networkFailure
+            default:
+                return .init(status: 401, json: Self.unauthorizedJSON)
+            }
+        }
+        let client = makeClient()
+        let expired = Locked(wrappedValue: false)
+        await client.setSessionExpiredHandler { expired.wrappedValue = true }
+        await client.setAccessToken("old-access")
+        await client.setRefreshToken("r1")
+
+        await #expect(throws: APIError.network) {
+            try await client.me()
+        }
+        #expect(expired.wrappedValue == false)
+    }
+
+    @Test func refreshNetworkFailure_keepsSession() async {
+        defer { StubURLProtocol.reset() }
+        StubURLProtocol.install { request in
+            if request.url?.path == "/api/auth/refresh" { return .networkFailure }
+            return .init(status: 401, json: Self.unauthorizedJSON)
+        }
+        let client = makeClient()
+        let expired = Locked(wrappedValue: false)
+        await client.setSessionExpiredHandler { expired.wrappedValue = true }
+        await client.setAccessToken("old-access")
+        await client.setRefreshToken("r1")
+
+        await #expect(throws: APIError.network) {
+            try await client.me()
+        }
+        #expect(expired.wrappedValue == false)
+    }
 }

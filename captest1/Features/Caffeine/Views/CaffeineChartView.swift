@@ -13,8 +13,8 @@ struct CaffeineChartView: View {
     let dataPoints: [CaffeineKineticsCalculator.DataPoint]
     let doses: [CaffeineKineticsCalculator.Dose]
     let currentTime: Date
-    var bedtimeHour: Int = 23
-    var bedtimeMinute: Int = 0
+    /// 서버가 정한 다음 취침 시각(today 응답). 이미 지난 오늘 취침은 서버가 내일로 넘겨 준다
+    var bedtime: Date? = nil
     /// 다음 한 잔 마감 시각. 지났거나 없으면 nil
     var cutoffTime: Date? = nil
     var cutoffColor: Color = Theme.Colors.signalOK
@@ -153,7 +153,7 @@ struct CaffeineChartView: View {
 
     @ChartContentBuilder
     private var bedtimeRule: some ChartContent {
-        if let bedtime = resolvedBedtimeDate(hour: bedtimeHour, minute: bedtimeMinute) {
+        if let bedtime {
             RuleMark(x: .value("취침", bedtime))
                 .foregroundStyle(Theme.Colors.inkSecondary.opacity(0.6))
                 .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 3]))
@@ -179,7 +179,7 @@ struct CaffeineChartView: View {
 
     @ChartContentBuilder
     private var bedtimeDangerZone: some ChartContent {
-        if let bedtime = resolvedBedtimeDate(hour: bedtimeHour, minute: bedtimeMinute),
+        if let bedtime,
            let chartEnd = dataPoints.last?.time,
            bedtime < chartEnd {
             let threshold = AppConstants.Caffeine.bedtimeSafeThresholdMg
