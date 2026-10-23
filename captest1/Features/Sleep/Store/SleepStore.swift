@@ -63,7 +63,8 @@ final class SleepStore {
 
     /// 원시 샘플이 있으면 업로드한 뒤 서버 요약을 받아 표시 모델로 바꾼다. 데이터가 없는 날은 nil.
     private func summary(for date: Date) async throws -> SleepSummary? {
-        let raw = try await samples.fetchRawSamples(for: date)
+        // 길이 0(end == start) 샘플은 서버가 배치 전체를 400으로 거절하므로 업로드 전에 뺀다. 병합 결과에는 영향 없음.
+        let raw = try await samples.fetchRawSamples(for: date).filter { $0.end > $0.start }
         if !raw.isEmpty {
             let items = raw.map {
                 UploadSleepSampleItem(clientUuid: $0.clientUuid, start: $0.start, end: $0.end, hkValue: $0.hkValue)

@@ -41,6 +41,37 @@ struct SleepStoreTests {
         #expect(repo.uploads.first?.samples.first?.clientUuid == "u1")
     }
 
+    @Test func loadData_dropsZeroLengthSamplesBeforeUpload() async {
+        let source = FakeSleepSampleSource()
+        let start = Date().addingTimeInterval(-8 * 3600)
+        source.samples = [
+            RawSleepSample(clientUuid: "zero", start: start, end: start, hkValue: 0),
+            RawSleepSample(clientUuid: "ok", start: start, end: start.addingTimeInterval(3600), hkValue: 3),
+        ]
+        let repo = FakeSleepRepository()
+        let store = SleepStore(samples: source, repository: repo)
+
+        await store.loadData()
+
+        let uploadedUuids: [String] = repo.uploads.first?.samples.map(\.clientUuid) ?? []
+        #expect(uploadedUuids == ["ok"])
+        #expect(store.errorMessage == nil)
+    }
+
+    @Test func loadData_skipsUploadWhenOnlyZeroLengthSamples() async {
+        let source = FakeSleepSampleSource()
+        let start = Date().addingTimeInterval(-8 * 3600)
+        source.samples = [RawSleepSample(clientUuid: "zero", start: start, end: start, hkValue: 0)]
+        let repo = FakeSleepRepository()
+        let store = SleepStore(samples: source, repository: repo)
+
+        await store.loadData()
+
+        #expect(repo.uploads.isEmpty)
+        #expect(repo.summaryDates.count == AppConstants.Sleep.recentHistoryDays)
+        #expect(store.hasLoadedData == true)
+    }
+
     @Test func loadData_mapsServerSummaryWithoutRecomputing() async {
         let repo = FakeSleepRepository()
         repo.summaryByDate[todayKey] = .fixture(date: todayKey, totalSleepSeconds: 6 * 3600, timeInBedSeconds: 8 * 3600, sleepOnsetLatencySeconds: nil)
