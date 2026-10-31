@@ -55,6 +55,23 @@ struct CaffeineStoreTests {
         #expect(store.errorMessage == nil)
     }
 
+    @Test func residualDoses_includeCarryover_andResetClears() async {
+        let repo = FakeCaffeineRepository()
+        var today = CaffeineTodayResponse.fixture(records: [.fixture(id: 2, amount: 75)])
+        today.carryoverRecords = [.fixture(id: 1, amount: 200)]
+        repo.todayResult = .success(today)
+        let store = CaffeineStore(repository: repo)
+        await store.refresh()
+
+        #expect(store.todayTotal == 75)
+        #expect(store.chartDoses.map(\.amountMg) == [75])
+        #expect(store.residualDoses.map(\.amountMg) == [200, 75])
+
+        store.reset()
+        #expect(store.today == nil)
+        #expect(store.residualDoses.isEmpty)
+    }
+
     @Test func refresh_failure_setsErrorMessage() async {
         let repo = FakeCaffeineRepository()
         repo.todayResult = .failure(FakeError())

@@ -43,6 +43,8 @@ nonisolated struct CaffeineTodayResponse: Decodable, Sendable {
     let cutoff: CutoffDTO
     let effectiveHalfLifeHours: Double
     let referenceDoseMg: Int
+    /// 오늘 경계(05:00) 이전이지만 서버 잔량 계산에 포함된 최근 24시간 기록. 이 필드를 모르는 이전 서버면 nil.
+    var carryoverRecords: [CaffeineRecordDTO]? = nil
 }
 
 nonisolated struct ChartPointDTO: Decodable, Sendable {

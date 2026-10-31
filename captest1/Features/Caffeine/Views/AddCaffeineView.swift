@@ -101,7 +101,7 @@ struct AddCaffeineView: View {
         // 즉시 미리보기만 로컬 공식 유지(키 입력 왕복 방지). 오늘 doses와 취침시각은 서버 today 결과에서.
         // today가 아직 없으면(첫 로드 전) doses도 비어 있어 미리보기 의미가 없으므로 배너를 띄우지 않는다.
         guard !isEditMode, let bedtime = store.bedtime else { return nil }
-        let todayDoses = store.chartDoses
+        let todayDoses = store.residualDoses
         guard let pair = viewModel.previewCutoff(
             todayDoses: todayDoses,
             halfLifeHours: settings.effectiveHalfLifeHours,
@@ -257,7 +257,8 @@ struct AddCaffeineView: View {
                             viewModel.isTimeEdited = true
                         }
                     ),
-                    in: ...Date(),
+                    // 홈에서 보이고 고칠 수 있는 범위(서버 최근 24시간)로 제한한다. 더 이전 시각은 저장해도 화면에 나타나지 않는다.
+                    in: Date().addingTimeInterval(-24 * 3600)...Date(),
                     displayedComponents: [.date, .hourAndMinute]
                 )
                 .labelsHidden()
