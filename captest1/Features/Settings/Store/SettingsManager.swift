@@ -135,11 +135,26 @@ final class SettingsManager {
         self.notifyCafeNearby = (defaults.object(forKey: Keys.notifyCafeNearby) as? Bool) ?? false
     }
 
-    /// 로그아웃 등 사용자 전환 시 베이지안 학습 결과를 초기화한다.
-    func resetLearnedData() {
+    /// 로그아웃 시 이전 계정의 설정을 기본값으로 되돌린다. 다음 계정은 서버 값을 받기 전까지 PUT하지 않는다.
+    func resetForSignOut() {
+        syncTask?.cancel()
+        isApplyingServer = true
+        defer { isApplyingServer = false }
+        halfLife = AppConstants.Pharmacokinetics.defaultHalfLifeHours
+        conditionRawValue = CaffeineCondition.none.rawValue
+        bedtimeHour = 23
+        bedtimeMinute = 0
+        referenceDoseMg = AppConstants.Caffeine.defaultReferenceDoseMg
+        isLearningEnabled = true
         learnedHalfLifeMean = AppConstants.Pharmacokinetics.defaultHalfLifeHours
         learnedHalfLifeVariance = Self.populationPriorVariance
         lastLearnedDate = nil
+        notifyCutoff = true
+        notifyBedtimeResidual = true
+        notifyRecordReminder = true
+        notifyCafeNearby = false
+        lastSyncedSnapshot = nil
+        syncErrorMessage = nil
     }
 
     // MARK: - 서버 동기화 (server-authoritative)
@@ -148,6 +163,8 @@ final class SettingsManager {
     private var syncTask: Task<Void, Never>?
     private var isApplyingServer = false
     private var lastSyncedSnapshot: Snapshot?
+    /// 설정 저장 실패 안내. 실패를 숨기면 화면은 새 값, 서버 계산은 옛 값인 채로 남는다.
+    var syncErrorMessage: String?
 
     private struct Snapshot: Equatable {
         let halfLife: Double
@@ -194,15 +211,31 @@ final class SettingsManager {
         }
     }
 
+    /// 저장 실패 안내에서 다시 시도할 때 호출.
+    func retrySync() async {
+        await syncToServer()
+    }
+
     private func syncToServer() async {
         guard let repository else { return }
+        // PUT은 전체 교체다. 서버 값을 받기 전에 보내면 로컬 값이 서버 설정과 학습 상태를 덮어쓴다.
+        guard lastSyncedSnapshot != nil else {
+            await loadFromServer()
+            syncErrorMessage = "서버 설정을 먼저 불러와야 해서 방금 변경은 저장하지 않았어요. 다시 변경해 주세요."
+            return
+        }
         let req = UpdateSettingsRequest(
             halfLife: halfLife, condition: conditionRawValue,
             bedtimeHour: bedtimeHour, bedtimeMinute: bedtimeMinute,
             referenceDoseMg: referenceDoseMg, isLearningEnabled: isLearningEnabled,
             notifications: notificationSettings)
-        if let dto = try? await repository.updateSettings(req) {
-            applyServer(dto)
+        do {
+            applyServer(try await repository.updateSettings(req))
+            syncErrorMessage = nil
+        } catch is CancellationError {
+            return
+        } catch {
+            syncErrorMessage = "설정을 저장하지 못했어요. 연결을 확인하고 다시 시도해주세요."
         }
     }
 

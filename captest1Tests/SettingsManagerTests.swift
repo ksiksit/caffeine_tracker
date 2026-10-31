@@ -132,6 +132,55 @@ struct SettingsManagerTests {
         #expect(settings.notifyCafeNearby == true)
     }
 
+    @Test func edit_beforeServerLoad_doesNotOverwriteServer() async throws {
+        let repo = FakeSettingsRepository()
+        let settings = makeManager()
+        settings.attach(repository: repo)
+
+        settings.referenceDoseMg = 80
+        settings.scheduleSync()
+        try await Task.sleep(for: .milliseconds(700))
+
+        #expect(repo.updateRequests.isEmpty)
+        #expect(settings.syncErrorMessage != nil)
+    }
+
+    @Test func putFailure_setsErrorAndRetryClearsIt() async throws {
+        let repo = FakeSettingsRepository()
+        let settings = makeManager()
+        settings.attach(repository: repo)
+        await settings.loadFromServer()
+
+        repo.updateOverride = .failure(APIError.network)
+        settings.referenceDoseMg = 80
+        settings.scheduleSync()
+        try await Task.sleep(for: .milliseconds(700))
+        #expect(settings.syncErrorMessage != nil)
+
+        repo.updateOverride = nil
+        await settings.retrySync()
+        #expect(settings.syncErrorMessage == nil)
+        #expect(repo.updateRequests.last?.referenceDoseMg == 80)
+    }
+
+    @Test func resetForSignOut_restoresDefaultsAndBlocksPutUntilLoad() async throws {
+        let repo = FakeSettingsRepository()
+        repo.getResult = .success(.fixture(halfLife: 6, condition: 3))
+        let settings = makeManager()
+        settings.attach(repository: repo)
+        await settings.loadFromServer()
+        #expect(settings.conditionRawValue == 3)
+
+        settings.resetForSignOut()
+
+        #expect(settings.conditionRawValue == CaffeineCondition.none.rawValue)
+        #expect(settings.halfLife == AppConstants.Pharmacokinetics.defaultHalfLifeHours)
+        settings.bedtimeHour = 22
+        settings.scheduleSync()
+        try await Task.sleep(for: .milliseconds(700))
+        #expect(repo.updateRequests.isEmpty)
+    }
+
     @Test func effectiveHalfLife_appliesConditionMultiplier() {
         let settings = makeManager()
         settings.isLearningEnabled = false

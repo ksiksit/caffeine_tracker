@@ -222,6 +222,9 @@ actor APIClient {
             return (data, http)
         } catch is CancellationError {
             throw CancellationError()
+        } catch let error as URLError where error.code == .cancelled {
+            // URLSession은 작업 취소를 CancellationError가 아니라 URLError로 던진다.
+            throw CancellationError()
         } catch {
             throw APIError.network
         }

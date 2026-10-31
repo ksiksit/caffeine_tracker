@@ -15,7 +15,13 @@ final class SleepStore {
     private(set) var recentSummaries: [SleepSummary] = []
     private(set) var isLoading = false
     private(set) var hasLoadedData = false
+    /// 로드에 성공할 때마다 1씩 오른다. 업로드 뒤 학습처럼 "새 수면이 올라가면 다시 해야 하는" 쪽이 관찰한다.
+    private(set) var loadRevision = 0
     var errorMessage: String?
+    private var lastLoadedAt: Date?
+
+    /// 이 시간이 지나면 포그라운드 복귀·탭 진입에서 다시 읽는다. 앱을 띄워 둔 채 잔 지난밤을 올리기 위해서다.
+    private static let maxLoadAge: TimeInterval = 3600
 
     private let samples: any SleepSampleSource
     private let repository: any SleepRepository
@@ -25,13 +31,28 @@ final class SleepStore {
         self.repository = repository
     }
 
-    func loadDataIfNeeded() async {
-        guard !hasLoadedData else { return }
+    func loadDataIfNeeded(now: Date = Date()) async {
+        if let lastLoadedAt, now.timeIntervalSince(lastLoadedAt) < Self.maxLoadAge,
+           Calendar.current.isDate(lastLoadedAt, inSameDayAs: now) {
+            return
+        }
         await loadData()
+    }
+
+    /// 로그아웃 시 이전 계정의 값을 지운다. 새 계정의 샘플이 다시 올라가도록 로드 기록도 지운다.
+    func reset() {
+        lastNightSummary = nil
+        recentSummaries = []
+        isLoading = false
+        hasLoadedData = false
+        lastLoadedAt = nil
+        errorMessage = nil
     }
 
     /// 오늘부터 최근 N일의 요약을 받아온다. 날짜별 업로드+조회는 병렬(업로드는 clientUuid로 멱등).
     func loadData() async {
+        // 같은 샘플을 동시에 올리면 서버 유니크 키가 충돌한다 — 진행 중이면 그 결과를 쓴다.
+        guard !isLoading else { return }
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
@@ -56,6 +77,10 @@ final class SleepStore {
             lastNightSummary = results.first?.1
             recentSummaries = results.compactMap(\.1)
             hasLoadedData = true
+            lastLoadedAt = Date()
+            loadRevision += 1
+        } catch is CancellationError {
+            // 화면 전환으로 취소된 요청은 실패가 아니다
         } catch {
             errorMessage = "수면 데이터를 불러오는데 실패했습니다: \(error.localizedDescription)"
         }

@@ -10,6 +10,21 @@ import Testing
 @MainActor
 struct LearningStoreTests {
 
+    @Test func learnedRevision_bumpsOnlyWhenUpdated() async {
+        let repo = FakeLearningRepository()
+        let store = LearningStore(repository: repo)
+        await store.refresh()
+        #expect(store.learnedRevision == 0)
+
+        repo.runResult = .success(LearningRunResponse(updatedCount: 1, skipReason: nil, skipMessage: nil))
+        await store.refresh()
+        #expect(store.learnedRevision == 1)
+
+        store.reset()
+        #expect(store.dashboard == nil)
+        #expect(store.hasLoaded == false)
+    }
+
     @Test func refresh_showsSkipMessage_whenNothingUpdated() async {
         let repo = FakeLearningRepository()
         repo.runResult = .success(LearningRunResponse(updatedCount: 0, skipReason: "NO_SLEEP", skipMessage: "수면 기록이 없어요"))

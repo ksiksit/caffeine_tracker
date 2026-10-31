@@ -23,6 +23,13 @@ final class CaffeineStore {
 
     // MARK: - 서버 동기화
 
+    /// 로그아웃 시 이전 계정의 값을 지운다.
+    func reset() {
+        today = nil
+        isLoading = false
+        errorMessage = nil
+    }
+
     func refresh() async {
         isLoading = true
         defer { isLoading = false }
