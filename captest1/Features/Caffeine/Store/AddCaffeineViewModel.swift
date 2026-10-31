@@ -32,8 +32,18 @@ final class AddCaffeineViewModel {
         return value
     }
 
+    /// 공백만 입력한 이름은 비어 있는 것으로 본다(서버 @NotBlank).
+    private var trimmedCustomName: String {
+        customName.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// 서버 @Size 는 UTF-16 길이로 잰다.
+    private var isCustomNameTooLong: Bool {
+        trimmedCustomName.utf16.count > AppConstants.Caffeine.maxDrinkNameLength
+    }
+
     var canSave: Bool {
-        if isCustomMode { return parsedAmount != nil }
+        if isCustomMode { return parsedAmount != nil && !isCustomNameTooLong }
         return selectedPreset != nil
     }
 
@@ -42,7 +52,7 @@ final class AddCaffeineViewModel {
         if editingRecord != nil { return "저장" }
         if isCustomMode {
             guard let amount = parsedAmount else { return "카페인 양을 입력하세요" }
-            return "\(customName.isEmpty ? "직접 입력" : customName) \(amount) mg 추가"
+            return "\(trimmedCustomName.isEmpty ? "직접 입력" : trimmedCustomName) \(amount) mg 추가"
         }
         guard let preset = selectedPreset else { return "음료를 선택하세요" }
         return "\(preset.name) \(preset.caffeineAmount) mg 추가"
@@ -91,7 +101,11 @@ final class AddCaffeineViewModel {
     }
 
     var validationMessage: String? {
-        guard isCustomMode, !customAmount.isEmpty else { return nil }
+        guard isCustomMode else { return nil }
+        if isCustomNameTooLong {
+            return "음료 이름은 \(AppConstants.Caffeine.maxDrinkNameLength)자 이하로 입력해 주세요"
+        }
+        guard !customAmount.isEmpty else { return nil }
         if Int(customAmount) == nil {
             return "숫자만 입력해 주세요"
         }
@@ -147,7 +161,7 @@ final class AddCaffeineViewModel {
         } else {
             guard let parsed = parsedAmount else { return nil }
             amount = parsed
-            drinkName = customName.isEmpty ? "직접 입력" : customName
+            drinkName = trimmedCustomName.isEmpty ? "직접 입력" : trimmedCustomName
         }
         return (amount, drinkName, intakeTime())
     }

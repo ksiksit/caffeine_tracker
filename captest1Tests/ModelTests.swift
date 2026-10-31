@@ -130,6 +130,20 @@ struct DrinkPresetTests {
 
 @MainActor
 struct AddCaffeineViewModelTimeTests {
+    @Test func customName_blankIsDefaulted_andTooLongCannotSave() {
+        let vm = AddCaffeineViewModel()
+        vm.activateCustomMode()
+        vm.customAmount = "100"
+
+        vm.customName = "   "
+        #expect(vm.canSave)
+        #expect(vm.resolve()?.drinkName == "직접 입력")
+
+        vm.customName = String(repeating: "가", count: AppConstants.Caffeine.maxDrinkNameLength + 1)
+        #expect(!vm.canSave)
+        #expect(vm.validationMessage != nil)
+    }
+
 
     @Test func newRecord_untouchedTime_usesNowAtSave() {
         let vm = AddCaffeineViewModel()
