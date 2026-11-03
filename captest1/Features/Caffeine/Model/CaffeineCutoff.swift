@@ -1,0 +1,52 @@
+//
+//  CaffeineCutoff.swift
+//  captest1
+//
+//  카페인 추가 화면의 즉시 미리보기용 마감시각 계산(서버 calc의 로컬 미러)과 차트 보조 함수.
+//
+
+import Foundation
+
+func koreanTimeLabel(for date: Date) -> String {
+    let hour = Calendar.current.component(.hour, from: date)
+    switch hour {
+    case 0: return "자정"
+    case 6: return "오전 6시"
+    case 12: return "정오"
+    case 18: return "오후 6시"
+    default: return "\(hour)시"
+    }
+}
+
+enum CaffeineCutoffResult: Equatable {
+    case safeAnytime
+    case cutoff(Date)
+    case alreadyExceeded(Double)
+}
+
+func caffeineCutoffTime(
+    currentDoses: [CaffeineKineticsCalculator.Dose],
+    bedtime: Date,
+    referenceDoseMg: Double,
+    halfLifeHours: Double,
+    safeThresholdMg: Double = AppConstants.Caffeine.bedtimeSafeThresholdMg
+) -> CaffeineCutoffResult {
+    guard referenceDoseMg > 0, halfLifeHours > 0 else { return .safeAnytime }
+
+    let existingAtBedtime = CaffeineKineticsCalculator.totalRemaining(
+        at: bedtime, doses: currentDoses, halfLifeHours: halfLifeHours
+    )
+
+    let headroom = safeThresholdMg - existingAtBedtime
+    if headroom <= 0 {
+        return .alreadyExceeded(existingAtBedtime)
+    }
+    if headroom >= referenceDoseMg {
+        return .safeAnytime
+    }
+
+    let ke = log(2) / halfLifeHours
+    let hoursBeforeBedtime = log(referenceDoseMg / headroom) / ke
+    let cutoff = bedtime.addingTimeInterval(-hoursBeforeBedtime * 3600)
+    return .cutoff(cutoff)
+}

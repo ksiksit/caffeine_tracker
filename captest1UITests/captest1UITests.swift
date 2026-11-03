@@ -30,7 +30,8 @@ final class captest1UITests: XCTestCase {
         // 홈 탭이 기본으로 표시되는지 확인
         XCTAssertTrue(app.navigationBars["홈"].waitForExistence(timeout: 2))
         XCTAssertTrue(app.staticTexts["오늘의 카페인"].exists)
-        XCTAssertTrue(app.staticTexts["0 mg"].exists)
+        // 홈 상단 마감 문장 영역이 표시되는지 식별자로 확인한다
+        XCTAssertTrue(app.descendants(matching: .any)["caffeineCutoffHero"].waitForExistence(timeout: 2))
 
         // 수면 분석 탭 전환
         app.tabBars.buttons["수면 분석"].tap()

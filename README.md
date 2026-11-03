@@ -120,24 +120,76 @@ deep -> REM -> core -> unspecified -> awake -> inBed
 
 ```text
 captest1/
-├── App/          # 앱 진입점, 환경 주입(Store·APIClient·Auth)
-├── Views/        # SwiftUI 화면과 공용 컴포넌트, Auth/(로그인·회원가입)
-├── ViewModels/   # AddCaffeineViewModel (즉시 미리보기 등)
-├── Models/       # 서버 DTO, 음료 프리셋, 수면 표시 모델, 건강 상태 (SwiftData 모델은 보존·미사용)
-├── Services/     # APIClient, CaffeineStore/LearningStore, SettingsManager,
-│                 #   AuthManager/TokenStore/Keychain, HealthKitManager/SleepFetchService(읽기),
-│                 #   CaffeineKineticsCalculator(즉시 미리보기용)
-├── Utilities/    # 상수, 카페인 헬퍼
-└── Resources/    # entitlements, 에셋, 로컬라이제이션
+├── App/              # 조립(컴포지션 루트): captest1App·AppDelegate(위치 이벤트 재실행 대비)·RootView·ContentView·AppEnvironment
+├── Features/         # ↔ 서버 domain/<도메인>. 각 Feature 안은 Views/Store/Data/Model 4종으로 분류(Model은 있는 곳만)
+│   ├── Auth/
+│   │   ├── Views/    # LoginView·SignupView
+│   │   ├── Store/    # AuthManager(세션 상태)·AuthState
+│   │   └── Data/     # AuthRepository(포트)·APIClient+Auth(어댑터)·AuthDTO·PreviewAuthRepository
+│   ├── Caffeine/
+│   │   ├── Views/    # HomeView·AddCaffeineView·CaffeineChartView·CutoffHeroCard·CutoffPreviewBanner
+│   │   ├── Store/    # CaffeineStore·AddCaffeineViewModel(폼 전용)
+│   │   ├── Data/     # CaffeineRepository·APIClient+Caffeine·CaffeineDTO·PreviewCaffeineRepository
+│   │   └── Model/    # CaffeineKineticsCalculator·CaffeineCutoff(즉시 미리보기용 로컬 미러)·DrinkPreset
+│   ├── Sleep/
+│   │   ├── Views/    # SleepAnalysisView·LastNightCard·StageBreakdownView·RecentNightsView
+│   │   ├── Store/    # SleepStore(업로드·요약)
+│   │   ├── Data/     # SleepRepository·APIClient+Sleep·SleepDTO·PreviewSleepRepository
+│   │   └── Model/    # SleepModels(서버값 표시 모델)
+│   ├── Learning/
+│   │   ├── Views/    # LearningDashboardView·CalibrationScatterChart·ConfidenceBar
+│   │   ├── Store/    # LearningStore
+│   │   └── Data/     # LearningRepository·APIClient+Learning·LearningDTO
+│   ├── Notification/
+│   │   ├── Views/    # NotificationPermissionRow·CafeNearbyRows(설정 화면 슬롯에 ContentView가 끼워 넣음)·DongPickerView
+│   │   ├── Store/    # NotificationStore(서버 알림 계획 → 로컬 예약 교체)·CafeNearbyStore(동 선택 → 지오펜스, 진입 판정 → 즉시 알림)
+│   │   ├── Data/     # NotificationRepository·APIClient+Notification·NotificationDTO·PreviewNotificationRepository·CafeZoneCatalog(번들 CafeZones.json)·CafeNearbyLocalStore
+│   │   └── Model/    # CafeNearbyGate(금지 구간 안인가·전체 60분 재알림 간격 — 순수 판정)
+│   └── Settings/
+│       ├── Views/    # SettingsView(알림 권한 줄·카페 근처 상세 줄은 슬롯으로 받음)
+│       ├── Store/    # SettingsManager(서버 권위 + 로컬 미러, 알림 종류별 on/off·카페 근처 포함)
+│       └── Data/     # SettingsRepository·APIClient+Settings·SettingsDTO
+├── Core/             # ↔ 서버 global/. Features를 참조하지 않는다
+│   ├── Networking/   # APIClient(전송·JWT·401 refresh·봉투 해제), APIEnvelope·APIError, ServerDateCoding, TokenStore, AuthSession
+│   ├── HealthKit/    # HealthKitManager(가용성·권한만), SleepFetchService(읽기), SleepSampleSource 포트
+│   ├── Notifications/ # LocalNotificationScheduler(로컬 알림 예약·즉시 알림·권한), LocalNotification 값, LocalNotificationScheduling 포트, LocalNotificationPresenter(앞에 있을 때 배너)
+│   ├── Location/     # GeofenceMonitor(CLMonitor 원형 구역 감시, GeofenceMonitoring 포트)·LocationPermissionManager(권한 상태만)
+│   ├── Security/     # KeychainHelper
+│   ├── DesignSystem/ # HealthCard·CategoryIconBadge·HealthMetric·SectionHeader
+│   └── Model/        # CaffeineCondition, AppConstants
+└── Resources/        # entitlements, 에셋, 로컬라이제이션
 
-captest1Tests/    # 단위 테스트 (도메인 연산 검증은 서버 골든 테스트로 이전)
-captest1UITests/  # 기본 탭 이동과 런치 성능 UI 테스트
+captest1Tests/        # 단위 테스트: 응답 봉투(Support/ URLProtocol 스텁), 스토어 5종(Fakes/ 페이크 Repository), 표시 모델·즉시 미리보기 계산.
+                      #   도메인 연산 검증은 서버 골든 테스트
+captest1UITests/      # 기본 탭 이동과 런치 성능 UI 테스트
 ```
+
+**구조 이름**: Clean Architecture의 의존 규칙을 적용한 Feature-first MVVM(Repository 포트까지만 채택).
+`XStore`(@Observable) = ViewModel 역할, `XRepository` = 포트, `extension APIClient: XRepository` = 어댑터, UseCase·Entity는 생략(연산은 서버).
+
+**의존 규칙**
+1. `Core`는 `Features`를 참조하지 않는다. (`grep -rnE "SettingsManager|CaffeineStore|LearningStore|SleepStore|AuthManager|NotificationStore|CafeNearbyStore" captest1/Core` 결과 없음)
+2. Feature 간 참조는 `SettingsManager` 읽기만 허용. 그 외 공유가 필요하면 `Core/Model`로 올린다.
+3. View는 Repository·Catalog를 직접 호출하지 않는다. 항상 Store를 거친다. (`grep -rn "Repository\|Catalog" captest1/Features/*/Views | grep -v Preview` 결과 없음. `#Preview`의 페이크 주입만 예외)
+4. `APIClient` 본체에는 엔드포인트를 두지 않는다. 각 Feature의 `APIClient+X.swift` 확장이 `XRepository`를 채택하고, 조립은 `captest1App.init` 한 곳에서 한다. 예외: `CafeNearbyStore`는 위치 이벤트로 백그라운드 재실행될 때 화면 없이 동작해야 해서 `AppDelegate`가 만들고 앱이 environment로 넘긴다.
+5. DTO는 Feature 폴더에, 날짜 코딩·에러·봉투는 `Core/Networking`에.
+6. Feature 안은 `Views/ Store/ Data/ Model/` 4종으로만 분류한다(`find captest1/Features -mindepth 2 -maxdepth 2 -name "*.swift"` 결과 없음). 의존 방향은 `Views → Store → Data·Model`. Views는 Model·DTO를 읽기만 하고, Data는 같은 Feature의 다른 폴더를 모른다. 배치 기준은 `docs/ios-architecture-plan.md` 단계 9의 표.
+
+**데이터 흐름**: 사용자 입력 → `Store` → `XRepository`(= `APIClient` 확장) → 서버 연산 → `Store(@Observable)` → View
+**수면**: HealthKit 원시 샘플(`SleepSampleSource`) → `SleepStore`가 서버 업로드 → 서버 병합·요약 → `SleepSummary`(서버값 그대로) → View
+**설정**: 서버 권위 + `SettingsManager` 로컬 미러(변경 시 디바운스 PUT)
+**알림**: 서버 `/api/notifications/plan`(무엇을·언제·어떤 문구로) → `NotificationStore`가 기존 예약을 전부 지우고 교체 → `Core/Notifications`가 로컬 알림 예약.
+재조회 신호(today 갱신·설정 서버 반영·포그라운드 진입)는 기능끼리 부르지 않고 `ContentView`가 관찰해 잇는다. 조회 실패 시 기존 예약 유지
+**카페 근처 알림**: 번들 `CafeZones.json`(tools/cafe-zones로 생성) 중 고른 동(최대 2개)의 구역 상위 17개를 지오펜스 등록 → 계획의 `cafeNearbyWindows`를 기기에 저장 →
+진입 순간 `CafeNearbyGate`가 네트워크 없이 판정해 서버 문구로 즉시 알림. 동·위치는 서버로 보내지 않는다. 앱이 꺼져 있어도 `AppDelegate`가 감시를 재개한다
 
 ## 실행 방법
 
 > **먼저 서버를 실행**해야 합니다. [`../server`](../server)의 README를 따라 백엔드를 `http://localhost:8080`에 띄우세요
 > (앱의 `BASE_URL` 기본값). 회원가입/로그인 후 기능을 사용할 수 있습니다.
+
+배포 서버에 붙이려면 `Config/Secrets.example.plist`를 `captest1/Resources/Secrets.plist`로 복사해 `BASE_URL`을 넣으세요.
+이 파일은 gitignore라 저장소에 올라가지 않고, 있으면 `Info.plist`의 기본값보다 우선합니다(공개 저장소에 서버 주소를 남기지 않기 위함).
 
 1. 서버(`../server`)를 로컬에서 실행합니다.
 2. Xcode에서 `captest1.xcodeproj`를 엽니다.

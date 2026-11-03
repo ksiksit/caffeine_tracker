@@ -74,51 +74,29 @@ struct SleepStageTests {
     @Test func unknownValue_defaultsToUnspecified() {
         #expect(SleepStage(from: 999) == .asleepUnspecified)
     }
-
-    @Test func isAsleep_correctForAllCases() {
-        #expect(SleepStage.asleepCore.isAsleep == true)
-        #expect(SleepStage.asleepDeep.isAsleep == true)
-        #expect(SleepStage.asleepREM.isAsleep == true)
-        #expect(SleepStage.asleepUnspecified.isAsleep == true)
-        #expect(SleepStage.inBed.isAsleep == false)
-        #expect(SleepStage.awake.isAsleep == false)
-    }
 }
 
 struct SleepSummaryTests {
 
-    private func makeRecord(stage: SleepStage, hours: Double) -> SleepRecord {
-        let start = Date()
-        let end = start.addingTimeInterval(hours * 3600)
-        return SleepRecord(startDate: start, endDate: end, stage: stage)
-    }
+    /// 서버 SleepSummaryCalc 결과를 그대로 담는지(재계산 없음) 확인.
+    private static let response = SleepSummaryResponse(
+        date: "2026-06-01", hasData: true, bedtimeStart: nil, records: [],
+        totalSleepSeconds: 6 * 3600, timeInBedSeconds: 8 * 3600, sleepEfficiency: 0.75,
+        sleepOnsetLatencySeconds: 900,
+        stageBreakdown: [
+            SleepStageItem(hkValue: HKCategoryValueSleepAnalysis.asleepDeep.rawValue, durationSeconds: 3600),
+            SleepStageItem(hkValue: HKCategoryValueSleepAnalysis.asleepREM.rawValue, durationSeconds: 1800),
+        ]
+    )
 
-    @Test func totalSleepDuration_excludesNonSleep() {
-        let summary = SleepSummary(date: Date(), records: [
-            makeRecord(stage: .asleepDeep, hours: 2),
-            makeRecord(stage: .asleepREM, hours: 1),
-            makeRecord(stage: .inBed, hours: 0.5),
-            makeRecord(stage: .awake, hours: 0.5),
-        ])
-        let totalHours = summary.totalSleepDuration / 3600
-        #expect(totalHours == 3.0)
-    }
-
-    @Test func sleepEfficiency_zeroDivision() {
-        let summary = SleepSummary(date: Date(), records: [])
-        #expect(summary.sleepEfficiency == 0)
-    }
-
-    @Test func stageBreakdown_aggregatesCorrectly() {
-        let summary = SleepSummary(date: Date(), records: [
-            makeRecord(stage: .asleepDeep, hours: 1),
-            makeRecord(stage: .asleepDeep, hours: 2),
-            makeRecord(stage: .asleepREM, hours: 1),
-        ])
-        let breakdown = summary.stageBreakdown
-        let deepEntry = breakdown.first { $0.stage == .asleepDeep }
-        #expect(deepEntry != nil)
-        #expect(deepEntry!.duration / 3600 == 3.0)
+    @Test func init_mapsServerFieldsWithoutRecomputing() {
+        let summary = SleepSummary(date: Date(), response: Self.response)
+        #expect(summary.totalSleepDuration == 6 * 3600)
+        #expect(summary.timeInBed == 8 * 3600)
+        #expect(summary.sleepEfficiency == 0.75)
+        #expect(summary.sleepOnsetLatency == 900)
+        #expect(summary.stageBreakdown.map(\.stage) == [.asleepDeep, .asleepREM])
+        #expect(summary.stageBreakdown.map(\.duration) == [3600, 1800])
     }
 
     @Test func formatDuration_hoursAndMinutes() {
@@ -147,5 +125,71 @@ struct DrinkPresetTests {
     @Test func allPresets_haveUniqueNames() {
         let names = DrinkPreset.all.map(\.name)
         #expect(Set(names).count == names.count)
+    }
+}
+
+@MainActor
+struct AddCaffeineViewModelTimeTests {
+
+    @Test func newRecord_untouchedTime_usesNowAtSave() {
+        let vm = AddCaffeineViewModel()
+        vm.selectPreset(DrinkPreset.all[0])
+        vm.selectedDate = Date(timeIntervalSince1970: 1_000)
+        let now = Date(timeIntervalSince1970: 2_000)
+        #expect(vm.intakeTime(now: now) == now)
+    }
+
+    @Test func newRecord_editedTime_usesSelectedTime() {
+        let vm = AddCaffeineViewModel()
+        vm.selectPreset(DrinkPreset.all[0])
+        let picked = Date().addingTimeInterval(-2 * 3600)
+        vm.selectedDate = picked
+        vm.isTimeEdited = true
+        #expect(vm.resolve()?.timestamp == picked)
+    }
+
+    @Test func editRecord_usesRecordTime() {
+        let vm = AddCaffeineViewModel()
+        let recorded = Date().addingTimeInterval(-3 * 3600)
+        vm.loadForEdit(.fixture(timestamp: recorded))
+        #expect(vm.resolve()?.timestamp == recorded)
+    }
+}
+
+@MainActor
+struct AddCaffeineViewModelButtonTests {
+
+    @Test func nothingSelected_asksToChoose() {
+        let vm = AddCaffeineViewModel()
+        #expect(vm.saveButtonTitle == "음료를 선택하세요")
+        #expect(vm.canSave == false)
+    }
+
+    @Test func preset_showsNameAndAmount() {
+        let vm = AddCaffeineViewModel()
+        let preset = DrinkPreset.all[0]
+        vm.selectPreset(preset)
+        #expect(vm.saveButtonTitle == "\(preset.name) \(preset.caffeineAmount) mg 추가")
+    }
+
+    @Test func custom_withoutAmount_asksForAmount() {
+        let vm = AddCaffeineViewModel()
+        vm.activateCustomMode()
+        #expect(vm.saveButtonTitle == "카페인 양을 입력하세요")
+    }
+
+    @Test func custom_withAmount_usesNameOrFallback() {
+        let vm = AddCaffeineViewModel()
+        vm.activateCustomMode()
+        vm.customAmount = "120"
+        #expect(vm.saveButtonTitle == "직접 입력 120 mg 추가")
+        vm.customName = "콜드브루"
+        #expect(vm.saveButtonTitle == "콜드브루 120 mg 추가")
+    }
+
+    @Test func editMode_saysSave() {
+        let vm = AddCaffeineViewModel()
+        vm.loadForEdit(.fixture())
+        #expect(vm.saveButtonTitle == "저장")
     }
 }

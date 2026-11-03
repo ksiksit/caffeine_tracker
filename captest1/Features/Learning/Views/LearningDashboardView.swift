@@ -1,0 +1,360 @@
+//
+//  LearningDashboardView.swift
+//  captest1
+//
+//  베이지안 학습 결과 대시보드. 학습·통계는 서버가 계산하고, 여기선 서버 DTO를 렌더한다.
+//  5개 카드 — Hero / Trend / Calibration / Distribution / List. count에 따라 분기.
+//
+
+import SwiftUI
+import Charts
+
+struct LearningDashboardView: View {
+    @Environment(SettingsManager.self) private var settings
+    @Environment(LearningStore.self) private var store
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: Theme.Spacing.section) {
+                if let dashboard = store.dashboard {
+                    if let message = store.errorMessage {
+                        Label(message, systemImage: "exclamationmark.triangle.fill")
+                            .font(.footnote.weight(.medium))
+                            .foregroundStyle(Theme.Colors.signalWarn)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    content(dashboard)
+                } else if store.isLoading || !store.hasLoaded {
+                    ProgressView("학습 데이터를 불러오는 중...")
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 60)
+                } else if let message = store.errorMessage {
+                    // 오류를 "아직 학습된 데이터가 없어요"로 보여주면 기록이 부족하다고 오해한다.
+                    ContentUnavailableView {
+                        Label("불러오지 못했어요", systemImage: "wifi.exclamationmark")
+                    } description: {
+                        Text(message)
+                    } actions: {
+                        Button("다시 시도") {
+                            Task { await store.refresh() }
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                    .padding(.vertical, 40)
+                } else {
+                    EmptyLearningStateCard(message: store.skipMessage)
+                }
+            }
+            .padding(.horizontal, Theme.Spacing.screen)
+            .padding(.vertical, 16)
+        }
+        .background(Theme.Colors.canvas.ignoresSafeArea())
+        .navigationTitle("내 학습")
+        .navigationBarTitleDisplayMode(.inline)
+        .refreshable { await store.refresh() }
+        .task { await store.refresh() }
+    }
+
+    @ViewBuilder
+    private func content(_ dashboard: LearningDashboardResponse) -> some View {
+        switch dashboard.count {
+        case 0:
+            EmptyLearningStateCard(message: store.skipMessage)
+        case 1..<3:
+            if let latest = dashboard.latest {
+                HeroEstimateCard(latest: latest, count: dashboard.count, lastLearnedDate: settings.lastLearnedDate)
+            }
+            EarlyStageHintCard(count: dashboard.count)
+            ObservationListCard(observations: dashboard.observations)
+        default:
+            if let latest = dashboard.latest {
+                HeroEstimateCard(latest: latest, count: dashboard.count, lastLearnedDate: settings.lastLearnedDate)
+            }
+            LearningDetailsDisclosure {
+                LearningTrendCard(observations: dashboard.observations)
+                CalibrationCard(calibration: dashboard.calibration)
+                InputDistributionCard(residual: dashboard.residualHistogram, sol: dashboard.solHistogram)
+                ObservationListCard(observations: dashboard.observations)
+            }
+        }
+    }
+}
+
+// MARK: - 학습 상세 (점진적 공개)
+
+private struct LearningDetailsDisclosure<Content: View>: View {
+    @State private var isExpanded = false
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        VStack(spacing: 16) {
+            Button {
+                withAnimation { isExpanded.toggle() }
+            } label: {
+                HStack(spacing: 10) {
+                    Text("학습 상세 보기")
+                        .font(.body.weight(.semibold))
+                        .foregroundStyle(Theme.Colors.ink)
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.right")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(Theme.Colors.inkSecondary)
+                        .rotationEffect(.degrees(isExpanded ? 90 : 0))
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .buttonStyle(.outline)
+
+            if isExpanded {
+                content()
+            }
+        }
+    }
+}
+
+// MARK: - ① Hero
+
+private struct HeroEstimateCard: View {
+    let latest: LatestEstimate
+    let count: Int
+    let lastLearnedDate: Date?
+
+    private let populationMean = AppConstants.Pharmacokinetics.defaultHalfLifeHours
+
+    /// 일반 성인 평균과 비교한 한 줄 설명
+    private var comparison: String {
+        let diff = latest.posteriorMean - populationMean
+        let base = String(format: "일반 성인 평균(%.1f시간)", populationMean)
+        if abs(diff) < 0.25 { return "\(base)과 비슷한 속도로 분해돼요." }
+        return diff < 0 ? "\(base)보다 빨리 분해돼요." : "\(base)보다 천천히 분해돼요."
+    }
+
+    private var lastLearnedText: String {
+        guard let date = lastLearnedDate else { return "-" }
+        return date.formatted(.dateTime.month(.defaultDigits).day())
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("나의 카페인 반감기")
+                    .font(Theme.Fonts.sectionTitle)
+                    .foregroundStyle(Theme.Colors.inkSecondary)
+
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    Text(String(format: "%.1f", latest.posteriorMean))
+                        .font(Theme.Fonts.heroNumber)
+                        .foregroundStyle(Theme.Colors.ink)
+                    Text("시간")
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(Theme.Colors.inkSecondary)
+                }
+                .accessibilityElement(children: .combine)
+
+                Text(comparison)
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.Colors.ink)
+
+                Text(String(format: "예상 범위 %.1f–%.1f시간", latest.ciLower, latest.ciUpper))
+                    .font(.footnote.monospacedDigit())
+                    .foregroundStyle(Theme.Colors.inkSecondary)
+            }
+
+            MetricStrip([
+                .init(label: "학습 신뢰도", value: "\(Int((latest.confidence * 100).rounded()))", unit: "%"),
+                .init(label: "관측", value: "\(count)", unit: "회"),
+                .init(label: "마지막 학습", value: lastLearnedText),
+            ])
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+// MARK: - ② Trend
+
+private struct LearningTrendCard: View {
+    let observations: [ObservationItem]
+
+    var body: some View {
+        HealthCard("학습 추세", symbol: "chart.line.uptrend.xyaxis", tint: Theme.Colors.accent) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("선은 날마다 추정한 내 반감기, 띠는 오차 범위예요. 점선(일반 성인 평균)에서 멀어질수록 나만의 값에 가까워진 거예요.")
+                    .font(.caption).foregroundStyle(Theme.Colors.inkSecondary)
+
+                Chart {
+                    ForEach(observations) { obs in
+                        AreaMark(
+                            x: .value("날짜", obs.parsedDate),
+                            yStart: .value("하한", obs.posteriorMean - 1.96 * sqrt(obs.posteriorVariance)),
+                            yEnd: .value("상한", obs.posteriorMean + 1.96 * sqrt(obs.posteriorVariance))
+                        )
+                        .foregroundStyle(Theme.Colors.accent.opacity(0.15))
+
+                        LineMark(x: .value("날짜", obs.parsedDate), y: .value("반감기", obs.posteriorMean))
+                            .foregroundStyle(Theme.Colors.accent)
+                            .interpolationMethod(.monotone)
+                            .symbol(.circle)
+                    }
+                    RuleMark(y: .value("일반 성인 평균", AppConstants.Pharmacokinetics.defaultHalfLifeHours))
+                        .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
+                        .foregroundStyle(Theme.Colors.inkSecondary)
+                        .annotation(position: .topTrailing, alignment: .trailing) {
+                            Text(String(format: "평균 %.0f시간", AppConstants.Pharmacokinetics.defaultHalfLifeHours)).font(.caption2).foregroundStyle(Theme.Colors.inkSecondary)
+                        }
+                }
+                .chartYScale(domain: 2.5...7.5)
+                .chartYAxis {
+                    AxisMarks(values: [3, 4, 5, 6, 7]) { value in
+                        AxisGridLine()
+                        AxisValueLabel { if let v = value.as(Double.self) { Text("\(Int(v))시간") } }
+                    }
+                }
+                .frame(height: 220)
+            }
+        }
+    }
+}
+
+// MARK: - ③ Calibration (캡스톤 핵심)
+
+private struct CalibrationCard: View {
+    let calibration: Calibration
+
+    var body: some View {
+        let points = calibration.points.map {
+            CalibrationPoint(predicted: $0.predicted, observed: $0.observed)
+        }
+        let domain = calibration.domainLower...max(calibration.domainUpper, calibration.domainLower + 1)
+
+        HealthCard("모델 정확도", symbol: "target", tint: Theme.Colors.accent) {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("점 하나가 하룻밤이에요. 앱이 예측한 잠들기까지 걸린 시간과 실제 시간이 같을수록 점이 대각선에 붙어요. 회색 띠는 측정 오차 범위(±10분)예요.")
+                    .font(.caption).foregroundStyle(Theme.Colors.inkSecondary)
+
+                CalibrationScatterChart(points: points, domain: domain)
+
+                HStack(spacing: 24) {
+                    metricBlock(label: "설명력 (R²)",
+                                value: calibration.rSquared.map { String(format: "%.3f", $0) } ?? "—",
+                                unit: nil)
+                    metricBlock(label: "평균 오차 (RMSE)", value: String(format: "%.1f", calibration.rmse), unit: "분")
+                    Spacer()
+                }
+            }
+        }
+    }
+
+    private func metricBlock(label: String, value: String, unit: String?) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(label).font(.caption2).foregroundStyle(Theme.Colors.inkSecondary)
+            HStack(alignment: .firstTextBaseline, spacing: 2) {
+                Text(value).font(Theme.Fonts.metricValue)
+                    .foregroundStyle(Theme.Colors.ink)
+                if let unit { Text(unit).font(.caption.weight(.semibold)).foregroundStyle(Theme.Colors.inkSecondary) }
+            }
+        }
+    }
+}
+
+// MARK: - ④ Input Distribution
+
+private struct InputDistributionCard: View {
+    let residual: [HistogramBinItem]
+    let sol: [HistogramBinItem]
+
+    var body: some View {
+        HealthCard("입력 데이터 분포", symbol: "chart.bar.fill", tint: Theme.Colors.accent) {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("학습에 쓰인 취침 시 카페인 잔량과 잠들기까지 걸린 시간의 분포예요. 한쪽으로 몰려 있으면 더 다양한 날의 기록이 필요해요.")
+                    .font(.caption).foregroundStyle(Theme.Colors.inkSecondary)
+
+                HStack(alignment: .top, spacing: 12) {
+                    histogramColumn(title: "취침 시 카페인 잔량", unit: "mg", bins: residual)
+                    HairlineDivider(vertical: true).frame(maxHeight: 180)
+                    histogramColumn(title: "잠들기까지 걸린 시간", unit: "분", bins: sol)
+                }
+            }
+        }
+    }
+
+    private func histogramColumn(title: String, unit: String, bins: [HistogramBinItem]) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title).font(.caption.weight(.semibold))
+            Chart(bins) { bin in
+                BarMark(x: .value("범위", bin.label), y: .value("개수", bin.count))
+                    .foregroundStyle(Theme.Colors.accent.opacity(0.7))
+                    .cornerRadius(2)
+            }
+            .chartXAxis { AxisMarks { _ in AxisValueLabel(orientation: .vertical).font(Theme.Fonts.chartAxisDense) } }
+            .chartYAxis { AxisMarks(values: .automatic(desiredCount: 3)) }
+            .frame(height: 140)
+            Text("\(unit) 기준").font(.caption2).foregroundStyle(Theme.Colors.inkSecondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+// MARK: - ⑤ Observation list
+
+private struct ObservationListCard: View {
+    let observations: [ObservationItem]
+
+    var body: some View {
+        HealthCard("전체 기록", symbol: "list.bullet.rectangle", tint: Theme.Colors.accent) {
+            VStack(spacing: 0) {
+                ForEach(Array(observations.reversed().enumerated()), id: \.element.id) { index, obs in
+                    if index > 0 { HairlineDivider() }
+                    row(obs)
+                }
+            }
+        }
+    }
+
+    private func row(_ obs: ObservationItem) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text(obs.parsedDate, format: .dateTime.month().day())
+                    .font(.subheadline.weight(.semibold))
+                Spacer()
+                Text(String(format: "%.1f → %.1f시간", obs.priorMean, obs.posteriorMean))
+                    .font(.caption.monospacedDigit()).foregroundStyle(Theme.Colors.inkSecondary)
+            }
+            HStack(spacing: 12) {
+                Label(String(format: "잔량 %.0f mg", obs.predictedResidualAtBedtime), systemImage: "cup.and.saucer")
+                Label(String(format: "잠들기까지 %.0f분", obs.observedSolMinutes), systemImage: "moon.zzz")
+            }
+            .font(.caption2).foregroundStyle(Theme.Colors.inkSecondary)
+        }
+        .padding(.vertical, 8)
+    }
+}
+
+// MARK: - Empty / Early state
+
+private struct EmptyLearningStateCard: View {
+    let message: String?
+
+    // 수면 탭의 권한·빈 상태와 같은 시스템 빈 화면 형식을 쓴다.
+    var body: some View {
+        ContentUnavailableView {
+            Label("아직 학습된 데이터가 없어요", systemImage: "brain.head.profile")
+        } description: {
+            if let message {
+                Text("HealthKit 수면 기록과 카페인 섭취 기록이 쌓이면\n매일 자동으로 반감기가 갱신됩니다.\n\n학습되지 않은 이유: \(message)")
+            } else {
+                Text("HealthKit 수면 기록과 카페인 섭취 기록이 쌓이면\n매일 자동으로 반감기가 갱신됩니다.")
+            }
+        }
+        .padding(.vertical, 40)
+    }
+}
+
+private struct EarlyStageHintCard: View {
+    let count: Int
+    var body: some View {
+        HealthCard(symbol: "info.circle") {
+            Text("관측 \(count)회 누적. 모델 정확도와 입력 분포 차트는 3회 관측부터 표시됩니다.")
+                .font(.subheadline).foregroundStyle(Theme.Colors.inkSecondary)
+        }
+    }
+}

@@ -6,6 +6,10 @@
 	<string>http://localhost:8080</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
+		<!-- 개발/테스트용: 배포 서버가 평문 HTTP라 ATS 전역 허용.
+		     App Store 심사 전에는 HTTPS로 전환하고 이 키를 제거할 것. -->
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
 		<key>NSExceptionDomains</key>
 		<dict>
 			<key>localhost</key>

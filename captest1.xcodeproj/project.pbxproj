@@ -404,6 +404,8 @@
 				INFOPLIST_FILE = Config/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "수면 데이터를 분석하기 위해 건강 데이터에 접근합니다";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "앱을 열지 않아도 카페 구역에 들어서면 알림을 보내기 위해 위치를 사용합니다. 위치는 기기 밖으로 보내지 않습니다.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "카페 구역 진입을 확인하기 위해 위치를 사용합니다. 위치는 기기 밖으로 보내지 않습니다.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -440,6 +442,8 @@
 				INFOPLIST_FILE = Config/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "수면 데이터를 분석하기 위해 건강 데이터에 접근합니다";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "앱을 열지 않아도 카페 구역에 들어서면 알림을 보내기 위해 위치를 사용합니다. 위치는 기기 밖으로 보내지 않습니다.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "카페 구역 진입을 확인하기 위해 위치를 사용합니다. 위치는 기기 밖으로 보내지 않습니다.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
