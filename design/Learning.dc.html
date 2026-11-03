@@ -1,0 +1,303 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; }
+    .ios { font-family: -apple-system, "SF Pro Text", "Apple SD Gothic Neo", "Pretendard Variable", Pretendard, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    .rounded { font-family: "SF Pro Rounded", ui-rounded, -apple-system, "Apple SD Gothic Neo", system-ui, sans-serif; font-variant-numeric: tabular-nums; }
+    .card { background: #FFFFFF; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+    .cardhead { display: flex; align-items: center; gap: 10px; }
+    .badge { width: 28px; height: 28px; border-radius: 14px; background: #8B5E3C; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .cardtitle { font-size: 17px; font-weight: 600; }
+    .cardnote { font-size: 12px; color: rgba(60,60,67,0.6); line-height: 1.45; }
+    .rule { height: 1px; background: rgba(60,60,67,0.29); }
+    .tabitem { flex-grow: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .tablabel { font-size: 10px; font-weight: 500; color: rgba(60,60,67,0.6); line-height: 12px; }
+    .axis { font-size: 11px; fill: rgba(60,60,67,0.6); }
+    a { color: #8B5E3C; text-decoration: none; }
+    a:hover { color: #6E4A2F; }
+  </style>
+</helmet>
+
+<div class="ios" style="width: 402px; min-height: 2300px; background: #F2F2F7; color: #000000; display: flex; flex-direction: column; box-sizing: border-box;">
+
+  <div style="height: 62px; flex-shrink: 0;"></div>
+  <div style="padding: 4px 16px 7px; flex-shrink: 0;">
+    <div style="font-size: 34px; font-weight: 700; letter-spacing: -0.02em; line-height: 41px;">내 학습 데이터</div>
+  </div>
+
+  <div style="flex-grow: 1; padding: 16px; display: flex; flex-direction: column; gap: 16px; box-sizing: border-box;">
+
+    <!-- ① 현재 추정 반감기 -->
+    <div class="card">
+      <div class="cardhead">
+        <div class="badge">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 1.8v4M12 18.2v4M1.8 12h4M18.2 12h4"/></svg>
+        </div>
+        <div class="cardtitle">현재 추정 반감기</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 14px;">
+        <div style="display: flex; align-items: baseline; gap: 4px;">
+          <div class="rounded" style="font-size: 48px; font-weight: 700; color: #8B5E3C; line-height: 58px;">5.57</div>
+          <div style="font-size: 22px; font-weight: 600; color: rgba(60,60,67,0.6);">h</div>
+        </div>
+        <div class="rounded" style="font-size: 15px; color: rgba(60,60,67,0.6);">95% 신뢰구간&nbsp; 5.11 h ~ 6.03 h</div>
+        <div class="rule"></div>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <div style="display: flex; align-items: center;">
+            <div style="font-size: 12px; font-weight: 500; flex-grow: 1;">학습 신뢰도</div>
+            <div class="rounded" style="font-size: 12px; font-weight: 600; color: #8B5E3C;">68%</div>
+          </div>
+          <div style="height: 8px; border-radius: 4px; background: rgba(118,118,128,0.12); position: relative;">
+            <div style="position: absolute; left: 0; top: 0; height: 8px; width: 68%; border-radius: 4px; background: #8B5E3C;"></div>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; font-size: 12px; color: rgba(60,60,67,0.3);">
+          <div style="display: flex; align-items: center; gap: 5px; flex-grow: 1;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(60,60,67,0.3)" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 20V9M9.3 20V4M14.7 20v-8M20 20v-5"/></svg>
+            <div>7회 관측</div>
+          </div>
+          <div>마지막 학습 9월 10일</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 학습 상세 보기 (점진적 공개) -->
+    <div role="button" tabindex="0" onClick="{{ toggleDetails }}" style="background: #FFFFFF; border-radius: 12px; padding: 16px; display: flex; align-items: center; gap: 10px; cursor: pointer;">
+      <div class="badge">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4v15.4h16"/><path d="M7.4 16.2 11 10.6l3.2 2.6 4-6"/></svg>
+      </div>
+      <div class="cardtitle" style="flex-grow: 1;">학습 상세 보기</div>
+      <div style="display: flex; align-items: center; transition: transform 0.25s; transform: {{ chevron }};">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(60,60,67,0.6)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5.5 15.5 12 9 18.5"/></svg>
+      </div>
+    </div>
+
+    <sc-if value="{{ open }}" hint-placeholder-val="{{ true }}">
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+
+        <!-- ② 학습 추세 -->
+        <div class="card">
+          <div class="cardhead">
+            <div class="badge"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4v15.4h16"/><path d="M7.2 15.6l3.4-3.7 2.6 2.2 4.6-5.5"/><path d="M15.2 8.4h2.9v2.9"/></svg></div>
+            <div class="cardtitle">학습 추세</div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div class="cardnote">사후 평균과 95% 신뢰구간이 모집단 prior(5.0h)에서 어떻게 멀어졌는지 확인하세요.</div>
+            <svg width="338" height="220" viewBox="0 0 338 220" aria-label="반감기 사후 평균 추세">
+              <g stroke="rgba(60,60,67,0.29)" stroke-width="0.5">
+                <path d="M28 179.6H336M28 142.8H336M28 106H336M28 69.2H336M28 32.4H336"></path>
+              </g>
+              <path d="M28 73.0 L79.3 73.0 L130.7 73.4 L182 71.6 L233.3 70.8 L284.7 70.1 L336 70.1 L336 104.0 L284.7 106.9 L233.3 109.8 L182 113.5 L130.7 119.8 L79.3 125.3 L28 134.1 Z" fill="#8B5E3C" fill-opacity="0.15"></path>
+              <path d="M28 106H336" stroke="rgba(60,60,67,0.6)" stroke-width="1" stroke-dasharray="4 4"></path>
+              <text x="334" y="101" text-anchor="end" font-size="11" fill="rgba(60,60,67,0.6)">모집단 5.0h</text>
+              <path fill="none" stroke="#8B5E3C" stroke-width="2" stroke-linejoin="round" d="M28 103.6 L79.3 99.2 L130.7 96.6 L182 92.5 L233.3 90.3 L284.7 88.5 L336 87.0"></path>
+              <g fill="#8B5E3C">
+                <circle cx="28" cy="103.6" r="3.4"></circle>
+                <circle cx="79.3" cy="99.2" r="3.4"></circle>
+                <circle cx="130.7" cy="96.6" r="3.4"></circle>
+                <circle cx="182" cy="92.5" r="3.4"></circle>
+                <circle cx="233.3" cy="90.3" r="3.4"></circle>
+                <circle cx="284.7" cy="88.5" r="3.4"></circle>
+                <circle cx="336" cy="87.0" r="3.4"></circle>
+              </g>
+              <g class="axis">
+                <text x="24" y="183.1" text-anchor="end">3h</text>
+                <text x="24" y="146.3" text-anchor="end">4h</text>
+                <text x="24" y="109.5" text-anchor="end">5h</text>
+                <text x="24" y="72.7" text-anchor="end">6h</text>
+                <text x="24" y="35.9" text-anchor="end">7h</text>
+                <text x="28" y="213" text-anchor="start">9/4</text>
+                <text x="130.7" y="213" text-anchor="middle">9/6</text>
+                <text x="233.3" y="213" text-anchor="middle">9/8</text>
+                <text x="336" y="213" text-anchor="end">9/10</text>
+              </g>
+            </svg>
+          </div>
+        </div>
+
+        <!-- ③ 모델 정확도 -->
+        <div class="card">
+          <div class="cardhead">
+            <div class="badge"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.9" aria-hidden="true"><circle cx="12" cy="12" r="8.4"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="0.9" fill="#FFFFFF"/></svg></div>
+            <div class="cardtitle">모델 정확도</div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div class="cardnote">점이 대각선에 가까울수록 모델 예측이 정확합니다. 회색 띠 = ±10분 노이즈 범위.</div>
+            <svg width="338" height="338" viewBox="0 0 338 338" aria-label="예측 SOL 대비 측정 SOL">
+              <path d="M40 304 L138 304 L334 108 L334 10 L236 10 L40 206 Z" fill="rgba(60,60,67,0.10)"></path>
+              <g stroke="rgba(60,60,67,0.29)" stroke-width="0.5">
+                <path d="M108.6 10V304M206.6 10V304M304.6 10V304"></path>
+                <path d="M40 235.4H334M40 137.4H334M40 39.4H334"></path>
+              </g>
+              <path d="M40 304 L334 10" fill="none" stroke="rgba(60,60,67,0.6)" stroke-width="1.5" stroke-dasharray="6 4"></path>
+              <g fill="#8B5E3C">
+                <circle cx="89" cy="215.8" r="5"></circle>
+                <circle cx="147.8" cy="225.6" r="5"></circle>
+                <circle cx="177.2" cy="127.6" r="5"></circle>
+                <circle cx="216.4" cy="147.2" r="5"></circle>
+                <circle cx="255.6" cy="59" r="5"></circle>
+                <circle cx="128.2" cy="245.2" r="5"></circle>
+                <circle cx="196.8" cy="176.6" r="5"></circle>
+              </g>
+              <path d="M40 10V304H334" fill="none" stroke="rgba(60,60,67,0.29)" stroke-width="1"></path>
+              <g class="axis">
+                <text x="108.6" y="318" text-anchor="middle">20</text>
+                <text x="206.6" y="318" text-anchor="middle">30</text>
+                <text x="304.6" y="318" text-anchor="middle">40</text>
+                <text x="34" y="239" text-anchor="end">20</text>
+                <text x="34" y="141" text-anchor="end">30</text>
+                <text x="34" y="43" text-anchor="end">40</text>
+                <text x="187" y="334" text-anchor="middle">예측 SOL (분)</text>
+                <text x="0" y="0" text-anchor="middle" transform="translate(11,157) rotate(-90)">측정 SOL (분)</text>
+              </g>
+            </svg>
+            <div style="display: flex; gap: 24px;">
+              <div style="display: flex; flex-direction: column; gap: 2px;">
+                <div style="font-size: 11px; color: rgba(60,60,67,0.6);">R²</div>
+                <div class="rounded" style="font-size: 24px; font-weight: 700; color: #8B5E3C;">0.729</div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 2px;">
+                <div style="font-size: 11px; color: rgba(60,60,67,0.6);">RMSE</div>
+                <div style="display: flex; align-items: baseline; gap: 2px;">
+                  <div class="rounded" style="font-size: 24px; font-weight: 700; color: #8B5E3C;">3.2</div>
+                  <div style="font-size: 12px; font-weight: 600; color: rgba(60,60,67,0.6);">분</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ④ 입력 데이터 분포 -->
+        <div class="card">
+          <div class="cardhead">
+            <div class="badge"><svg width="15" height="15" viewBox="0 0 24 24" fill="#FFFFFF" aria-hidden="true"><rect x="3" y="12" width="4.2" height="9" rx="1"/><rect x="9.9" y="6.5" width="4.2" height="14.5" rx="1"/><rect x="16.8" y="9.5" width="4.2" height="11.5" rx="1"/></svg></div>
+            <div class="cardtitle">입력 데이터 분포</div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div class="cardnote">학습에 사용된 카페인 잔량과 SOL의 분포입니다. 한쪽으로 치우쳐 있다면 더 다양한 조건의 데이터가 필요합니다.</div>
+            <div style="display: flex; align-items: flex-start; gap: 12px;">
+              <div style="display: flex; flex-direction: column; gap: 6px; flex-grow: 1;">
+                <div style="font-size: 12px; font-weight: 600;">취침 시 카페인 잔량</div>
+                <svg width="156" height="140" viewBox="0 0 156 140" aria-label="잔량 분포">
+                  <g stroke="rgba(60,60,67,0.29)" stroke-width="0.5"><path d="M16 118H156M16 81.3H156M16 44.7H156M16 8H156"></path></g>
+                  <g fill="#8B5E3C" fill-opacity="0.7">
+                    <rect x="25.3" y="44.7" width="28" height="73.3" rx="2"></rect>
+                    <rect x="72" y="8" width="28" height="110" rx="2"></rect>
+                    <rect x="118.7" y="44.7" width="28" height="73.3" rx="2"></rect>
+                  </g>
+                  <g font-size="10" fill="rgba(60,60,67,0.6)">
+                    <text x="12" y="121.5" text-anchor="end">0</text>
+                    <text x="12" y="84.8" text-anchor="end">1</text>
+                    <text x="12" y="48.2" text-anchor="end">2</text>
+                    <text x="12" y="11.5" text-anchor="end">3</text>
+                  </g>
+                  <g font-size="8" fill="rgba(60,60,67,0.6)">
+                    <text x="0" y="0" text-anchor="end" transform="translate(42.5,136) rotate(-90)">20-40</text>
+                    <text x="0" y="0" text-anchor="end" transform="translate(89.2,136) rotate(-90)">40-60</text>
+                    <text x="0" y="0" text-anchor="end" transform="translate(135.9,136) rotate(-90)">60-80</text>
+                  </g>
+                </svg>
+                <div style="font-size: 11px; color: rgba(60,60,67,0.3);">mg 기준</div>
+              </div>
+              <div style="width: 1px; height: 180px; background: rgba(60,60,67,0.29);"></div>
+              <div style="display: flex; flex-direction: column; gap: 6px; flex-grow: 1;">
+                <div style="font-size: 12px; font-weight: 600;">측정된 SOL</div>
+                <svg width="156" height="140" viewBox="0 0 156 140" aria-label="SOL 분포">
+                  <g stroke="rgba(60,60,67,0.29)" stroke-width="0.5"><path d="M16 118H156M16 81.3H156M16 44.7H156M16 8H156"></path></g>
+                  <g fill="#8B5E3C" fill-opacity="0.7">
+                    <rect x="25.3" y="8" width="28" height="110" rx="2"></rect>
+                    <rect x="72" y="8" width="28" height="110" rx="2"></rect>
+                    <rect x="118.7" y="81.3" width="28" height="36.7" rx="2"></rect>
+                  </g>
+                  <g font-size="10" fill="rgba(60,60,67,0.6)">
+                    <text x="12" y="121.5" text-anchor="end">0</text>
+                    <text x="12" y="84.8" text-anchor="end">1</text>
+                    <text x="12" y="48.2" text-anchor="end">2</text>
+                    <text x="12" y="11.5" text-anchor="end">3</text>
+                  </g>
+                  <g font-size="8" fill="rgba(60,60,67,0.6)">
+                    <text x="0" y="0" text-anchor="end" transform="translate(42.5,136) rotate(-90)">15-25</text>
+                    <text x="0" y="0" text-anchor="end" transform="translate(89.2,136) rotate(-90)">25-35</text>
+                    <text x="0" y="0" text-anchor="end" transform="translate(135.9,136) rotate(-90)">35-45</text>
+                  </g>
+                </svg>
+                <div style="font-size: 11px; color: rgba(60,60,67,0.3);">분 기준</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ⑤ 전체 기록 -->
+        <div class="card">
+          <div class="cardhead">
+            <div class="badge"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="2.6" y="4.6" width="18.8" height="14.8" rx="2.6"/><path d="M6.4 9.4h11.2M6.4 12.8h11.2M6.4 16.2h6.6"/></svg></div>
+            <div class="cardtitle">전체 기록</div>
+          </div>
+          <div style="display: flex; flex-direction: column;">
+            <div style="display: flex; flex-direction: column; gap: 4px; padding: 8px 0;"><div style="display: flex;"><div style="font-size: 15px; font-weight: 600; flex-grow: 1;">9월 10일</div><div class="rounded" style="font-size: 12px; color: rgba(60,60,67,0.6);">5.53 h → 5.57 h</div></div><div style="display: flex; gap: 12px; font-size: 11px; color: rgba(60,60,67,0.3);"><div>잔량 58 mg</div><div>SOL 26분</div></div></div>
+            <div class="rule"></div>
+            <div style="display: flex; flex-direction: column; gap: 4px; padding: 8px 0;"><div style="display: flex;"><div style="font-size: 15px; font-weight: 600; flex-grow: 1;">9월 9일</div><div class="rounded" style="font-size: 12px; color: rgba(60,60,67,0.6);">5.48 h → 5.53 h</div></div><div style="display: flex; gap: 12px; font-size: 11px; color: rgba(60,60,67,0.3);"><div>잔량 35 mg</div><div>SOL 19분</div></div></div>
+            <div class="rule"></div>
+            <div style="display: flex; flex-direction: column; gap: 4px; padding: 8px 0;"><div style="display: flex;"><div style="font-size: 15px; font-weight: 600; flex-grow: 1;">9월 8일</div><div class="rounded" style="font-size: 12px; color: rgba(60,60,67,0.6);">5.42 h → 5.48 h</div></div><div style="display: flex; gap: 12px; font-size: 11px; color: rgba(60,60,67,0.3);"><div>잔량 78 mg</div><div>SOL 38분</div></div></div>
+            <div class="rule"></div>
+            <div style="display: flex; flex-direction: column; gap: 4px; padding: 8px 0;"><div style="display: flex;"><div style="font-size: 15px; font-weight: 600; flex-grow: 1;">9월 7일</div><div class="rounded" style="font-size: 12px; color: rgba(60,60,67,0.6);">5.31 h → 5.42 h</div></div><div style="display: flex; gap: 12px; font-size: 11px; color: rgba(60,60,67,0.3);"><div>잔량 62 mg</div><div>SOL 29분</div></div></div>
+            <div class="rule"></div>
+            <div style="display: flex; flex-direction: column; gap: 4px; padding: 8px 0;"><div style="display: flex;"><div style="font-size: 15px; font-weight: 600; flex-grow: 1;">9월 6일</div><div class="rounded" style="font-size: 12px; color: rgba(60,60,67,0.6);">5.24 h → 5.31 h</div></div><div style="display: flex; gap: 12px; font-size: 11px; color: rgba(60,60,67,0.3);"><div>잔량 53 mg</div><div>SOL 31분</div></div></div>
+            <div class="rule"></div>
+            <div style="display: flex; flex-direction: column; gap: 4px; padding: 8px 0;"><div style="display: flex;"><div style="font-size: 15px; font-weight: 600; flex-grow: 1;">9월 5일</div><div class="rounded" style="font-size: 12px; color: rgba(60,60,67,0.6);">5.12 h → 5.24 h</div></div><div style="display: flex; gap: 12px; font-size: 11px; color: rgba(60,60,67,0.3);"><div>잔량 28 mg</div><div>SOL 21분</div></div></div>
+            <div class="rule"></div>
+            <div style="display: flex; flex-direction: column; gap: 4px; padding: 8px 0;"><div style="display: flex;"><div style="font-size: 15px; font-weight: 600; flex-grow: 1;">9월 4일</div><div class="rounded" style="font-size: 12px; color: rgba(60,60,67,0.6);">5.00 h → 5.12 h</div></div><div style="display: flex; gap: 12px; font-size: 11px; color: rgba(60,60,67,0.3);"><div>잔량 41 mg</div><div>SOL 22분</div></div></div>
+          </div>
+        </div>
+
+      </div>
+    </sc-if>
+
+  </div>
+
+  <div style="flex-shrink: 0; background: rgba(249,249,249,0.94); border-top: 1px solid rgba(60,60,67,0.29); display: flex; padding: 6px 0 0; height: 49px; box-sizing: border-box;">
+    <div class="tabitem">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="rgba(60,60,67,0.6)" aria-hidden="true"><path d="M3 5.2h11.2v4.6a5.6 5.6 0 0 1-11.2 0V5.2Z"/><path d="M14.6 6.4h1.7a2.5 2.5 0 0 1 0 5h-1.7v-1.6h1.7a.9.9 0 0 0 0-1.8h-1.7Z"/><path d="M2.4 17.4h15.2a.9.9 0 0 1 0 1.8H2.4a.9.9 0 0 1 0-1.8Z"/></svg>
+      <div class="tablabel">홈</div>
+    </div>
+    <div class="tabitem">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="rgba(60,60,67,0.6)" aria-hidden="true"><path d="M9.8 6.8A7.4 7.4 0 1 0 17.4 18 7.9 7.9 0 0 1 9.8 6.8Z"/><path d="M13.6 2.8h4.8v1.5l-3 3.4h3v1.5h-5.1V7.7l3-3.4h-2.7Z"/></svg>
+      <div class="tablabel">수면 분석</div>
+    </div>
+    <div class="tabitem">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#007AFF" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.2 12.4c0-4.4 3.5-7.9 8-7.9 4.3 0 7.6 3.2 7.6 7.4 0 2.7-1.4 4.1-3 5.2-.6.4-.9.9-.9 1.6v2.1H7.1v-2.9c0-.7-.2-1.1-.7-1.6-1.3-1.2-2.2-2.6-2.2-3.9Z"/><path d="M9 9.4c1.2-.9 2.6-.5 3 .6.4 1.1-.5 1.9-1.4 1.9M11.4 14.3c1.4.2 2.3-.6 2.3-1.6"/></svg>
+      <div class="tablabel" style="color: #007AFF;">내 학습</div>
+    </div>
+    <div class="tabitem">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="rgba(60,60,67,0.6)" aria-hidden="true"><path fill-rule="evenodd" d="M12 5.6a6.4 6.4 0 1 0 0 12.8 6.4 6.4 0 0 0 0-12.8Zm0 3.8a2.6 2.6 0 1 1 0 5.2 2.6 2.6 0 0 1 0-5.2Z"/><rect x="10.8" y="1.6" width="2.4" height="3.6" rx="1.1"/><rect x="10.8" y="18.8" width="2.4" height="3.6" rx="1.1"/><rect x="10.8" y="1.6" width="2.4" height="3.6" rx="1.1" transform="rotate(45 12 12)"/><rect x="10.8" y="18.8" width="2.4" height="3.6" rx="1.1" transform="rotate(45 12 12)"/><rect x="10.8" y="1.6" width="2.4" height="3.6" rx="1.1" transform="rotate(90 12 12)"/><rect x="10.8" y="18.8" width="2.4" height="3.6" rx="1.1" transform="rotate(90 12 12)"/><rect x="10.8" y="1.6" width="2.4" height="3.6" rx="1.1" transform="rotate(135 12 12)"/><rect x="10.8" y="18.8" width="2.4" height="3.6" rx="1.1" transform="rotate(135 12 12)"/></svg>
+      <div class="tablabel">설정</div>
+    </div>
+  </div>
+  <div style="height: 34px; flex-shrink: 0; background: rgba(249,249,249,0.94);"></div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"$preview":{"width":402,"height":2300}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var st = this.state || {};
+    // 앱 기본값은 접힘. 캔버스에서는 내용을 보이려고 펼친 상태로 시작한다.
+    var open = st.open === undefined ? true : !!st.open;
+    var self = this;
+    return {
+      open: open,
+      chevron: open ? 'rotate(90deg)' : 'rotate(0deg)',
+      toggleDetails: function () { self.setState({ open: !open }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

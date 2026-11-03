@@ -1,0 +1,372 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; }
+    .sheet {
+      font-family: -apple-system, "SF Pro Text", "Apple SD Gothic Neo", "Pretendard Variable", Pretendard, system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 11px; letter-spacing: -0.01em; }
+    .rounded { font-family: "SF Pro Rounded", ui-rounded, -apple-system, "Apple SD Gothic Neo", system-ui, sans-serif; font-variant-numeric: tabular-nums; }
+    a { color: #8B5E3C; text-decoration: none; }
+    a:hover { color: #6E4A2F; }
+  </style>
+</helmet>
+
+<div class="sheet" style="width: 1040px; background: #FAF9F7; color: #1A1614; padding: 40px 40px 56px; box-sizing: border-box; display: flex; flex-direction: column; gap: 36px;">
+
+  <!-- 헤더 -->
+  <div style="display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid #E3DED7; padding-bottom: 24px;">
+    <div style="display: flex; align-items: baseline; gap: 14px;">
+      <div style="font-size: 30px; font-weight: 700; letter-spacing: -0.02em;">captest1 · 디자인 토큰</div>
+      <div style="font-size: 14px; color: #7C736A;">카페인 · 수면 iOS 앱</div>
+    </div>
+    <div style="font-size: 13px; color: #7C736A; line-height: 1.55;">
+      값은 앱 소스에서 그대로 추출했습니다 — 색은 <span class="mono">Assets.xcassets</span> · iOS 시스템 색, 치수는 각 View의 인라인 값, 상수는 <span class="mono">AppConstants</span>. 기준 브랜치 <span class="mono">feat/client-server-phase1</span>.
+    </div>
+  </div>
+
+  <!-- 1행: 색 / 타이포 -->
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px;">
+
+    <!-- 색 -->
+    <div style="display: flex; flex-direction: column; gap: 20px;">
+      <div style="font-size: 11px; font-weight: 700; letter-spacing: 0.09em; color: #9A9088;">색</div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="font-size: 13px; font-weight: 600; color: #4A423C;">브랜드</div>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 44px; height: 44px; border-radius: 10px; background: #8B5E3C; flex-shrink: 0;"></div>
+            <div style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1;">
+              <div style="font-size: 13px; font-weight: 600;">EspressoBrown · 라이트</div>
+              <div style="font-size: 12px; color: #7C736A;">홈·학습 tint, 기본 버튼, 카페인 곡선</div>
+            </div>
+            <div class="mono" style="color: #7C736A;">#8B5E3C</div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 44px; height: 44px; border-radius: 10px; background: #C4956A; flex-shrink: 0;"></div>
+            <div style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1;">
+              <div style="font-size: 13px; font-weight: 600;">EspressoBrown · 다크</div>
+              <div style="font-size: 12px; color: #7C736A;">같은 역할의 다크 모드 대응값</div>
+            </div>
+            <div class="mono" style="color: #7C736A;">#C4956A</div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 44px; height: 44px; border-radius: 10px; background: #007AFF; flex-shrink: 0;"></div>
+            <div style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1;">
+              <div style="font-size: 13px; font-weight: 600;">AccentColor · 미지정</div>
+              <div style="font-size: 12px; color: #B8442E;">에셋이 비어 있어 시스템 기본 파랑으로 떨어짐 → 탭바 선택색</div>
+            </div>
+            <div class="mono" style="color: #7C736A;">#007AFF</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="font-size: 13px; font-weight: 600; color: #4A423C;">신호등 (홈 hero) <span style="font-weight: 400; color: #9A9088;">· 원은 <span class="mono">color.gradient</span> 파생색으로 칠함</span></div>
+        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px;">
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div style="height: 44px; border-radius: 10px; background: #34C759;"></div>
+            <div style="font-size: 12px; font-weight: 600;">지금 OK · 마감 시각</div>
+            <div class="mono" style="color: #7C736A;">#34C759</div>
+            <div class="mono" style="color: #B0A79E;">↓ #4FD467 → #29B84C</div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div style="height: 44px; border-radius: 10px; background: #FF9500;"></div>
+            <div style="font-size: 12px; font-weight: 600;">곧 마감 (90분 이내)</div>
+            <div class="mono" style="color: #7C736A;">#FF9500</div>
+            <div class="mono" style="color: #B0A79E;">↓ #FFAA2B → #F08800</div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div style="height: 44px; border-radius: 10px; background: #FF3B30;"></div>
+            <div style="font-size: 12px; font-weight: 600;">지금은 패스 · 오늘은 NO</div>
+            <div class="mono" style="color: #7C736A;">#FF3B30</div>
+            <div class="mono" style="color: #B0A79E;">↓ #FF5A50 → #F02A1E</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="font-size: 13px; font-weight: 600; color: #4A423C;">수면 단계 <span style="font-weight: 400; color: #9A9088;">· 수면 탭 카드 뱃지 tint는 indigo (탭바 선택색과 무관)</span></div>
+        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px 16px;">
+          <div style="display: flex; align-items: center; gap: 8px;"><div style="width: 12px; height: 12px; border-radius: 6px; background: #5856D6;"></div><div style="font-size: 12px;">깊은 수면</div><div class="mono" style="color: #9A9088; margin-left: auto;">#5856D6</div></div>
+          <div style="display: flex; align-items: center; gap: 8px;"><div style="width: 12px; height: 12px; border-radius: 6px; background: #AF52DE;"></div><div style="font-size: 12px;">REM 수면</div><div class="mono" style="color: #9A9088; margin-left: auto;">#AF52DE</div></div>
+          <div style="display: flex; align-items: center; gap: 8px;"><div style="width: 12px; height: 12px; border-radius: 6px; background: #007AFF;"></div><div style="font-size: 12px;">코어 수면</div><div class="mono" style="color: #9A9088; margin-left: auto;">#007AFF</div></div>
+          <div style="display: flex; align-items: center; gap: 8px;"><div style="width: 12px; height: 12px; border-radius: 6px; background: #32ADE6;"></div><div style="font-size: 12px;">수면 (미분류)</div><div class="mono" style="color: #9A9088; margin-left: auto;">#32ADE6</div></div>
+          <div style="display: flex; align-items: center; gap: 8px;"><div style="width: 12px; height: 12px; border-radius: 6px; background: #FF9500;"></div><div style="font-size: 12px;">깨어 있음</div><div class="mono" style="color: #9A9088; margin-left: auto;">#FF9500</div></div>
+          <div style="display: flex; align-items: center; gap: 8px;"><div style="width: 12px; height: 12px; border-radius: 6px; background: #8E8E93;"></div><div style="font-size: 12px;">침대에 있음</div><div class="mono" style="color: #9A9088; margin-left: auto;">#8E8E93</div></div>
+        </div>
+        <div style="font-size: 11px; color: #9A9088;">병합 우선순위 deep → REM → core → 미분류 → awake → inBed (서버 SleepMerger)</div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="font-size: 13px; font-weight: 600; color: #4A423C;">표면과 텍스트 (라이트)</div>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <div style="display: flex; align-items: center; gap: 12px; font-size: 12px;"><div style="width: 28px; height: 28px; border-radius: 7px; background: #F2F2F7; border: 1px solid #E3DED7;"></div><div style="flex-grow: 1;">systemGroupedBackground · 화면 배경</div><div class="mono" style="color: #9A9088;">#F2F2F7</div></div>
+          <div style="display: flex; align-items: center; gap: 12px; font-size: 12px;"><div style="width: 28px; height: 28px; border-radius: 7px; background: #FFFFFF; border: 1px solid #E3DED7;"></div><div style="flex-grow: 1;">secondarySystemGrouped · 카드</div><div class="mono" style="color: #9A9088;">#FFFFFF</div></div>
+          <div style="display: flex; align-items: center; gap: 12px; font-size: 12px;"><div style="width: 28px; height: 28px; border-radius: 7px; background: #F2F2F7; border: 1px solid #E3DED7;"></div><div style="flex-grow: 1;">tertiarySystemGrouped · 입력 필드·배너</div><div class="mono" style="color: #9A9088;">#F2F2F7</div></div>
+          <div style="display: flex; align-items: center; gap: 12px; font-size: 12px;"><div style="width: 28px; height: 28px; border-radius: 7px; background: #000000;"></div><div style="flex-grow: 1;">label · 본문</div><div class="mono" style="color: #9A9088;">#000000</div></div>
+          <div style="display: flex; align-items: center; gap: 12px; font-size: 12px;"><div style="width: 28px; height: 28px; border-radius: 7px; background: rgba(60,60,67,0.6);"></div><div style="flex-grow: 1;">secondaryLabel · 보조 문구</div><div class="mono" style="color: #9A9088;">60 60 67 / 60%</div></div>
+          <div style="display: flex; align-items: center; gap: 12px; font-size: 12px;"><div style="width: 28px; height: 28px; border-radius: 7px; background: rgba(60,60,67,0.3);"></div><div style="flex-grow: 1;">tertiaryLabel · 최하위 캡션</div><div class="mono" style="color: #9A9088;">60 60 67 / 30%</div></div>
+          <div style="display: flex; align-items: center; gap: 12px; font-size: 12px;"><div style="width: 28px; height: 28px; border-radius: 7px; background: rgba(60,60,67,0.29);"></div><div style="flex-grow: 1;">separator · 행 구분선</div><div class="mono" style="color: #9A9088;">60 60 67 / 29%</div></div>
+          <div style="display: flex; align-items: center; gap: 12px; font-size: 12px;"><div style="width: 28px; height: 28px; border-radius: 7px; background: rgba(60,60,67,0.5);"></div><div style="flex-grow: 1;">차트 안전선 50mg</div><div class="mono" style="color: #9A9088;">60 60 67 / 50%</div></div>
+          <div style="display: flex; align-items: center; gap: 12px; font-size: 12px;"><div style="width: 28px; height: 28px; border-radius: 7px; background: rgba(249,249,249,0.94); border: 1px solid #E3DED7;"></div><div style="flex-grow: 1;">탭바 배경</div><div class="mono" style="color: #9A9088;">249 249 249 / 94%</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 타이포 -->
+    <div style="display: flex; flex-direction: column; gap: 20px;">
+      <div style="font-size: 11px; font-weight: 700; letter-spacing: 0.09em; color: #9A9088;">타이포</div>
+
+      <div style="display: flex; flex-direction: column; gap: 14px;">
+        <div style="display: flex; align-items: baseline; gap: 16px;">
+          <div style="font-size: 34px; font-weight: 700; letter-spacing: -0.02em; flex-grow: 1;">홈</div>
+          <div class="mono" style="color: #9A9088; text-align: right; white-space: nowrap;">34 / bold · Large Title</div>
+        </div>
+        <div style="display: flex; align-items: baseline; gap: 16px; border-top: 1px solid #EFEBE5; padding-top: 14px;">
+          <div class="rounded" style="font-size: 40px; font-weight: 700; color: #8B5E3C; flex-grow: 1;">오후 3:20</div>
+          <div class="mono" style="color: #9A9088; text-align: right; white-space: nowrap;">40 / rounded bold · 신호등 시각</div>
+        </div>
+        <div style="display: flex; align-items: baseline; gap: 16px; border-top: 1px solid #EFEBE5; padding-top: 14px;">
+          <div class="rounded" style="font-size: 34px; font-weight: 700; flex-grow: 1;">96</div>
+          <div class="mono" style="color: #9A9088; text-align: right; white-space: nowrap;">34 / rounded bold · 지표 값</div>
+        </div>
+        <div style="display: flex; align-items: baseline; gap: 16px; border-top: 1px solid #EFEBE5; padding-top: 14px;">
+          <div style="font-size: 20px; font-weight: 600; flex-grow: 1;">시간 · mg</div>
+          <div class="mono" style="color: #9A9088; text-align: right; white-space: nowrap;">20 / semibold · 단위 · bold는 신호등 뒷면</div>
+        </div>
+        <div style="display: flex; align-items: baseline; gap: 16px; border-top: 1px solid #EFEBE5; padding-top: 14px;">
+          <div style="font-size: 17px; font-weight: 600; flex-grow: 1;">시간대별 카페인</div>
+          <div class="mono" style="color: #9A9088; text-align: right; white-space: nowrap;">17 / semibold · Headline</div>
+        </div>
+        <div style="display: flex; align-items: baseline; gap: 16px; border-top: 1px solid #EFEBE5; padding-top: 14px;">
+          <div style="font-size: 17px; flex-grow: 1;">아메리카노</div>
+          <div class="mono" style="color: #9A9088; text-align: right; white-space: nowrap;">17 / regular · Body</div>
+        </div>
+        <div style="display: flex; align-items: baseline; gap: 16px; border-top: 1px solid #EFEBE5; padding-top: 14px;">
+          <div style="font-size: 15px; color: rgba(60,60,67,0.6); flex-grow: 1;">이 시각까지 75 mg 한 잔 OK</div>
+          <div class="mono" style="color: #9A9088; text-align: right; white-space: nowrap;">15 / regular · Subheadline</div>
+        </div>
+        <div style="display: flex; align-items: baseline; gap: 16px; border-top: 1px solid #EFEBE5; padding-top: 14px;">
+          <div style="font-size: 13px; font-weight: 600; color: rgba(60,60,67,0.6); flex-grow: 1;">음료 선택</div>
+          <div class="mono" style="color: #9A9088; text-align: right; white-space: nowrap;">13 / semibold · SectionHeader</div>
+        </div>
+        <div style="display: flex; align-items: baseline; gap: 16px; border-top: 1px solid #EFEBE5; padding-top: 14px;">
+          <div style="font-size: 12px; color: rgba(60,60,67,0.6); flex-grow: 1;">오전 8:00</div>
+          <div class="mono" style="color: #9A9088; text-align: right; white-space: nowrap;">12 / regular · Caption</div>
+        </div>
+        <div style="display: flex; align-items: baseline; gap: 16px; border-top: 1px solid #EFEBE5; padding-top: 14px;">
+          <div style="font-size: 11px; color: rgba(60,60,67,0.6); flex-grow: 1;">안전 50mg</div>
+          <div class="mono" style="color: #9A9088; text-align: right; white-space: nowrap;">11 / regular · Caption2 · 차트</div>
+        </div>
+        <div style="display: flex; align-items: baseline; gap: 16px; border-top: 1px solid #EFEBE5; padding-top: 14px;">
+          <div style="font-size: 10px; font-weight: 500; color: rgba(60,60,67,0.6); flex-grow: 1;">수면 분석</div>
+          <div class="mono" style="color: #9A9088; text-align: right; white-space: nowrap;">10 / medium · 탭바 라벨</div>
+        </div>
+      </div>
+
+      <div style="background: #F3EFE9; border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px;">
+        <div style="font-size: 12px; font-weight: 600;">규칙</div>
+        <div style="font-size: 12px; color: #6E655D; line-height: 1.6;">
+          숫자는 전부 <span class="mono">SF Rounded · bold · monospacedDigit</span> — 초 단위로 갱신되는 잔류량이 자릿수 때문에 흔들리지 않게. 본문·라벨은 시스템 서체 그대로. 전용 서체 없음.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2행: 간격·형태 / 도메인 상수 -->
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px;">
+    <div style="display: flex; flex-direction: column; gap: 16px;">
+      <div style="font-size: 11px; font-weight: 700; letter-spacing: 0.09em; color: #9A9088;">간격과 형태</div>
+      <div style="display: flex; flex-direction: column; gap: 7px; font-size: 12px;">
+        <div style="display: flex; gap: 12px; border-bottom: 1px solid #EFEBE5; padding-bottom: 7px;"><div style="flex-grow: 1; color: #4A423C;">화면 여백 (가로 / 세로)</div><div class="mono">16 / 16</div></div>
+        <div style="display: flex; gap: 12px; border-bottom: 1px solid #EFEBE5; padding-bottom: 7px;"><div style="flex-grow: 1; color: #4A423C;">카드 사이 간격</div><div class="mono">16</div></div>
+        <div style="display: flex; gap: 12px; border-bottom: 1px solid #EFEBE5; padding-bottom: 7px;"><div style="flex-grow: 1; color: #4A423C;">HealthCard 안쪽 여백 / 내부 간격</div><div class="mono">16 / 12</div></div>
+        <div style="display: flex; gap: 12px; border-bottom: 1px solid #EFEBE5; padding-bottom: 7px;"><div style="flex-grow: 1; color: #4A423C;">모서리 반경 (continuous)</div><div class="mono">12</div></div>
+        <div style="display: flex; gap: 12px; border-bottom: 1px solid #EFEBE5; padding-bottom: 7px;"><div style="flex-grow: 1; color: #4A423C;">리스트 행 상하 여백 / 아이콘 간격</div><div class="mono">10 / 12</div></div>
+        <div style="display: flex; gap: 12px; border-bottom: 1px solid #EFEBE5; padding-bottom: 7px;"><div style="flex-grow: 1; color: #4A423C;">구분선 좌측 인셋 (아이콘 행)</div><div class="mono">44</div></div>
+        <div style="display: flex; gap: 12px; border-bottom: 1px solid #EFEBE5; padding-bottom: 7px;"><div style="flex-grow: 1; color: #4A423C;">아이콘 뱃지 지름 (기본 / 리스트 / 프리셋)</div><div class="mono">28 / 32 / 36</div></div>
+        <div style="display: flex; gap: 12px; border-bottom: 1px solid #EFEBE5; padding-bottom: 7px;"><div style="flex-grow: 1; color: #4A423C;">뱃지 안 심볼 크기</div><div class="mono">지름 × 0.54</div></div>
+        <div style="display: flex; gap: 12px; border-bottom: 1px solid #EFEBE5; padding-bottom: 7px;"><div style="flex-grow: 1; color: #4A423C;">신호등 원 지름 / 그림자 반경</div><div class="mono">240 / 18 → CSS blur 32</div></div>
+        <div style="display: flex; gap: 12px;"><div style="flex-grow: 1; color: #4A423C;">최소 터치 영역</div><div class="mono">44 × 44</div></div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 16px;">
+      <div style="font-size: 11px; font-weight: 700; letter-spacing: 0.09em; color: #9A9088;">도메인 상수 <span style="font-weight: 400; text-transform: none; letter-spacing: 0;">— 서버 calc와 같은 값, 임의 변경 금지</span></div>
+      <div style="display: flex; flex-direction: column; gap: 7px; font-size: 12px;">
+        <div style="display: flex; gap: 12px; border-bottom: 1px solid #EFEBE5; padding-bottom: 7px;"><div style="flex-grow: 1; color: #4A423C;">일일 권장 한도</div><div class="mono">400 mg</div></div>
+        <div style="display: flex; gap: 12px; border-bottom: 1px solid #EFEBE5; padding-bottom: 7px;"><div style="flex-grow: 1; color: #4A423C;">취침 시 안전선</div><div class="mono">50 mg</div></div>
+        <div style="display: flex; gap: 12px; border-bottom: 1px solid #EFEBE5; padding-bottom: 7px;"><div style="flex-grow: 1; color: #4A423C;">기본 반감기 (범위 · 단위)</div><div class="mono">5.0 h (3.0–7.0 · 0.5)</div></div>
+        <div style="display: flex; gap: 12px; border-bottom: 1px solid #EFEBE5; padding-bottom: 7px;"><div style="flex-grow: 1; color: #4A423C;">기준 섭취량 (범위 · 단위)</div><div class="mono">75 mg (20–300 · 5)</div></div>
+        <div style="display: flex; gap: 12px; border-bottom: 1px solid #EFEBE5; padding-bottom: 7px;"><div style="flex-grow: 1; color: #4A423C;">차트 구간 · 간격</div><div class="mono">05:00 + 24 h · 15분</div></div>
+        <div style="display: flex; gap: 12px; border-bottom: 1px solid #EFEBE5; padding-bottom: 7px;"><div style="flex-grow: 1; color: #4A423C;">최근 수면 기록</div><div class="mono">7일</div></div>
+        <div style="display: flex; gap: 12px; border-bottom: 1px solid #EFEBE5; padding-bottom: 7px;"><div style="flex-grow: 1; color: #4A423C;">건강 상태 배수 · 흡연</div><div class="mono">× 0.5</div></div>
+        <div style="display: flex; gap: 12px; border-bottom: 1px solid #EFEBE5; padding-bottom: 7px;"><div style="flex-grow: 1; color: #4A423C;">건강 상태 배수 · 경구피임약</div><div class="mono">× 2.0</div></div>
+        <div style="display: flex; gap: 12px; border-bottom: 1px solid #EFEBE5; padding-bottom: 7px;"><div style="flex-grow: 1; color: #4A423C;">건강 상태 배수 · 임신</div><div class="mono">× 2.5</div></div>
+        <div style="display: flex; gap: 12px;"><div style="flex-grow: 1; color: #4A423C;">잔류량 공식</div><div class="mono">dose · e^(−ln2/T½ · t)</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3행: 컴포넌트 -->
+  <div style="display: flex; flex-direction: column; gap: 18px;">
+    <div style="font-size: 11px; font-weight: 700; letter-spacing: 0.09em; color: #9A9088;">컴포넌트 <span style="font-weight: 400; letter-spacing: 0;">— 신호등만 축소, 나머지는 실제 크기</span></div>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px;">
+
+      <!-- HealthCard -->
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="font-size: 12px; font-weight: 600; color: #4A423C;">HealthCard + HealthMetric</div>
+        <div style="background: #F2F2F7; padding: 12px; border-radius: 12px;">
+          <div style="background: #FFFFFF; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <div style="width: 28px; height: 28px; border-radius: 14px; background: #8B5E3C; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="#FFFFFF" aria-hidden="true"><path d="M3 5.2h11.2v4.6a5.6 5.6 0 0 1-11.2 0V5.2Z"/><path d="M14.6 6.4h1.7a2.5 2.5 0 0 1 0 5h-1.7v-1.6h1.7a.9.9 0 0 0 0-1.8h-1.7Z"/><path d="M2.4 17.4h15.2a.9.9 0 0 1 0 1.8H2.4a.9.9 0 0 1 0-1.8Z"/></svg>
+              </div>
+              <div style="font-size: 17px; font-weight: 600;">카드 제목</div>
+            </div>
+            <div style="display: flex; gap: 12px;">
+              <div style="display: flex; flex-direction: column; gap: 4px; flex-grow: 1;">
+                <div style="font-size: 15px; color: rgba(60,60,67,0.6);">현재 잔류량</div>
+                <div style="display: flex; align-items: baseline; gap: 4px;">
+                  <div class="rounded" style="font-size: 34px; font-weight: 700;">96</div>
+                  <div style="font-size: 20px; font-weight: 600; color: rgba(60,60,67,0.6);">mg</div>
+                </div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 4px; flex-grow: 1;">
+                <div style="font-size: 15px; color: rgba(60,60,67,0.6);">취침 시 예상</div>
+                <div style="display: flex; align-items: baseline; gap: 4px;">
+                  <div class="rounded" style="font-size: 34px; font-weight: 700;">24</div>
+                  <div style="font-size: 20px; font-weight: 600; color: rgba(60,60,67,0.6);">mg</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 접히는 카드 + 리스트 행 -->
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="font-size: 12px; font-weight: 600; color: #4A423C;">접히는 카드 · 리스트 행</div>
+        <div style="background: #F2F2F7; padding: 12px; border-radius: 12px; display: flex; flex-direction: column; gap: 12px;">
+          <div style="background: #FFFFFF; border-radius: 12px; padding: 16px; display: flex; align-items: center; gap: 10px;">
+            <div style="width: 28px; height: 28px; border-radius: 14px; background: #8B5E3C; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4v15.4h16"/><path d="M7.2 15.6l3.4-3.7 2.6 2.2 4.6-5.5"/><path d="M15.2 8.4h2.9v2.9"/></svg>
+            </div>
+            <div style="font-size: 17px; font-weight: 600; flex-grow: 1;">시간대별 카페인</div>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(60,60,67,0.6)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5.5 15.5 12 9 18.5"/></svg>
+          </div>
+          <div style="background: #FFFFFF; border-radius: 12px; padding: 16px; display: flex; flex-direction: column;">
+            <div style="display: flex; align-items: center; gap: 12px; padding: 10px 0;">
+              <div style="width: 32px; height: 32px; border-radius: 16px; background: #8B5E3C; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="#FFFFFF" aria-hidden="true"><path d="M3 5.2h11.2v4.6a5.6 5.6 0 0 1-11.2 0V5.2Z"/><path d="M14.6 6.4h1.7a2.5 2.5 0 0 1 0 5h-1.7v-1.6h1.7a.9.9 0 0 0 0-1.8h-1.7Z"/><path d="M2.4 17.4h15.2a.9.9 0 0 1 0 1.8H2.4a.9.9 0 0 1 0-1.8Z"/></svg>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1;">
+                <div style="font-size: 17px;">아메리카노</div>
+                <div style="font-size: 12px; color: rgba(60,60,67,0.6);">오전 8:00</div>
+              </div>
+              <div class="rounded" style="font-size: 15px; font-weight: 500; color: rgba(60,60,67,0.6);">150 mg</div>
+            </div>
+            <div style="height: 1px; background: rgba(60,60,67,0.29); margin-left: 44px;"></div>
+            <div style="display: flex; align-items: center; gap: 12px; padding: 10px 0;">
+              <div style="width: 32px; height: 32px; border-radius: 16px; background: #8B5E3C; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="#FFFFFF" aria-hidden="true"><path d="M20.6 3.4C10.4 3.4 4.6 6.6 4.6 13a6.6 6.6 0 0 0 1.5 4.4C8.7 13 12.4 10 16.8 8.7c-4 2-7.2 5.2-9 9.3-.3.7-.6 1.4-.8 2.1a.95.95 0 0 0 1.8.6c.2-.6.4-1.2.7-1.8.9.3 1.9.4 2.9.4 6.4 0 9.2-5.3 8.2-15.9Z"/></svg>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1;">
+                <div style="font-size: 17px;">녹차</div>
+                <div style="font-size: 12px; color: rgba(60,60,67,0.6);">오전 10:30</div>
+              </div>
+              <div class="rounded" style="font-size: 15px; font-weight: 500; color: rgba(60,60,67,0.6);">30 mg</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 버튼 · 섹션 헤더 · 신호등 -->
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="font-size: 12px; font-weight: 600; color: #4A423C;">버튼 · 섹션 헤더 · 신호등</div>
+        <div style="background: #F2F2F7; padding: 12px; border-radius: 12px; display: flex; flex-direction: column; gap: 14px;">
+          <div style="background: #8B5E3C; border-radius: 12px; height: 56px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="#FFFFFF" aria-hidden="true"><path fill-rule="evenodd" d="M12 2.6a9.4 9.4 0 1 0 0 18.8 9.4 9.4 0 0 0 0-18.8Zm.95 4.9v3.55h3.55v1.9h-3.55v3.55h-1.9v-3.55H7.5v-1.9h3.55V7.5h1.9Z"/></svg>
+            <div style="font-size: 17px; font-weight: 600; color: #FFFFFF;">카페인 추가</div>
+          </div>
+          <div style="font-size: 13px; font-weight: 600; color: rgba(60,60,67,0.6);">음료 선택</div>
+          <div style="display: flex; align-items: center; justify-content: center; gap: 16px; padding: 6px 0;">
+            <div style="width: 72px; height: 72px; border-radius: 36px; background: linear-gradient(#4FD467, #29B84C); box-shadow: 0 0 10px rgba(52,199,89,0.5); display: flex; align-items: center; justify-content: center;">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12.8 9.6 17.8 19.5 6.6"/></svg>
+            </div>
+            <div style="width: 72px; height: 72px; border-radius: 36px; background: linear-gradient(#FFAA2B, #F08800); box-shadow: 0 0 10px rgba(255,149,0,0.5); display: flex; align-items: center; justify-content: center;">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="#FFFFFF" aria-hidden="true"><path d="M10.6 4.2h2.8l-.5 10h-1.8Z"/><circle cx="12" cy="18.6" r="1.6"/></svg>
+            </div>
+            <div style="width: 72px; height: 72px; border-radius: 36px; background: linear-gradient(#FF5A50, #F02A1E); box-shadow: 0 0 10px rgba(255,59,48,0.5); display: flex; align-items: center; justify-content: center;">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6.5 6.5 17.5 17.5M17.5 6.5 6.5 17.5"/></svg>
+            </div>
+          </div>
+          <div style="font-size: 11px; color: #7C736A; text-align: center;">실제 지름 240 — 여기서는 72로 축소</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 탭바 -->
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+      <div style="font-size: 12px; font-weight: 600; color: #4A423C;">탭바 (402 폭 · 선택색은 시스템 기본 파랑)</div>
+      <div style="width: 402px; background: rgba(249,249,249,0.94); border-top: 1px solid rgba(60,60,67,0.29); display: flex; padding: 6px 0 0; height: 49px; box-sizing: border-box;">
+        <div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="#007AFF" aria-hidden="true"><path d="M3 5.2h11.2v4.6a5.6 5.6 0 0 1-11.2 0V5.2Z"/><path d="M14.6 6.4h1.7a2.5 2.5 0 0 1 0 5h-1.7v-1.6h1.7a.9.9 0 0 0 0-1.8h-1.7Z"/><path d="M2.4 17.4h15.2a.9.9 0 0 1 0 1.8H2.4a.9.9 0 0 1 0-1.8Z"/></svg>
+          <div style="font-size: 10px; font-weight: 500; color: #007AFF; line-height: 12px;">홈</div>
+        </div>
+        <div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="rgba(60,60,67,0.6)" aria-hidden="true"><path d="M9.8 6.8A7.4 7.4 0 1 0 17.4 18 7.9 7.9 0 0 1 9.8 6.8Z"/><path d="M13.6 2.8h4.8v1.5l-3 3.4h3v1.5h-5.1V7.7l3-3.4h-2.7Z"/></svg>
+          <div style="font-size: 10px; font-weight: 500; color: rgba(60,60,67,0.6); line-height: 12px;">수면 분석</div>
+        </div>
+        <div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="rgba(60,60,67,0.6)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.2 12.4c0-4.4 3.5-7.9 8-7.9 4.3 0 7.6 3.2 7.6 7.4 0 2.7-1.4 4.1-3 5.2-.6.4-.9.9-.9 1.6v2.1H7.1v-2.9c0-.7-.2-1.1-.7-1.6-1.3-1.2-2.2-2.6-2.2-3.9Z"/><path d="M9 9.4c1.2-.9 2.6-.5 3 .6.4 1.1-.5 1.9-1.4 1.9M11.4 14.3c1.4.2 2.3-.6 2.3-1.6"/></svg>
+          <div style="font-size: 10px; font-weight: 500; color: rgba(60,60,67,0.6); line-height: 12px;">내 학습</div>
+        </div>
+        <div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="rgba(60,60,67,0.6)" aria-hidden="true"><path fill-rule="evenodd" d="M12 5.6a6.4 6.4 0 1 0 0 12.8 6.4 6.4 0 0 0 0-12.8Zm0 3.8a2.6 2.6 0 1 1 0 5.2 2.6 2.6 0 0 1 0-5.2Z"/><rect x="10.8" y="1.6" width="2.4" height="3.6" rx="1.1"/><rect x="10.8" y="18.8" width="2.4" height="3.6" rx="1.1"/><rect x="10.8" y="1.6" width="2.4" height="3.6" rx="1.1" transform="rotate(45 12 12)"/><rect x="10.8" y="18.8" width="2.4" height="3.6" rx="1.1" transform="rotate(45 12 12)"/><rect x="10.8" y="1.6" width="2.4" height="3.6" rx="1.1" transform="rotate(90 12 12)"/><rect x="10.8" y="18.8" width="2.4" height="3.6" rx="1.1" transform="rotate(90 12 12)"/><rect x="10.8" y="1.6" width="2.4" height="3.6" rx="1.1" transform="rotate(135 12 12)"/><rect x="10.8" y="18.8" width="2.4" height="3.6" rx="1.1" transform="rotate(135 12 12)"/></svg>
+          <div style="font-size: 10px; font-weight: 500; color: rgba(60,60,67,0.6); line-height: 12px;">설정</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4행: 아이콘 -->
+  <div style="display: flex; flex-direction: column; gap: 16px;">
+    <div style="font-size: 11px; font-weight: 700; letter-spacing: 0.09em; color: #9A9088;">아이콘 — SF Symbols 대체</div>
+    <div style="font-size: 12px; color: #6E655D; line-height: 1.6;">
+      SF Symbols는 웹 캔버스에서 못 씁니다. 24 그리드 인라인 SVG로 대체합니다. <span class="mono">.fill</span> 심볼은 면(fill), 나머지는 선 — 선 굵기는 쓰임새에 따라 <span class="mono">1.7</span>(본문 아이콘) · <span class="mono">2.2~2.4</span>(chevron·체크·엑스) · <span class="mono">2.6</span>(신호등 원 안, SF Symbols의 bold 대응). 아래가 앱에서 실제로 쓰는 전부입니다.
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 18px 12px;">
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 7px;"><svg width="26" height="26" viewBox="0 0 24 24" fill="#1A1614" aria-hidden="true"><path d="M3 5.2h11.2v4.6a5.6 5.6 0 0 1-11.2 0V5.2Z"/><path d="M14.6 6.4h1.7a2.5 2.5 0 0 1 0 5h-1.7v-1.6h1.7a.9.9 0 0 0 0-1.8h-1.7Z"/><path d="M2.4 17.4h15.2a.9.9 0 0 1 0 1.8H2.4a.9.9 0 0 1 0-1.8Z"/></svg><div class="mono" style="color: #9A9088; text-align: center; line-height: 1.35;">cup.and.<br>saucer.fill</div></div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 7px;"><svg width="26" height="26" viewBox="0 0 24 24" fill="#1A1614" aria-hidden="true"><path d="M9.8 6.8A7.4 7.4 0 1 0 17.4 18 7.9 7.9 0 0 1 9.8 6.8Z"/><path d="M13.6 2.8h4.8v1.5l-3 3.4h3v1.5h-5.1V7.7l3-3.4h-2.7Z"/></svg><div class="mono" style="color: #9A9088; text-align: center; line-height: 1.35;">moon.<br>zzz.fill</div></div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 7px;"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1A1614" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.2 12.4c0-4.4 3.5-7.9 8-7.9 4.3 0 7.6 3.2 7.6 7.4 0 2.7-1.4 4.1-3 5.2-.6.4-.9.9-.9 1.6v2.1H7.1v-2.9c0-.7-.2-1.1-.7-1.6-1.3-1.2-2.2-2.6-2.2-3.9Z"/><path d="M9 9.4c1.2-.9 2.6-.5 3 .6.4 1.1-.5 1.9-1.4 1.9M11.4 14.3c1.4.2 2.3-.6 2.3-1.6"/></svg><div class="mono" style="color: #9A9088; text-align: center; line-height: 1.35;">brain.head.<br>profile</div></div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 7px;"><svg width="26" height="26" viewBox="0 0 24 24" fill="#1A1614" aria-hidden="true"><path fill-rule="evenodd" d="M12 5.6a6.4 6.4 0 1 0 0 12.8 6.4 6.4 0 0 0 0-12.8Zm0 3.8a2.6 2.6 0 1 1 0 5.2 2.6 2.6 0 0 1 0-5.2Z"/><rect x="10.8" y="1.6" width="2.4" height="3.6" rx="1.1"/><rect x="10.8" y="18.8" width="2.4" height="3.6" rx="1.1"/><rect x="10.8" y="1.6" width="2.4" height="3.6" rx="1.1" transform="rotate(45 12 12)"/><rect x="10.8" y="18.8" width="2.4" height="3.6" rx="1.1" transform="rotate(45 12 12)"/><rect x="10.8" y="1.6" width="2.4" height="3.6" rx="1.1" transform="rotate(90 12 12)"/><rect x="10.8" y="18.8" width="2.4" height="3.6" rx="1.1" transform="rotate(90 12 12)"/><rect x="10.8" y="1.6" width="2.4" height="3.6" rx="1.1" transform="rotate(135 12 12)"/><rect x="10.8" y="18.8" width="2.4" height="3.6" rx="1.1" transform="rotate(135 12 12)"/></svg><div class="mono" style="color: #9A9088; text-align: center; line-height: 1.35;">gearshape.<br>fill</div></div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 7px;"><svg width="26" height="26" viewBox="0 0 24 24" fill="#1A1614" aria-hidden="true"><path fill-rule="evenodd" d="M12 2.6a9.4 9.4 0 1 0 0 18.8 9.4 9.4 0 0 0 0-18.8Zm.95 4.9v3.55h3.55v1.9h-3.55v3.55h-1.9v-3.55H7.5v-1.9h3.55V7.5h1.9Z"/></svg><div class="mono" style="color: #9A9088; text-align: center; line-height: 1.35;">plus.circle.<br>fill</div></div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 7px;"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1A1614" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4v15.4h16"/><path d="M7.2 15.6l3.4-3.7 2.6 2.2 4.6-5.5"/><path d="M15.2 8.4h2.9v2.9"/></svg><div class="mono" style="color: #9A9088; text-align: center; line-height: 1.35;">chart.line.<br>uptrend</div></div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 7px;"><svg width="26" height="26" viewBox="0 0 24 24" fill="#1A1614" aria-hidden="true"><circle cx="4.8" cy="6.4" r="1.6"/><circle cx="4.8" cy="12" r="1.6"/><circle cx="4.8" cy="17.6" r="1.6"/><path d="M9.2 5.5h11v1.8h-11zM9.2 11.1h11v1.8h-11zM9.2 16.7h11v1.8h-11z"/></svg><div class="mono" style="color: #9A9088; text-align: center; line-height: 1.35;">list.<br>bullet</div></div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 7px;"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1A1614" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5.5 15.5 12 9 18.5"/></svg><div class="mono" style="color: #9A9088; text-align: center; line-height: 1.35;">chevron.<br>right</div></div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 7px;"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1A1614" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12.8 9.6 17.8 19.5 6.6"/></svg><div class="mono" style="color: #9A9088; text-align: center; line-height: 1.35;">check<br>mark</div></div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 7px;"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1A1614" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6.5 6.5 17.5 17.5M17.5 6.5 6.5 17.5"/></svg><div class="mono" style="color: #9A9088; text-align: center; line-height: 1.35;">x<br>mark</div></div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 7px;"><svg width="26" height="26" viewBox="0 0 24 24" fill="#1A1614" aria-hidden="true"><path d="M10.6 4.2h2.8l-.5 10h-1.8Z"/><circle cx="12" cy="18.6" r="1.6"/></svg><div class="mono" style="color: #9A9088; text-align: center; line-height: 1.35;">exclamation<br>mark</div></div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 7px;"><svg width="26" height="26" viewBox="0 0 24 24" fill="#1A1614" aria-hidden="true"><path d="M3 6.4a1.1 1.1 0 0 1 2.2 0v4.9h13.9a2 2 0 0 1 2 2v4.5a1.1 1.1 0 0 1-2.2 0v-1.3H5.2v1.3a1.1 1.1 0 0 1-2.2 0Z"/><path d="M7 8.1h3.4a1.5 1.5 0 0 1 1.5 1.5v1.7H5.5V9.6A1.5 1.5 0 0 1 7 8.1ZM14 8.1h3.4a1.5 1.5 0 0 1 1.5 1.5v1.7h-6.4V9.6A1.5 1.5 0 0 1 14 8.1Z"/></svg><div class="mono" style="color: #9A9088; text-align: center; line-height: 1.35;">bed.double.<br>fill</div></div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 7px;"><svg width="26" height="26" viewBox="0 0 24 24" fill="#1A1614" aria-hidden="true"><path d="M20.6 3.4C10.4 3.4 4.6 6.6 4.6 13a6.6 6.6 0 0 0 1.5 4.4C8.7 13 12.4 10 16.8 8.7c-4 2-7.2 5.2-9 9.3-.3.7-.6 1.4-.8 2.1a.95.95 0 0 0 1.8.6c.2-.6.4-1.2.7-1.8.9.3 1.9.4 2.9.4 6.4 0 9.2-5.3 8.2-15.9Z"/></svg><div class="mono" style="color: #9A9088; text-align: center; line-height: 1.35;">leaf.<br>fill</div></div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 7px;"><svg width="26" height="26" viewBox="0 0 24 24" fill="#1A1614" aria-hidden="true"><path d="M13.6 2.6 5.8 13.2c-.4.5 0 1.2.6 1.2h4.2l-1.4 6.8c-.1.7.8 1.1 1.2.5l7.8-10.6c.4-.5 0-1.2-.6-1.2h-4.2l1.4-6.8c.1-.7-.8-1.1-1.2-.5Z"/></svg><div class="mono" style="color: #9A9088; text-align: center; line-height: 1.35;">bolt.<br>fill</div></div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 7px;"><svg width="26" height="26" viewBox="0 0 24 24" fill="#1A1614" aria-hidden="true"><path d="M12 2.6a1.3 1.3 0 0 1 1.3 1.3v.7a6.2 6.2 0 0 1 4.9 6v2.9l1.5 2.4c.4.7-.1 1.6-.9 1.6H5.2c-.8 0-1.3-.9-.9-1.6l1.5-2.4v-2.9a6.2 6.2 0 0 1 4.9-6v-.7A1.3 1.3 0 0 1 12 2.6ZM9.6 19.1h4.8a2.4 2.4 0 0 1-4.8 0Z"/></svg><div class="mono" style="color: #9A9088; text-align: center; line-height: 1.35;">bell.<br>fill</div></div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 7px;"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1A1614" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.4" y="5.2" width="17.2" height="15.4" rx="2.8"/><path d="M3.4 9.8h17.2M8 3.4v3.4M16 3.4v3.4"/></svg><div class="mono" style="color: #9A9088; text-align: center; line-height: 1.35;">calen<br>dar</div></div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>
