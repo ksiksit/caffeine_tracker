@@ -18,6 +18,8 @@ final class LearningStore {
     private(set) var errorMessage: String?
     /// refresh를 한 번이라도 끝냈는가. 첫 로드 전에 빈 상태 카드가 잠깐 보이지 않게 한다.
     private(set) var hasLoaded = false
+    /// 학습으로 서버 설정이 바뀔 때마다 1씩 오른다. 설정 미러가 관찰해 다시 받는다.
+    private(set) var learnedRevision = 0
 
     private let repository: any LearningRepository
 
@@ -28,11 +30,14 @@ final class LearningStore {
     /// 학습 1회 실행(멱등) 후 대시보드를 갱신한다.
     /// 실패해도 이전 대시보드는 지우지 않는다(마지막으로 받은 값을 계속 보여준다).
     func refresh() async {
+        // 수면 업로드 뒤 자동 실행과 탭 진입이 겹치면 같은 밤을 동시에 학습하게 된다.
+        guard !isLoading else { return }
         isLoading = true
         defer { isLoading = false }
         do {
             let run = try await repository.run(timeZone: .current)
             skipMessage = run.updatedCount == 0 ? run.skipMessage : nil
+            if run.updatedCount > 0 { learnedRevision += 1 }
             dashboard = try await repository.dashboard()
             errorMessage = nil
         } catch is CancellationError {
@@ -50,6 +55,15 @@ final class LearningStore {
             }
         }
         hasLoaded = true
+    }
+
+    /// 로그아웃 시 이전 계정의 값을 지운다.
+    func reset() {
+        dashboard = nil
+        isLoading = false
+        skipMessage = nil
+        errorMessage = nil
+        hasLoaded = false
     }
 
     private static let loadFailedMessage = "학습 데이터를 불러오지 못했어요. 연결을 확인해주세요."

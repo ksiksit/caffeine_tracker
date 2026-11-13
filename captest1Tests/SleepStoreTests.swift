@@ -14,6 +14,35 @@ struct SleepStoreTests {
 
     private var todayKey: String { ServerDateCoding.localDate.string(from: Date()) }
 
+    @Test func reset_clearsAccountDataAndAllowsReload() async {
+        let source = FakeSleepSampleSource()
+        let repo = FakeSleepRepository()
+        let store = SleepStore(samples: source, repository: repo)
+        await store.loadData()
+        #expect(store.hasLoadedData)
+        let firstFetchCount = source.fetchCount
+
+        await store.loadDataIfNeeded()
+        #expect(source.fetchCount == firstFetchCount)
+
+        store.reset()
+        #expect(!store.hasLoadedData)
+        await store.loadDataIfNeeded()
+        #expect(source.fetchCount == firstFetchCount * 2)
+    }
+
+    @Test func loadDataIfNeeded_reloadsAfterMaxAge() async {
+        let source = FakeSleepSampleSource()
+        let store = SleepStore(samples: source, repository: FakeSleepRepository())
+        await store.loadData()
+        let firstFetchCount = source.fetchCount
+
+        await store.loadDataIfNeeded(now: Date().addingTimeInterval(3601))
+
+        #expect(source.fetchCount == firstFetchCount * 2)
+        #expect(store.loadRevision == 2)
+    }
+
     @Test func loadData_skipsUploadWhenNoSamples() async {
         let source = FakeSleepSampleSource()
         let repo = FakeSleepRepository()

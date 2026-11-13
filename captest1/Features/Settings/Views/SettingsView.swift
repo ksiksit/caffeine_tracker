@@ -250,7 +250,6 @@ struct SettingsView<NotificationStatus: View, CafeNearbyDetail: View>: View {
             Button("로그아웃", role: .destructive) {
                 Task {
                     await auth.logout()
-                    settings.resetLearnedData()
                 }
             }
             Button("취소", role: .cancel) {}
@@ -277,6 +276,17 @@ struct SettingsView<NotificationStatus: View, CafeNearbyDetail: View>: View {
         .onChange(of: settings.notifyBedtimeResidual) { settings.scheduleSync() }
         .onChange(of: settings.notifyRecordReminder) { settings.scheduleSync() }
         .onChange(of: settings.notifyCafeNearby) { settings.scheduleSync() }
+        .alert("설정 저장 실패", isPresented: Binding(
+            get: { settings.syncErrorMessage != nil },
+            set: { if !$0 { settings.syncErrorMessage = nil } }
+        )) {
+            Button("다시 시도") {
+                Task { await settings.retrySync() }
+            }
+            Button("닫기", role: .cancel) {}
+        } message: {
+            Text(settings.syncErrorMessage ?? "")
+        }
     }
 }
 

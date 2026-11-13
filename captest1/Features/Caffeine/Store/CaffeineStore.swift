@@ -23,6 +23,13 @@ final class CaffeineStore {
 
     // MARK: - 서버 동기화
 
+    /// 로그아웃 시 이전 계정의 값을 지운다.
+    func reset() {
+        today = nil
+        isLoading = false
+        errorMessage = nil
+    }
+
     func refresh() async {
         isLoading = true
         defer { isLoading = false }
@@ -98,6 +105,13 @@ final class CaffeineStore {
     /// 서버가 계산한 다음 취침시각(오늘의 설정 취침시각, 지났으면 내일). 미리보기가 로컬 계산 대신 이 값을 쓴다.
     var bedtime: Date? { today?.bedtime }
     var todayRecords: [CaffeineRecordDTO] { today?.records ?? [] }
+    var carryoverRecords: [CaffeineRecordDTO] { today?.carryoverRecords ?? [] }
+    /// 서버 잔량 계산과 같은 투약 목록(최근 24시간). 미리보기가 서버 마감과 어긋나지 않게 이 값을 쓴다.
+    var residualDoses: [CaffeineKineticsCalculator.Dose] {
+        (carryoverRecords + todayRecords).map {
+            CaffeineKineticsCalculator.Dose(timestamp: $0.timestamp, amountMg: Double($0.amount))
+        }
+    }
     var todayTotal: Int { today?.todayTotal ?? 0 }
     var currentResidual: Double { today?.currentResidual ?? 0 }
     var predictedAtBedtime: Double { today?.predictedAtBedtime ?? 0 }

@@ -27,7 +27,14 @@ struct CutoffHeroCard: View {
         let headline: String
     }
 
-    var style: Style {
+    /// 마감 임박(카운트다운)으로 보는 구간.
+    static let countdownWindow: TimeInterval = 90 * 60
+
+    /// today 조회 시각 기준 스타일(차트 마감선 색 등 바깥에서 읽는 값).
+    var style: Style { style(at: now) }
+
+    /// `at` 시각 기준 스타일. 카드 본문은 분마다 다시 계산해 남은 시간이 줄어든다.
+    func style(at now: Date) -> Style {
         switch cutoffResult {
         case .safeAnytime:
             return Style(
@@ -39,9 +46,9 @@ struct CutoffHeroCard: View {
 
         case .cutoff(let time) where time > now:
             let timeText = Self.timeFormatter.string(from: time)
-            if time.timeIntervalSince(now) <= 90 * 60 {
+            if time.timeIntervalSince(now) <= Self.countdownWindow {
                 return Style(
-                    status: "곧 마감",
+                    status: Self.remainingText(until: time, from: now),
                     symbol: "exclamationmark",
                     color: Theme.Colors.signalWarn,
                     headline: "\(timeText) 마감\n지금이 마지막 \(referenceDoseMg) mg 한 잔이에요"
@@ -72,8 +79,37 @@ struct CutoffHeroCard: View {
         }
     }
 
+    /// 마감까지 남은 시간. "1시간 20분 남음" · "1시간 남음" · "40분 남음".
+    /// 분은 올림한다(30초 남았을 때 "0분 남음"이 되지 않도록).
+    static func remainingText(until deadline: Date, from now: Date) -> String {
+        let totalMinutes = max(1, Int((deadline.timeIntervalSince(now) / 60).rounded(.up)))
+        let hours = totalMinutes / 60
+        let minutes = totalMinutes % 60
+        if hours == 0 {
+            return String(localized: "\(minutes)분 남음")
+        }
+        if minutes == 0 {
+            return String(localized: "\(hours)시간 남음")
+        }
+        return String(localized: "\(hours)시간 \(minutes)분 남음")
+    }
+
+    /// 분 경계 외에 상태가 바뀌는 순간: 카운트다운 시작(마감 90분 전)과 마감 시각. 둘 다 초 단위라 분 경계만으로는 최대 59초 늦게 바뀐다.
+    var refreshDeadlines: [Date] {
+        guard case .cutoff(let time) = cutoffResult else { return [] }
+        return [time.addingTimeInterval(-Self.countdownWindow), time]
+    }
+
     var body: some View {
-        let style = style
+        // 남은 시간이 다음 조회까지 멈춰 있지 않도록 다시 그린다.
+        // now는 앱이 today 요청에 보낸 기기 시각을 서버가 그대로 돌려준 값이고, 마감 시각도 같은 기기 시계 기준이라
+        // 기기 시계(context.date)로 비교한다. max는 조회 뒤 기기 시계가 뒤로 돌아간 경우만 막는다.
+        TimelineView(CutoffRefreshSchedule(deadlines: refreshDeadlines)) { context in
+            content(style: style(at: max(now, context.date)))
+        }
+    }
+
+    private func content(style: Style) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("오늘의 카페인")
                 .font(Theme.Fonts.sectionTitle)
@@ -97,6 +133,37 @@ struct CutoffHeroCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("caffeineCutoffHero")
+    }
+}
+
+/// 매 분 경계 + 지정한 시각(마감 등)에 다시 그리는 스케줄.
+struct CutoffRefreshSchedule: TimelineSchedule {
+    let deadlines: [Date]
+
+    func entries(from startDate: Date, mode: TimelineScheduleMode) -> Entries {
+        Entries(start: startDate, deadlines: deadlines)
+    }
+
+    struct Entries: Sequence, IteratorProtocol {
+        private var nextMinute: Date
+        private var pending: [Date]
+
+        init(start: Date, deadlines: [Date]) {
+            let floored = (start.timeIntervalSinceReferenceDate / 60).rounded(.down) * 60
+            nextMinute = Date(timeIntervalSinceReferenceDate: floored)
+            pending = deadlines.filter { $0 > start }.sorted()
+        }
+
+        mutating func next() -> Date? {
+            if let deadline = pending.first, deadline <= nextMinute {
+                pending.removeFirst()
+                // 분 경계와 같은 시각이면 한 번만 낸다
+                if deadline < nextMinute { return deadline }
+            }
+            let minute = nextMinute
+            nextMinute = minute.addingTimeInterval(60)
+            return minute
+        }
     }
 }
 

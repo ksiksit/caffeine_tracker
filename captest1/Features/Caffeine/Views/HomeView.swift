@@ -53,7 +53,8 @@ struct HomeView: View {
                         currentTime: store.currentTime,
                         bedtime: store.bedtime,
                         cutoffTime: upcomingCutoff,
-                        cutoffColor: hero.style.color
+                        cutoffColor: hero.style.color,
+                        predictedAtBedtime: store.today?.predictedAtBedtime
                     )
                 } else if store.today != nil {
                     timelinePlaceholder
@@ -70,6 +71,10 @@ struct HomeView: View {
                 }
 
                 todayRecordsSection
+
+                if !store.carryoverRecords.isEmpty {
+                    carryoverRecordsSection
+                }
             }
             .padding(.horizontal, Theme.Spacing.screen)
             .padding(.top, 8)
@@ -151,6 +156,20 @@ struct HomeView: View {
     }
 
     // MARK: - 오늘 기록
+
+    /// 오늘 경계 이전이지만 지금 잔량에 들어 있는 기록. 합계에는 포함되지 않아도 여기서 고칠 수 있어야 한다.
+    private var carryoverRecordsSection: some View {
+        HealthCard("지난 24시간 기록", showsDivider: false) {
+            VStack(spacing: 0) {
+                ForEach(Array(store.carryoverRecords.enumerated()), id: \.element.id) { index, record in
+                    if index > 0 {
+                        HairlineDivider()
+                    }
+                    recordRow(record)
+                }
+            }
+        }
+    }
 
     private var todayRecordsSection: some View {
         HealthCard("오늘 기록", showsDivider: false) {
