@@ -44,6 +44,30 @@ struct APIClientEnvelopeTests {
     { "success": true, "data": { "halfLife": 5.0, "condition": 0, "bedtimeHour": 23, "bedtimeMinute": 0, "referenceDoseMg": 75, "isLearningEnabled": true, "learnedMean": 5.0, "learnedVariance": 2.25, "lastLearnedDate": null, "inferredBaseHalfLife": 5.0, "effectiveHalfLifeHours": 5.0, "notifications": { "cutoff": true, "bedtimeResidual": true, "recordReminder": true, "cafeNearby": true } }, "error": null, "message": null }
     """
 
+    /// 서버 api.md 인사이트 절 caffeine-sleep 예시(2c89425) 그대로.
+    private static let caffeineSleepJSON = """
+    { "success": true, "data": {
+      "from": "2026-06-01", "to": "2026-06-14", "nightCount": 12, "sufficient": true,
+      "residualThresholdMg": 50.0, "halfLifeHoursUsed": 5.0,
+      "residualComparison": {
+        "high": { "nightCount": 5, "solNightCount": 5, "avgSolMinutes": 27.0, "avgSleepEfficiency": 0.86, "avgTotalSleepMinutes": 402.0, "avgDeepSleepRatio": 0.14 },
+        "low": { "nightCount": 7, "solNightCount": 7, "avgSolMinutes": 16.0, "avgSleepEfficiency": 0.9, "avgTotalSleepMinutes": 431.0, "avgDeepSleepRatio": 0.17 },
+        "sufficient": true, "moreNightsNeeded": null, "solDiffMinutes": 11.0, "efficiencyDiff": -0.04,
+        "sentence": "취침 때 카페인이 50mg 이상 남아 있던 밤은 잠드는 데 평균 11분 더 걸렸고, 수면 효율은 4%p 낮았어요 (5밤 vs 7밤)"
+      },
+      "cutoffComparison": {
+        "high": { "nightCount": 2, "solNightCount": 2, "avgSolMinutes": 30.0, "avgSleepEfficiency": 0.85, "avgTotalSleepMinutes": 395.0, "avgDeepSleepRatio": 0.13 },
+        "low": { "nightCount": 8, "solNightCount": 8, "avgSolMinutes": 18.0, "avgSleepEfficiency": 0.89, "avgTotalSleepMinutes": 425.0, "avgDeepSleepRatio": 0.16 },
+        "sufficient": false, "moreNightsNeeded": 1, "solDiffMinutes": null, "efficiencyDiff": null,
+        "sentence": "지금 기준 용량(75mg)으로 따지면, 마감을 넘긴 밤이 1밤 더 있어야 비교할 수 있어요"
+      },
+      "headlines": [ "취침 때 카페인이 50mg 이상 남아 있던 밤은 잠드는 데 평균 11분 더 걸렸고, 수면 효율은 4%p 낮았어요 (5밤 vs 7밤)" ],
+      "nights": [
+        { "date": "2026-06-02", "bedtime": "2026-06-01T14:00:00Z", "residualAtBedtimeMg": 114.87, "dayTotalMg": 200.0, "lastIntakeAt": "2026-06-01T10:00:00Z", "cutoffKept": false, "solMinutes": 30.0, "sleepEfficiency": 0.9375, "totalSleepMinutes": 450.0, "deepSleepRatio": null }
+      ]
+    }, "error": null, "message": null }
+    """
+
     private static let unauthorizedJSON = #"{ "success": false, "data": null, "error": { "code": "UNAUTHORIZED" }, "message": "인증이 필요합니다." }"#
 
     @Test func successEnvelope_returnsPayload() async throws {
@@ -252,5 +276,33 @@ struct APIClientEnvelopeTests {
             try await client.me()
         }
         #expect(expired.wrappedValue == false)
+    }
+
+    // MARK: - 인사이트
+
+    @Test func caffeineSleep_decodesApiDocExample_andSendsPeriod() async throws {
+        defer { StubURLProtocol.reset() }
+        StubURLProtocol.install { _ in .init(status: 200, json: Self.caffeineSleepJSON) }
+
+        let report = try await makeClient().caffeineSleepReport(
+            from: "2026-06-01", to: "2026-06-14", timeZone: TimeZone(identifier: "Asia/Seoul")!)
+
+        #expect(report.residualThresholdMg == 50)
+        #expect(report.cutoffComparison.moreNightsNeeded == 1)
+        #expect(report.cutoffComparison.solDiffMinutes == nil)
+        let night = try #require(report.nights.first)
+        #expect(night.date == "2026-06-02")
+        #expect(night.residualAtBedtimeMg == 114.87)
+        #expect(night.dayTotalMg == 200)
+        #expect(night.solMinutes == 30)
+        #expect(night.cutoffKept == false)
+        #expect(night.deepSleepRatio == nil)
+        #expect(night.bedtime == Date(timeIntervalSince1970: 1_780_322_400))
+        let request = StubURLProtocol.requests.first?.url
+        #expect(request?.path == "/api/insight/caffeine-sleep")
+        let query = request?.query ?? ""
+        #expect(query.contains("from=2026-06-01"))
+        #expect(query.contains("to=2026-06-14"))
+        #expect(query.contains("tz=Asia/Seoul"))
     }
 }
