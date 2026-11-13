@@ -58,7 +58,13 @@ final class captest1UITests: XCTestCase {
             || app.staticTexts["HealthKit 접근 요청 완료"].exists
             || app.staticTexts["건강 데이터 사용 불가"].exists
         )
-        XCTAssertTrue(app.staticTexts["카페인 알림 설정"].waitForExistence(timeout: 2))
+        // 알림 섹션은 화면 아래쪽에 있다 — 보일 때까지 몇 번만 스크롤한다
+        let cutoffToggle = app.switches["섭취 마감 30분 전"]
+        for _ in 0..<4 where !cutoffToggle.exists {
+            app.swipeUp()
+        }
+        XCTAssertTrue(cutoffToggle.waitForExistence(timeout: 2))
+        XCTAssertTrue(app.staticTexts["알림"].exists)
 
         // 홈 탭으로 복귀
         app.tabBars.buttons["홈"].tap()
