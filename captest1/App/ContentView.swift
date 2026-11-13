@@ -14,6 +14,7 @@ struct ContentView: View {
     @Environment(SettingsManager.self) private var settings
     @Environment(CaffeineStore.self) private var caffeineStore
     @Environment(LearningStore.self) private var learningStore
+    @Environment(InsightStore.self) private var insightStore
     @Environment(NotificationStore.self) private var notifications
     @Environment(CafeNearbyStore.self) private var cafeNearby
     @Environment(LocationPermissionManager.self) private var location
@@ -30,7 +31,11 @@ struct ContentView: View {
 
             Tab(String(localized: "tab.sleepAnalysis"), systemImage: "moon.zzz.fill", value: 1) {
                 NavigationStack {
-                    SleepAnalysisView()
+                    SleepAnalysisView { lastNight in
+                        LastNightCaffeineRow(date: lastNight)
+                    } nightlyCaffeine: {
+                        NightlyCaffeineCard()
+                    }
                 }
             }
 
@@ -66,7 +71,11 @@ struct ContentView: View {
         // 알림 계획 재조회 시점(api.md 알림 절): 기록 변경 후 · 설정 변경 후 · 포그라운드 진입 시.
         // 기록 추가·수정·삭제는 CaffeineStore가 today를 다시 받으므로 today 갱신을 신호로 쓴다.
         // 기능끼리 직접 부르지 않도록 조립층에서만 잇는다(CLAUDE.md 의존 규칙 2).
-        .onChange(of: caffeineStore.today?.now) { notifications.scheduleRefresh() }
+        .onChange(of: caffeineStore.today?.now) {
+            notifications.scheduleRefresh()
+            // 기록이 바뀌면 밤별 취침 잔량도 바뀐다 — 다음 수면 탭 진입 때 다시 받는다.
+            insightStore.invalidate()
+        }
         // 설정이 서버에 반영되면 홈의 마감·잔량도 그 설정으로 다시 계산해야 한다.
         .onChange(of: settings.serverRevision) {
             notifications.scheduleRefresh()
@@ -75,6 +84,11 @@ struct ContentView: View {
         // 수면이 새로 올라가면 학습하고, 학습이 설정을 바꾸면 미러를 다시 받는다.
         .onChange(of: sleepStore.loadRevision) {
             Task { await learningStore.refresh() }
+        }
+        // 수면을 다시 읽을 때마다(새로고침 포함, 실패해도) 밤별 카페인 리포트도 다시 받는다.
+        // 서버가 업로드된 샘플로 계산하고, 서버가 꺼졌으면 리포트 쪽도 "연결 안 됨"을 보여야 한다.
+        .onChange(of: sleepStore.loadAttemptRevision) {
+            Task { await insightStore.refresh() }
         }
         .onChange(of: learningStore.learnedRevision) {
             Task { await settings.loadFromServer() }
@@ -104,6 +118,7 @@ struct ContentView: View {
             caffeineStore.reset()
             sleepStore.reset()
             learningStore.reset()
+            insightStore.reset()
             settings.resetForSignOut()
             Task {
                 await notifications.clear()

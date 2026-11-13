@@ -158,4 +158,37 @@ struct SleepStoreTests {
 
         #expect(repo.summaryDates.count == AppConstants.Sleep.recentHistoryDays)
     }
+
+    // MARK: - 오류 문구·재시도 신호
+
+    @Test func loadData_serverUnreachable_showsUserMessage_notInternalErrorName() async {
+        // 서버가 꺼졌을 때 "작업을 완료할 수 없습니다.(captest1.APIError 오류 11.)"가 보였다
+        let source = FakeSleepSampleSource()
+        source.error = APIError.network
+        let store = SleepStore(samples: source, repository: FakeSleepRepository())
+
+        await store.loadData()
+
+        let message = try? #require(store.errorMessage)
+        #expect(message == "서버에 연결할 수 없어요. 인터넷 연결을 확인하거나 잠시 후 다시 시도해주세요.")
+        #expect(message?.contains("APIError") == false)
+    }
+
+    @Test func userMessage_nonServerError_keepsSystemDescription() {
+        let error = NSError(domain: "HK", code: 1, userInfo: [NSLocalizedDescriptionKey: "건강 데이터에 접근할 수 없습니다"])
+        #expect(SleepStore.userMessage(for: error) == "수면 데이터를 불러오지 못했어요: 건강 데이터에 접근할 수 없습니다")
+    }
+
+    @Test func loadAttemptRevision_bumpsOnSuccessAndFailure() async {
+        let source = FakeSleepSampleSource()
+        let store = SleepStore(samples: source, repository: FakeSleepRepository())
+        await store.loadData()
+        #expect(store.loadAttemptRevision == 1)
+        #expect(store.loadRevision == 1)
+
+        source.error = APIError.network
+        await store.loadData()
+        #expect(store.loadAttemptRevision == 2)
+        #expect(store.loadRevision == 1)
+    }
 }

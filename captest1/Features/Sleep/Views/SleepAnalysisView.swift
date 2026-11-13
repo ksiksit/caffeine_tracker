@@ -5,10 +5,22 @@
 
 import SwiftUI
 
-struct SleepAnalysisView: View {
+/// 카페인과 함께 보는 줄(지난밤 잔량·밤별 카페인)은 다른 기능(Insight)이라 슬롯으로 받는다. 조립은 ContentView.
+struct SleepAnalysisView<LastNightCaffeine: View, NightlyCaffeine: View>: View {
     @Environment(HealthKitManager.self) private var healthKit
     @Environment(SleepStore.self) private var store
     @State private var showingError: Bool = false
+
+    /// 지난밤 카드 아래. 인자는 지난밤 카드의 날짜(밤이 끝나는 아침)
+    private let lastNightCaffeine: (Date) -> LastNightCaffeine
+    /// 최근 7일 카드 위
+    private let nightlyCaffeine: () -> NightlyCaffeine
+
+    init(@ViewBuilder lastNightCaffeine: @escaping (Date) -> LastNightCaffeine,
+         @ViewBuilder nightlyCaffeine: @escaping () -> NightlyCaffeine) {
+        self.lastNightCaffeine = lastNightCaffeine
+        self.nightlyCaffeine = nightlyCaffeine
+    }
 
     var body: some View {
         Group {
@@ -107,7 +119,9 @@ struct SleepAnalysisView: View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: Theme.Spacing.section) {
                 LastNightCard(summary: summary)
+                lastNightCaffeine(summary.date)
                 StageBreakdownView(summary: summary)
+                nightlyCaffeine()
                 RecentNightsView(summaries: store.recentSummaries)
             }
             .padding(.horizontal, Theme.Spacing.screen)
@@ -121,7 +135,7 @@ struct SleepAnalysisView: View {
 
 #Preview {
     NavigationStack {
-        SleepAnalysisView()
+        SleepAnalysisView { _ in EmptyView() } nightlyCaffeine: { EmptyView() }
             .environment(HealthKitManager())
             .environment(SleepStore(samples: PreviewSleepSampleSource(), repository: PreviewSleepRepository()))
     }

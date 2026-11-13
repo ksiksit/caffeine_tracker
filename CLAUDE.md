@@ -52,6 +52,10 @@ captest1/
 │   │   ├── Store/    # SleepStore(업로드·요약)
 │   │   ├── Data/     # SleepRepository·APIClient+Sleep·SleepDTO·PreviewSleepRepository
 │   │   └── Model/    # SleepModels(서버값 표시 모델)
+│   ├── Insight/      # 카페인·수면 리포트(서버 domain/insight). 지금은 수면 탭 슬롯만(전용 화면은 계획서 §4)
+│   │   ├── Views/    # LastNightCaffeineRow(지난밤 취침 잔량·그날 섭취)·NightlyCaffeineCard(7밤 막대·표) — 수면 탭 슬롯에 ContentView가 끼워 넣음
+│   │   ├── Store/    # InsightStore(최근 7밤 리포트, 수면 업로드 후·기록 변경 후 재조회)
+│   │   └── Data/     # InsightRepository·APIClient+Insight·InsightDTO·PreviewInsightRepository
 │   ├── Learning/
 │   │   ├── Views/    # LearningDashboardView·CalibrationScatterChart·ConfidenceBar
 │   │   ├── Store/    # LearningStore
