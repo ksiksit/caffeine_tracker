@@ -2,7 +2,8 @@
 //  LastNightCaffeineRow.swift
 //  captest1
 //
-//  수면 탭 지난밤 카드 아래: 그 밤 취침 때 남아 있던 카페인과 잠들기까지 걸린 시간을 나란히(로드맵 §2 (1)).
+//  수면 탭 지난밤 카드 아래: 그 밤 취침 때 남아 있던 카페인과 그날 섭취량(로드맵 §2 (1)).
+//  잠들기까지(SOL)는 바로 위 지난밤 카드가 이미 보여 주므로 여기서는 다시 표시하지 않는다.
 //  값·경계는 서버 리포트 그대로다. 수면 탭(Sleep)이 날짜를 넘기고, 조립은 ContentView가 한다.
 //
 
@@ -29,18 +30,11 @@ struct LastNightCaffeineRow: View {
                     .init(label: "취침 때 카페인", value: InsightFormat.mg(night.residualAtBedtimeMg), unit: "mg",
                           valueColor: InsightFormat.isHigh(night.residualAtBedtimeMg, threshold: threshold)
                               ? Theme.Colors.signalStop : Theme.Colors.ink),
-                    .init(label: "잠들기까지", value: night.solMinutes.map(InsightFormat.minutes) ?? "–",
-                          unit: night.solMinutes == nil ? nil : "분"),
                     .init(label: "그날 섭취", value: InsightFormat.mg(night.dayTotalMg), unit: "mg"),
                 ])
                 Text("기준 \(InsightFormat.mg(threshold)) mg")
                     .font(.footnote)
                     .foregroundStyle(Theme.Colors.inkSecondary)
-                if night.solMinutes == nil {
-                    Text("잠들기까지 걸린 시간은 Apple Watch를 차고 잔 밤에만 기록돼요.")
-                        .font(.footnote)
-                        .foregroundStyle(Theme.Colors.inkSecondary)
-                }
             }
         } else {
             InsightStatusText(isLoading: store.isLoading, errorMessage: store.errorMessage, loaded: store.report != nil,
