@@ -11,16 +11,22 @@ final class AuthManager {
     private(set) var state: AuthState = .checking
     var isProcessing: Bool = false
     var lastError: AuthErrorMessage?
+    /// 서버에 닿지 못해 저장된 계정으로 들어온 상태. 서버 확인이 아니라 기기 사본 기준이다.
+    private(set) var isOfflineSession = false
 
     private let repository: any AuthRepository
     private let session: any AuthSession
     private let tokenStore: TokenStore
+    /// nil이면 계정을 기기에 저장하지 않는다(미리보기). 그때 오프라인 진입도 없다.
+    private let accountStore: AuthAccountStore?
     private var isLoggingOut: Bool = false
 
-    init(repository: any AuthRepository, session: any AuthSession, tokenStore: TokenStore) {
+    init(repository: any AuthRepository, session: any AuthSession, tokenStore: TokenStore,
+         accountStore: AuthAccountStore? = nil) {
         self.repository = repository
         self.session = session
         self.tokenStore = tokenStore
+        self.accountStore = accountStore
     }
 
     #if DEBUG
@@ -44,25 +50,45 @@ final class AuthManager {
         do {
             _ = try await repository.refresh(refreshToken: refresh)
             let me = try await repository.me()
-            finishBootstrap(.authenticated(me))
+            if finishBootstrap(.authenticated(me)) {
+                accountStore?.save(me)
+            }
         } catch APIError.invalidRefreshToken, APIError.sessionExpired {
             await tokenStore.clear()
             await session.setAccessToken(nil)
             await session.setRefreshToken(nil)
+            accountStore?.clear()
             finishBootstrap(.unauthenticated)
         } catch APIError.network {
-            // 오프라인 부팅: 토큰 보존, 다음 시도에 재진입
-            finishBootstrap(.unauthenticated, error: .offlineBootstrap)
+            // 오프라인 부팅: 토큰 보존. 서버가 확인해 준 계정이 기기에 있으면 그 계정으로 들어가 캐시를 보여 준다.
+            // 토큰이 실제로 무효인지는 온라인이 되어 첫 요청이 401 → refresh 실패하면 세션 만료로 판정된다.
+            if let saved = accountStore?.load() {
+                if finishBootstrap(.authenticated(saved)) {
+                    isOfflineSession = true
+                }
+            } else {
+                finishBootstrap(.unauthenticated, error: .offlineBootstrap)
+            }
         } catch {
             finishBootstrap(.unauthenticated)
         }
     }
 
     /// 자동 로그인 결과는 아직 확인 중일 때만 반영한다 — 그사이 사용자가 로그인했거나(디버그) 건너뛰었으면 덮어쓰지 않는다.
-    private func finishBootstrap(_ newState: AuthState, error: AuthErrorMessage? = nil) {
-        guard state == .checking else { return }
+    /// 반영했으면 true.
+    @discardableResult
+    private func finishBootstrap(_ newState: AuthState, error: AuthErrorMessage? = nil) -> Bool {
+        guard state == .checking else { return false }
         state = newState
         if let error { lastError = error }
+        return true
+    }
+
+    /// 로그인·가입 후 서버가 확인한 계정으로 들어간다.
+    private func enter(_ me: MeResponse) {
+        accountStore?.save(me)
+        isOfflineSession = false
+        state = .authenticated(me)
     }
 
     func login(email: String, password: String) async {
@@ -78,8 +104,7 @@ final class AuthManager {
             await session.setRefreshToken(tokens.refreshToken)
             await installSessionExpiredHandler()
             isLoggingOut = false
-            let me = try await repository.me()
-            state = .authenticated(me)
+            enter(try await repository.me())
         } catch let error as APIError {
             lastError = error.toUserMessage()
         } catch {
@@ -111,8 +136,7 @@ final class AuthManager {
             await session.setRefreshToken(tokens.refreshToken)
             await installSessionExpiredHandler()
             isLoggingOut = false
-            let me = try await repository.me()
-            state = .authenticated(me)
+            enter(try await repository.me())
         } catch let error as APIError {
             lastError = error.toUserMessage()
         } catch {
@@ -133,6 +157,8 @@ final class AuthManager {
         await tokenStore.clear()
         await session.setAccessToken(nil)
         await session.setRefreshToken(nil)
+        accountStore?.clear()
+        isOfflineSession = false
         state = .unauthenticated
         lastError = nil
         isLoggingOut = false
@@ -145,6 +171,8 @@ final class AuthManager {
             await tokenStore.clear()
             await session.setAccessToken(nil)
             await session.setRefreshToken(nil)
+            accountStore?.clear()
+            isOfflineSession = false
             state = .unauthenticated
             lastError = APIError.sessionExpired.toUserMessage()
         }

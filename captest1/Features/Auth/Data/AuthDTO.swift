@@ -42,7 +42,8 @@ nonisolated struct SignupResponse: Decodable, Sendable {
     let nickname: String
 }
 
-nonisolated struct MeResponse: Decodable, Equatable, Sendable {
+/// Encodable은 마지막 확인 계정을 Keychain에 저장하려고 둔다(AuthAccountStore). 서버로 보내지 않는다.
+nonisolated struct MeResponse: Codable, Equatable, Sendable {
     let userId: Int64
     let email: String
 }

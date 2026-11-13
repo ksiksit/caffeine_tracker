@@ -41,7 +41,7 @@ captest1/
 │   ├── Auth/
 │   │   ├── Views/    # LoginView·SignupView
 │   │   ├── Store/    # AuthManager(세션 상태)·AuthState
-│   │   └── Data/     # AuthRepository(포트)·APIClient+Auth(어댑터)·AuthDTO·PreviewAuthRepository
+│   │   └── Data/     # AuthRepository(포트)·APIClient+Auth(어댑터)·AuthDTO·AuthAccountStore(마지막 확인 계정 Keychain 사본, 오프라인 진입용)·PreviewAuthRepository
 │   ├── Caffeine/
 │   │   ├── Views/    # HomeView·AddCaffeineView·CaffeineChartView·CutoffHeroCard·CutoffPreviewBanner
 │   │   ├── Store/    # CaffeineStore·AddCaffeineViewModel(폼 전용)
