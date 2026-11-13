@@ -2,7 +2,7 @@
 //  APIError.swift
 //  captest1
 //
-//  서버 응답 봉투의 error.code를 앱 에러로 매핑한다. 사용자 문구는 Features/Auth/AuthDTO.swift의 toUserMessage().
+//  서버 응답 봉투의 error.code를 앱 에러로 매핑한다. 사용자 문구는 APIError+UserMessage.swift(로그인 화면은 Auth의 toUserMessage가 감싼다).
 //
 
 import Foundation

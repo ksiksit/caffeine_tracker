@@ -82,9 +82,12 @@ struct ContentView: View {
             Task { await caffeineStore.refresh() }
         }
         // 수면이 새로 올라가면 학습하고, 학습이 설정을 바꾸면 미러를 다시 받는다.
-        // 수면이 새로 올라가면 밤별 카페인 리포트도 그 수면으로 다시 받는다(서버가 업로드된 샘플로 계산).
         .onChange(of: sleepStore.loadRevision) {
             Task { await learningStore.refresh() }
+        }
+        // 수면을 다시 읽을 때마다(새로고침 포함, 실패해도) 밤별 카페인 리포트도 다시 받는다.
+        // 서버가 업로드된 샘플로 계산하고, 서버가 꺼졌으면 리포트 쪽도 "연결 안 됨"을 보여야 한다.
+        .onChange(of: sleepStore.loadAttemptRevision) {
             Task { await insightStore.refresh() }
         }
         .onChange(of: learningStore.learnedRevision) {

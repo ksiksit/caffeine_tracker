@@ -35,6 +35,9 @@ struct LastNightCaffeineRow: View {
                 Text("기준 \(InsightFormat.mg(threshold)) mg")
                     .font(.footnote)
                     .foregroundStyle(Theme.Colors.inkSecondary)
+                if store.isStale, let asOf = store.loadedAt {
+                    InsightStaleNotice(asOf: asOf)
+                }
             }
         } else {
             InsightStatusText(isLoading: store.isLoading, errorMessage: store.errorMessage, loaded: store.report != nil,
@@ -70,9 +73,38 @@ struct InsightStatusText: View {
     }
 }
 
+/// 조회에 실패해 이전 리포트를 보여 주는 중임을 알린다. 문구는 홈의 연결 끊김 안내와 같다. "N분 전"은 분마다 다시 센다.
+struct InsightStaleNotice: View {
+    let asOf: Date
+
+    var body: some View {
+        TimelineView(.everyMinute) { context in
+            Label(InsightFormat.staleText(asOf: asOf, now: context.date), systemImage: "wifi.exclamationmark")
+                .font(.footnote.weight(.medium))
+                .foregroundStyle(Theme.Colors.signalWarn)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .accessibilityIdentifier("insightStaleNotice")
+    }
+}
+
 /// 서버 값의 표시 형식. 계산이 아니라 반올림과 강조 여부만 정한다.
 enum InsightFormat {
     static func mg(_ value: Double) -> String { "\(Int(value.rounded()))" }
+
+    /// "서버 연결 안 됨 · 12분 전 기준". `asOf`는 마지막 조회 성공 시각(기기 시계).
+    static func staleText(asOf: Date, now: Date) -> String {
+        let minutes = max(0, Int(now.timeIntervalSince(asOf) / 60))
+        let ago: String
+        if minutes < 1 {
+            ago = String(localized: "방금 전")
+        } else if minutes < 60 {
+            ago = String(localized: "\(minutes)분 전")
+        } else {
+            ago = String(localized: "\(minutes / 60)시간 전")
+        }
+        return String(localized: "서버 연결 안 됨 · \(ago) 기준")
+    }
     static func minutes(_ value: Double) -> String { "\(Int(value.rounded()))" }
     static func percent(_ ratio: Double) -> String { "\(Int((ratio * 100).rounded()))" }
 

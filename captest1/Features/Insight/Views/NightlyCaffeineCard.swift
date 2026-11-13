@@ -16,6 +16,9 @@ struct NightlyCaffeineCard: View {
         HealthCard("최근 7일 밤별 카페인", showsDivider: false) {
             if let threshold = store.residualThresholdMg, !store.recentNights.isEmpty {
                 VStack(alignment: .leading, spacing: 12) {
+                    if store.isStale, let asOf = store.loadedAt {
+                        InsightStaleNotice(asOf: asOf)
+                    }
                     chart(threshold: threshold)
                     table(threshold: threshold)
                 }

@@ -19,10 +19,13 @@ final class InsightStore {
     private(set) var report: CaffeineSleepReportResponse?
     private(set) var isLoading = false
     private(set) var errorMessage: String?
+    /// 보여 주는 리포트가 마지막 조회로 확인되지 않은 값인가(조회 실패 뒤 이전 값을 유지). 화면은 `loadedAt` 기준이라고 알린다.
+    private(set) var isStale = false
+    /// 마지막으로 조회에 성공한 기기 시각("N분 전 기준")
+    private(set) var loadedAt: Date?
     /// 요청한 아침 날짜("yyyy-MM-dd") 오름차순. 응답에 없는 날짜는 "데이터 없음"으로 그린다.
     private(set) var nightKeys: [String] = []
 
-    @ObservationIgnored private var loadedAt: Date?
     @ObservationIgnored private var isInvalidated = false
     /// 조회 중에 다시 받으라는 요청이 오면(예: 수면 업로드 완료) 끝난 뒤 한 번 더 받는다.
     @ObservationIgnored private var rerunRequested = false
@@ -37,10 +40,10 @@ final class InsightStore {
 
     // MARK: - 조회
 
-    /// 처음이거나, 기록이 바뀌었거나, 날이 바뀌었거나, 오래됐으면 다시 받는다.
+    /// 처음이거나, 지난 조회가 실패했거나, 기록이 바뀌었거나, 날이 바뀌었거나, 오래됐으면 다시 받는다.
     func refreshIfNeeded() async {
         let now = clock()
-        if let loadedAt, !isInvalidated,
+        if let loadedAt, !isInvalidated, !isStale, errorMessage == nil,
            now.timeIntervalSince(loadedAt) < Self.maxLoadAge,
            Calendar.current.isDate(loadedAt, inSameDayAs: now) {
             return
@@ -73,15 +76,23 @@ final class InsightStore {
             report = try await repository.caffeineSleepReport(from: from, to: to, timeZone: .current)
             nightKeys = keys
             errorMessage = nil
+            isStale = false
             loadedAt = clock()
             isInvalidated = false
         } catch is CancellationError {
             // 화면 전환으로 취소된 요청은 실패가 아니다
         } catch {
-            // 이전 리포트는 다른 기간일 수 있어 버린다 — 실패를 "데이터 없음"처럼 보이게 하지 않는다
-            report = nil
-            nightKeys = []
             errorMessage = "카페인 기록과 함께 보려면 서버 연결이 필요해요."
+            // 같은 기간의 이전 리포트는 "N분 전 기준"으로 남긴다(홈 today 캐시와 같은 방식).
+            // 날이 바뀌어 기간이 달라졌으면 버린다 — 실패를 "데이터 없음"처럼 보이게 하지 않는다.
+            if report != nil, nightKeys == keys {
+                isStale = true
+            } else {
+                report = nil
+                nightKeys = []
+                isStale = false
+                loadedAt = nil
+            }
         }
     }
 
@@ -91,6 +102,7 @@ final class InsightStore {
         nightKeys = []
         isLoading = false
         errorMessage = nil
+        isStale = false
         loadedAt = nil
         isInvalidated = false
         rerunRequested = false

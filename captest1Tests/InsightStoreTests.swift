@@ -61,17 +61,75 @@ struct InsightStoreTests {
         #expect(store.residualThresholdMg == 60)
     }
 
-    @Test func failure_clearsReport_andSetsError_notEmpty() async {
+    @Test func failure_afterSuccess_keepsReportAsStale() async {
+        // 홈 today 캐시처럼 이전 값은 남기고 "연결 안 됨 · N분 전 기준"을 띄울 수 있게 한다
         let repo = FakeInsightRepository()
-        let store = InsightStore(repository: repo, now: { noon })
+        repo.result = .success(.fixture(nights: [.fixture(date: "2027-01-15", residual: 81)]))
+        var now = noon
+        let store = InsightStore(repository: repo, now: { now })
         await store.refresh()
-        #expect(store.report != nil)
+        #expect(store.isStale == false)
+        #expect(store.loadedAt == noon)
 
+        now = noon.addingTimeInterval(10 * 60)
         repo.result = .failure(FakeError())
+        await store.refresh()
+        #expect(store.night(endingOn: noon)?.residualAtBedtimeMg == 81)
+        #expect(store.isStale == true)
+        #expect(store.loadedAt == noon)
+        #expect(store.errorMessage != nil)
+
+        repo.result = .success(.fixture(nights: [.fixture(date: "2027-01-15", residual: 40)]))
+        await store.refresh()
+        #expect(store.isStale == false)
+        #expect(store.errorMessage == nil)
+        #expect(store.night(endingOn: noon)?.residualAtBedtimeMg == 40)
+    }
+
+    @Test func failure_withoutPrevious_setsError_notEmpty() async {
+        let repo = FakeInsightRepository()
+        repo.result = .failure(FakeError())
+        let store = InsightStore(repository: repo, now: { noon })
         await store.refresh()
         #expect(store.report == nil)
         #expect(store.recentNights.isEmpty)
+        #expect(store.isStale == false)
         #expect(store.errorMessage != nil)
+    }
+
+    @Test func failure_afterDayChange_dropsPreviousPeriod() async {
+        let repo = FakeInsightRepository()
+        var now = noon
+        let store = InsightStore(repository: repo, now: { now })
+        await store.refresh()
+
+        now = noon.addingTimeInterval(86_400)
+        repo.result = .failure(FakeError())
+        await store.refresh()
+        #expect(store.report == nil)
+        #expect(store.isStale == false)
+        #expect(store.loadedAt == nil)
+    }
+
+    @Test func refreshIfNeeded_retriesAfterFailure() async {
+        let repo = FakeInsightRepository()
+        let store = InsightStore(repository: repo, now: { noon })
+        await store.refresh()
+        repo.result = .failure(FakeError())
+        await store.refresh()
+        #expect(store.isStale)
+        // 1시간이 안 지났어도 실패 뒤 탭 진입이면 다시 묻는다
+        repo.result = .success(.fixture())
+        await store.refreshIfNeeded()
+        #expect(repo.requests.count == 3)
+        #expect(store.isStale == false)
+    }
+
+    @Test func staleText_matchesHomeWording() {
+        let asOf = Date(timeIntervalSince1970: 1_800_000_000)
+        #expect(InsightFormat.staleText(asOf: asOf, now: asOf.addingTimeInterval(30)) == "서버 연결 안 됨 · 방금 전 기준")
+        #expect(InsightFormat.staleText(asOf: asOf, now: asOf.addingTimeInterval(12 * 60 + 59)) == "서버 연결 안 됨 · 12분 전 기준")
+        #expect(InsightFormat.staleText(asOf: asOf, now: asOf.addingTimeInterval(125 * 60)) == "서버 연결 안 됨 · 2시간 전 기준")
     }
 
     @Test func refreshIfNeeded_skipsWhenFresh_refetchesWhenInvalidatedOrOld() async {
@@ -99,6 +157,8 @@ struct InsightStoreTests {
         #expect(store.report == nil)
         #expect(store.nightKeys.isEmpty)
         #expect(store.errorMessage == nil)
+        #expect(store.isStale == false)
+        #expect(store.loadedAt == nil)
         await store.refreshIfNeeded()
         #expect(repo.requests.count == 2)
     }

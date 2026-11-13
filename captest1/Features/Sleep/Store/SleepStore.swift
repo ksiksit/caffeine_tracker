@@ -17,6 +17,8 @@ final class SleepStore {
     private(set) var hasLoadedData = false
     /// 로드에 성공할 때마다 1씩 오른다. 업로드 뒤 학습처럼 "새 수면이 올라가면 다시 해야 하는" 쪽이 관찰한다.
     private(set) var loadRevision = 0
+    /// 로드를 시도할 때마다(성공·실패 모두) 1씩 오른다. 새로고침에 맞춰 함께 다시 받아야 하는 쪽(밤별 카페인)이 관찰한다.
+    private(set) var loadAttemptRevision = 0
     var errorMessage: String?
     private var lastLoadedAt: Date?
 
@@ -81,9 +83,20 @@ final class SleepStore {
             loadRevision += 1
         } catch is CancellationError {
             // 화면 전환으로 취소된 요청은 실패가 아니다
+            return
         } catch {
-            errorMessage = "수면 데이터를 불러오는데 실패했습니다: \(error.localizedDescription)"
+            errorMessage = Self.userMessage(for: error)
         }
+        loadAttemptRevision += 1
+    }
+
+    /// 서버 오류는 공용 사용자 문구로 바꾼다 — APIError의 localizedDescription은 "captest1.APIError 오류 11." 같은 내부 이름이다.
+    /// HealthKit 오류는 시스템이 사용자용 설명을 주므로 그대로 붙인다.
+    static func userMessage(for error: Error) -> String {
+        if let apiError = error as? APIError {
+            return "\(apiError.userTitle). \(apiError.userBody)"
+        }
+        return "수면 데이터를 불러오지 못했어요: \(error.localizedDescription)"
     }
 
     /// 원시 샘플이 있으면 업로드한 뒤 서버 요약을 받아 표시 모델로 바꾼다. 데이터가 없는 날은 nil.
