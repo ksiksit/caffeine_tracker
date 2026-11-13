@@ -27,6 +27,17 @@ final class captest1UITests: XCTestCase {
         let app = XCUIApplication()
         app.launch()
 
+        // 저장된 세션이 없으면 로그인 화면에서 시작한다 — 디버그 건너뛰기 버튼이 있을 때만 누른다
+        let homeBar = app.navigationBars["홈"]
+        let skipLogin = app.buttons["로그인 건너뛰기 (디버그)"]
+        let deadline = Date().addingTimeInterval(5)
+        while Date() < deadline && !homeBar.exists && !skipLogin.exists {
+            _ = homeBar.waitForExistence(timeout: 0.5)
+        }
+        if !homeBar.exists && skipLogin.exists {
+            skipLogin.tap()
+        }
+
         // 홈 탭이 기본으로 표시되는지 확인
         XCTAssertTrue(app.navigationBars["홈"].waitForExistence(timeout: 2))
         XCTAssertTrue(app.staticTexts["오늘의 카페인"].exists)
