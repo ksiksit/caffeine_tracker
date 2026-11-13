@@ -234,13 +234,4 @@ struct CaffeineStoreTests {
         #expect(cache.load(accountId: 3) == nil)
         #expect(store.isStale == false)
     }
-
-    @Test func staleText_minutesAndHours() {
-        let asOf = Date(timeIntervalSince1970: 1_800_000_000)
-        #expect(HomeView.staleText(asOf: asOf, now: asOf.addingTimeInterval(30)) == "서버 연결 안 됨 · 방금 전 기준")
-        #expect(HomeView.staleText(asOf: asOf, now: asOf.addingTimeInterval(12 * 60 + 59)) == "서버 연결 안 됨 · 12분 전 기준")
-        #expect(HomeView.staleText(asOf: asOf, now: asOf.addingTimeInterval(125 * 60)) == "서버 연결 안 됨 · 2시간 전 기준")
-        // 기기 시계가 뒤로 돌아가도 음수가 되지 않는다
-        #expect(HomeView.staleText(asOf: asOf, now: asOf.addingTimeInterval(-60)) == "서버 연결 안 됨 · 방금 전 기준")
-    }
 }

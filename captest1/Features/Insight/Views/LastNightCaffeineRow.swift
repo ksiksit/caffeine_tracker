@@ -79,7 +79,7 @@ struct InsightStaleNotice: View {
 
     var body: some View {
         TimelineView(.everyMinute) { context in
-            Label(InsightFormat.staleText(asOf: asOf, now: context.date), systemImage: "wifi.exclamationmark")
+            Label(StaleText.make(asOf: asOf, now: context.date), systemImage: "wifi.exclamationmark")
                 .font(.footnote.weight(.medium))
                 .foregroundStyle(Theme.Colors.signalWarn)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -92,19 +92,6 @@ struct InsightStaleNotice: View {
 enum InsightFormat {
     static func mg(_ value: Double) -> String { "\(Int(value.rounded()))" }
 
-    /// "서버 연결 안 됨 · 12분 전 기준". `asOf`는 마지막 조회 성공 시각(기기 시계).
-    static func staleText(asOf: Date, now: Date) -> String {
-        let minutes = max(0, Int(now.timeIntervalSince(asOf) / 60))
-        let ago: String
-        if minutes < 1 {
-            ago = String(localized: "방금 전")
-        } else if minutes < 60 {
-            ago = String(localized: "\(minutes)분 전")
-        } else {
-            ago = String(localized: "\(minutes / 60)시간 전")
-        }
-        return String(localized: "서버 연결 안 됨 · \(ago) 기준")
-    }
     static func minutes(_ value: Double) -> String { "\(Int(value.rounded()))" }
     static func percent(_ ratio: Double) -> String { "\(Int((ratio * 100).rounded()))" }
 

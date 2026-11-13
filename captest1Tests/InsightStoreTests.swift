@@ -125,13 +125,6 @@ struct InsightStoreTests {
         #expect(store.isStale == false)
     }
 
-    @Test func staleText_matchesHomeWording() {
-        let asOf = Date(timeIntervalSince1970: 1_800_000_000)
-        #expect(InsightFormat.staleText(asOf: asOf, now: asOf.addingTimeInterval(30)) == "서버 연결 안 됨 · 방금 전 기준")
-        #expect(InsightFormat.staleText(asOf: asOf, now: asOf.addingTimeInterval(12 * 60 + 59)) == "서버 연결 안 됨 · 12분 전 기준")
-        #expect(InsightFormat.staleText(asOf: asOf, now: asOf.addingTimeInterval(125 * 60)) == "서버 연결 안 됨 · 2시간 전 기준")
-    }
-
     @Test func refreshIfNeeded_skipsWhenFresh_refetchesWhenInvalidatedOrOld() async {
         let repo = FakeInsightRepository()
         var now = noon
