@@ -18,6 +18,8 @@ struct CaffeineChartView: View {
     /// 다음 한 잔 마감 시각. 지났거나 없으면 nil
     var cutoffTime: Date? = nil
     var cutoffColor: Color = Theme.Colors.signalOK
+    /// 서버가 계산한 취침 시각 예상 잔량(today.predictedAtBedtime). 위험 영역 판정에 포함한다
+    var predictedAtBedtime: Double? = nil
 
     private let ink = Theme.Colors.ink
 
@@ -177,18 +179,19 @@ struct CaffeineChartView: View {
             }
     }
 
-    /// 취침 이후 위험 영역의 위쪽 끝. 취침 이후 구간의 최대 잔류량이 안전선을 넘을 때만 값을 주고, 아니면 nil(영역을 그리지 않음).
-    /// 하루 전체 최대값으로 판정하면 낮에 많이 마시고 취침 땐 안전한 날에도 붉게 칠해진다.
+    /// 취침 이후 위험 영역의 위쪽 끝. 취침 이후 최대 잔류량이 안전선 이상일 때만 값을 주고, 아니면 nil(영역을 그리지 않음).
+    /// - 하루 전체 최대값으로 판정하면 낮에 많이 마시고 취침 땐 안전한 날에도 붉게 칠해진다.
+    /// - 경계는 신호등과 같다: 서버는 취침 잔량이 안전선 "이상"이면 초과로 본다(headroom <= 0).
+    /// - 차트 샘플은 15분 간격이라 취침이 23:10처럼 사이에 있으면 취침 순간 값이 없다. 서버가 계산한 취침 시 잔량을 함께 본다.
     static func dangerZoneTop(
         dataPoints: [CaffeineKineticsCalculator.DataPoint],
         bedtime: Date,
-        threshold: Double
+        threshold: Double,
+        predictedAtBedtime: Double? = nil
     ) -> Double? {
-        guard let maxAfterBedtime = dataPoints
-            .filter({ $0.time >= bedtime })
-            .map(\.concentrationMg)
-            .max(),
-              maxAfterBedtime > threshold else { return nil }
+        let afterBedtime = dataPoints.filter { $0.time >= bedtime }.map(\.concentrationMg)
+        guard let maxAfterBedtime = (afterBedtime + [predictedAtBedtime].compactMap { $0 }).max(),
+              maxAfterBedtime >= threshold else { return nil }
         return maxAfterBedtime
     }
 
@@ -198,7 +201,9 @@ struct CaffeineChartView: View {
            let chartEnd = dataPoints.last?.time,
            bedtime < chartEnd {
             let threshold = AppConstants.Caffeine.bedtimeSafeThresholdMg
-            if let maxConcentration = Self.dangerZoneTop(dataPoints: dataPoints, bedtime: bedtime, threshold: threshold) {
+            if let maxConcentration = Self.dangerZoneTop(
+                dataPoints: dataPoints, bedtime: bedtime, threshold: threshold, predictedAtBedtime: predictedAtBedtime
+            ) {
                 RectangleMark(
                     xStart: .value("취침", bedtime),
                     xEnd: .value("끝", chartEnd),

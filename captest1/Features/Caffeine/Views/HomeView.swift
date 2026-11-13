@@ -53,7 +53,8 @@ struct HomeView: View {
                         currentTime: store.currentTime,
                         bedtime: store.bedtime,
                         cutoffTime: upcomingCutoff,
-                        cutoffColor: hero.style.color
+                        cutoffColor: hero.style.color,
+                        predictedAtBedtime: store.today?.predictedAtBedtime
                     )
                 } else if store.today != nil {
                     timelinePlaceholder
