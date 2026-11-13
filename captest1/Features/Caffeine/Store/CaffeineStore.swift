@@ -14,32 +14,71 @@ final class CaffeineStore {
     private(set) var today: CaffeineTodayResponse?
     private(set) var isLoading = false
     var errorMessage: String?
+    /// 보여 주는 today가 최신 조회로 확인되지 않은 값인가(기기 캐시에서 꺼냈거나 마지막 조회가 실패함).
+    /// 이때 화면은 `today.now`("N분 전") 기준이라고 알린다.
+    private(set) var isStale = false
 
     private let repository: any CaffeineRepository
+    @ObservationIgnored private let cache: CaffeineTodayCache?
+    @ObservationIgnored private let clock: () -> Date
+    @ObservationIgnored private var accountId: Int64?
 
-    init(repository: any CaffeineRepository) {
+    /// - Parameter cache: nil이면 기기에 저장하지 않는다(테스트·미리보기).
+    init(repository: any CaffeineRepository, cache: CaffeineTodayCache? = nil, now: @escaping () -> Date = Date.init) {
         self.repository = repository
+        self.cache = cache
+        self.clock = now
     }
 
     // MARK: - 서버 동기화
 
-    /// 로그아웃 시 이전 계정의 값을 지운다.
+    /// 로그인한 계정을 알린다. 아직 서버 값이 없으면 이 계정의 마지막 응답(같은 날)을 꺼내 "N분 전 기준"으로 보여 준다.
+    func activate(accountId: Int64) {
+        if let previous = self.accountId, previous != accountId {
+            today = nil
+            isStale = false
+        }
+        self.accountId = accountId
+        if let today, !isStale {
+            // 계정을 알기 전에 조회가 먼저 끝났으면 지금 저장한다.
+            cache?.save(today, accountId: accountId)
+            return
+        }
+        if today == nil, let cached = cache?.load(accountId: accountId),
+           CaffeineTodayCache.isUsable(cached, at: clock()) {
+            today = cached
+            isStale = true
+        }
+    }
+
+    /// 로그아웃 시 이전 계정의 값을 지운다(기기 캐시 포함).
     func reset() {
         today = nil
         isLoading = false
         errorMessage = nil
+        isStale = false
+        accountId = nil
+        cache?.clear()
     }
 
     func refresh() async {
         isLoading = true
         defer { isLoading = false }
         do {
-            today = try await repository.today()
+            let fresh = try await repository.today()
+            today = fresh
+            isStale = false
             errorMessage = nil
+            if let accountId { cache?.save(fresh, accountId: accountId) }
         } catch is CancellationError {
             // 무시
         } catch {
             errorMessage = "현황을 불러오지 못했어요. 서버 연결을 확인해주세요."
+            // 이전 값은 "N분 전 기준"으로 남기되, 하루 경계를 넘었으면 어제 기록·마감이라 버린다.
+            if let today, !CaffeineTodayCache.isUsable(today, at: clock()) {
+                self.today = nil
+            }
+            isStale = self.today != nil
         }
     }
 
@@ -77,16 +116,18 @@ final class CaffeineStore {
 
     // MARK: - DTO → 기존 차트/카드 타입 매핑 (카드 뷰 변경 없이 재사용)
 
-    var cutoffResult: CaffeineCutoffResult {
-        guard let c = today?.cutoff else { return .safeAnytime }
+    /// 서버 신호등 상태. 서버 값이 없거나 알 수 없는 형식이면 nil — 판단 근거 없이 "지금 OK"로 보이지 않게 한다.
+    var cutoffResult: CaffeineCutoffResult? {
+        guard let c = today?.cutoff else { return nil }
         switch c.status {
-        case "CUTOFF":
-            if let at = c.cutoff { return .cutoff(at) }
+        case "SAFE_ANYTIME":
             return .safeAnytime
+        case "CUTOFF":
+            return c.cutoff.map { .cutoff($0) }
         case "ALREADY_EXCEEDED":
             return .alreadyExceeded(c.existingAtBedtime ?? 0)
         default:
-            return .safeAnytime
+            return nil
         }
     }
 

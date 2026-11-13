@@ -41,11 +41,11 @@ captest1/
 │   ├── Auth/
 │   │   ├── Views/    # LoginView·SignupView
 │   │   ├── Store/    # AuthManager(세션 상태)·AuthState
-│   │   └── Data/     # AuthRepository(포트)·APIClient+Auth(어댑터)·AuthDTO·PreviewAuthRepository
+│   │   └── Data/     # AuthRepository(포트)·APIClient+Auth(어댑터)·AuthDTO·AuthAccountStore(마지막 확인 계정 Keychain 사본, 오프라인 진입용)·PreviewAuthRepository
 │   ├── Caffeine/
 │   │   ├── Views/    # HomeView·AddCaffeineView·CaffeineChartView·CutoffHeroCard·CutoffPreviewBanner
 │   │   ├── Store/    # CaffeineStore·AddCaffeineViewModel(폼 전용)
-│   │   ├── Data/     # CaffeineRepository·APIClient+Caffeine·CaffeineDTO·PreviewCaffeineRepository
+│   │   ├── Data/     # CaffeineRepository·APIClient+Caffeine·CaffeineDTO·CaffeineTodayCache(마지막 today 기기 사본)·PreviewCaffeineRepository
 │   │   └── Model/    # CaffeineKineticsCalculator·CaffeineCutoff(즉시 미리보기용 로컬 미러)·DrinkPreset
 │   ├── Sleep/
 │   │   ├── Views/    # SleepAnalysisView·LastNightCard·StageBreakdownView·RecentNightsView

@@ -100,13 +100,22 @@ struct CutoffHeroCard: View {
         return [time.addingTimeInterval(-Self.countdownWindow), time]
     }
 
+    /// `at` 시각에 아직 지나지 않은 마감 시각(차트 마감선용). 카드가 "지금은 패스"로 바뀌는 순간 함께 nil이 된다.
+    func upcomingCutoff(at now: Date) -> Date? {
+        if case .cutoff(let time) = cutoffResult, time > now { return time }
+        return nil
+    }
+
     var body: some View {
         // 남은 시간이 다음 조회까지 멈춰 있지 않도록 다시 그린다.
         // now는 앱이 today 요청에 보낸 기기 시각을 서버가 그대로 돌려준 값이고, 마감 시각도 같은 기기 시계 기준이라
         // 기기 시계(context.date)로 비교한다. max는 조회 뒤 기기 시계가 뒤로 돌아간 경우만 막는다.
+        // 재조회로 마감 시각이 바뀌면 스케줄도 바뀌어야 한다. TimelineView가 바뀐 스케줄을 다시 읽는지에 기대지 않고
+        // 마감 시각을 identity로 삼아 새로 만든다(그러지 않으면 새 마감 순간을 놓치고 다음 분 경계에야 바뀐다).
         TimelineView(CutoffRefreshSchedule(deadlines: refreshDeadlines)) { context in
             content(style: style(at: max(now, context.date)))
         }
+        .id(refreshDeadlines)
     }
 
     private func content(style: Style) -> some View {

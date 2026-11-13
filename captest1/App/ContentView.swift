@@ -56,6 +56,10 @@ struct ContentView: View {
             }
         }
         .task {
+            // 서버에 닿지 못해도 이 계정의 마지막 today를 "N분 전 기준"으로 보여 줄 수 있게 계정을 먼저 알린다.
+            if case .authenticated(let me) = auth.state {
+                caffeineStore.activate(accountId: me.userId)
+            }
             // 서버 설정을 로컬 미러로 로드(server-authoritative)
             await settings.loadFromServer()
             // 권한은 Core(HealthKitManager), 데이터는 Feature(SleepStore)

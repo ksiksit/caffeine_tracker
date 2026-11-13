@@ -26,16 +26,14 @@ struct HomeView: View {
     }()
 
     var body: some View {
-        let hero = CutoffHeroCard(
-            cutoffResult: store.cutoffResult,
-            now: store.currentTime,
-            referenceDoseMg: settings.referenceDoseMg
-        )
+        // 서버 결과가 없으면 cutoffResult가 nil — 판단 근거 없이 "괜찮아요"로 안내하지 않는다.
+        let hero = store.cutoffResult.map {
+            CutoffHeroCard(cutoffResult: $0, now: store.currentTime, referenceDoseMg: settings.referenceDoseMg)
+        }
 
         ScrollView {
             VStack(alignment: .leading, spacing: Theme.Spacing.section) {
-                // 서버 결과가 없으면 cutoffResult가 기본값(.safeAnytime)이라 "괜찮아요"로 잘못 안내하게 된다.
-                if store.today != nil {
+                if let hero {
                     hero
                 } else {
                     CutoffUnavailableHero(
@@ -46,24 +44,20 @@ struct HomeView: View {
                     }
                 }
 
+                if store.isStale, let asOf = store.today?.now {
+                    staleNotice(asOf: asOf)
+                }
+
                 if !store.todayRecords.isEmpty {
-                    CaffeineChartView(
-                        dataPoints: store.chartDataPoints,
-                        doses: store.chartDoses,
-                        currentTime: store.currentTime,
-                        bedtime: store.bedtime,
-                        cutoffTime: upcomingCutoff,
-                        cutoffColor: hero.style.color,
-                        predictedAtBedtime: store.today?.predictedAtBedtime
-                    )
+                    chart(hero: hero)
                 } else if store.today != nil {
                     timelinePlaceholder
                 }
 
                 metricStrip
 
-                // today가 없을 때는 hero가 이미 실패를 알린다. 여기선 이전 값이 남아 있는데 갱신에 실패한 경우만.
-                if store.today != nil, let message = store.errorMessage {
+                // today가 없을 때는 hero가, 조회 실패로 이전 값을 보여 줄 때는 staleNotice가 이미 알린다. 여기선 저장 실패 등만.
+                if store.today != nil, !store.isStale, let message = store.errorMessage {
                     Label(message, systemImage: "exclamationmark.triangle.fill")
                         .font(.footnote.weight(.medium))
                         .foregroundStyle(Theme.Colors.signalWarn)
@@ -108,12 +102,68 @@ struct HomeView: View {
         }
     }
 
-    /// 아직 지나지 않은 마감 시각(차트 세로선용)
-    private var upcomingCutoff: Date? {
-        if case .cutoff(let time) = store.cutoffResult, time > store.currentTime {
-            return time
+    // MARK: - 차트
+
+    /// 마감선 색·표시는 카드와 같은 시계로 정한다. 조회 시각 기준으로 고정하면 카드가 "지금은 패스"로 바뀐 뒤에도
+    /// 다음 조회까지 이전 색의 마감선이 남는다.
+    /// 스케줄은 카드와 같은 CutoffRefreshSchedule(매 분 + 카운트다운 시작·마감 순간)을 쓴다. `.explicit(마감 시각들)`로는
+    /// 런타임에서 마감 순간에 다시 그려지지 않았다(검증 결함 d: +1·+25·+65초 모두 마감선 남음). 카드에서 동작이 확인된 스케줄로 통일한다.
+    private func chart(hero: CutoffHeroCard?) -> some View {
+        let deadlines = hero?.refreshDeadlines ?? []
+        return TimelineView(CutoffRefreshSchedule(deadlines: deadlines)) { context in
+            let clock = max(store.currentTime, context.date)
+            CaffeineChartView(
+                dataPoints: store.chartDataPoints,
+                doses: store.chartDoses,
+                currentTime: store.currentTime,
+                bedtime: store.bedtime,
+                cutoffTime: hero?.upcomingCutoff(at: clock),
+                cutoffColor: hero?.style(at: clock).color ?? Theme.Colors.signalOK,
+                predictedAtBedtime: store.today?.predictedAtBedtime
+            )
         }
-        return nil
+        .id(deadlines)
+    }
+
+    // MARK: - 연결 끊김 안내
+
+    /// 마지막으로 받은 값을 보여 주는 중임을 알린다. "N분 전"은 분마다 다시 센다.
+    private func staleNotice(asOf: Date) -> some View {
+        TimelineView(.everyMinute) { context in
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Label(Self.staleText(asOf: asOf, now: context.date), systemImage: "wifi.exclamationmark")
+                    .font(.footnote.weight(.medium))
+                    .foregroundStyle(Theme.Colors.signalWarn)
+                Spacer(minLength: 8)
+                Button {
+                    Task { await store.refresh() }
+                } label: {
+                    if store.isLoading {
+                        ProgressView()
+                    } else {
+                        Text("다시 시도")
+                    }
+                }
+                .font(.footnote.weight(.semibold))
+                .disabled(store.isLoading)
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("caffeineStaleNotice")
+    }
+
+    /// "서버 연결 안 됨 · 12분 전 기준". `asOf`는 today.now — 앱이 보낸 기기 시각이라 기기 시계로 뺀다.
+    static func staleText(asOf: Date, now: Date) -> String {
+        let minutes = max(0, Int(now.timeIntervalSince(asOf) / 60))
+        let ago: String
+        if minutes < 1 {
+            ago = String(localized: "방금 전")
+        } else if minutes < 60 {
+            ago = String(localized: "\(minutes)분 전")
+        } else {
+            ago = String(localized: "\(minutes / 60)시간 전")
+        }
+        return String(localized: "서버 연결 안 됨 · \(ago) 기준")
     }
 
     // MARK: - 지표 줄
