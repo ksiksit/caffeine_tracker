@@ -21,7 +21,7 @@ nonisolated struct UpdateCaffeineRecordRequest: Encodable, Sendable {
     let timestamp: Date
 }
 
-nonisolated struct CaffeineRecordDTO: Decodable, Identifiable, Sendable {
+nonisolated struct CaffeineRecordDTO: Codable, Identifiable, Sendable {
     let id: Int64
     let amount: Int
     let drinkName: String
@@ -29,8 +29,9 @@ nonisolated struct CaffeineRecordDTO: Decodable, Identifiable, Sendable {
 }
 
 // MARK: - 오늘 현황(서버 계산)
+// Encodable은 기기 캐시(CaffeineTodayCache)에 마지막 응답을 저장하려고 둔다. 서버로 보내지 않는다.
 
-nonisolated struct CaffeineTodayResponse: Decodable, Sendable {
+nonisolated struct CaffeineTodayResponse: Codable, Sendable {
     let now: Date
     /// 서버 LocalCalendar.nextBedtime: 오늘의 설정 취침시각, 이미 지났으면 내일.
     let bedtime: Date
@@ -47,12 +48,12 @@ nonisolated struct CaffeineTodayResponse: Decodable, Sendable {
     var carryoverRecords: [CaffeineRecordDTO]? = nil
 }
 
-nonisolated struct ChartPointDTO: Decodable, Sendable {
+nonisolated struct ChartPointDTO: Codable, Sendable {
     let time: Date
     let concentrationMg: Double
 }
 
-nonisolated struct CutoffDTO: Decodable, Sendable {
+nonisolated struct CutoffDTO: Codable, Sendable {
     /// SAFE_ANYTIME | CUTOFF | ALREADY_EXCEEDED
     let status: String
     let cutoff: Date?

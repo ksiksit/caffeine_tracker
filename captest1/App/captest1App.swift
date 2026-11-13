@@ -43,7 +43,7 @@ struct captest1App: App {
         // APIClient 하나를 각 도메인 포트(Repository)와 세션 제어(AuthSession)로 주입한다.
         settings.attach(repository: client)
         _auth = State(wrappedValue: AuthManager(repository: client, session: client, tokenStore: store))
-        _caffeineStore = State(wrappedValue: CaffeineStore(repository: client))
+        _caffeineStore = State(wrappedValue: CaffeineStore(repository: client, cache: CaffeineTodayCache()))
         _learningStore = State(wrappedValue: LearningStore(repository: client))
         _sleepStore = State(wrappedValue: SleepStore(samples: SleepFetchService(healthStore: healthStore), repository: client))
         _notificationStore = State(wrappedValue: NotificationStore(repository: client, scheduler: LocalNotificationScheduler()))

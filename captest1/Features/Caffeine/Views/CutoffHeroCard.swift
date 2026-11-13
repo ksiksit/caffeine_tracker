@@ -100,6 +100,12 @@ struct CutoffHeroCard: View {
         return [time.addingTimeInterval(-Self.countdownWindow), time]
     }
 
+    /// `at` 시각에 아직 지나지 않은 마감 시각(차트 마감선용).
+    func upcomingCutoff(at now: Date) -> Date? {
+        if case .cutoff(let time) = cutoffResult, time > now { return time }
+        return nil
+    }
+
     var body: some View {
         // 남은 시간이 다음 조회까지 멈춰 있지 않도록 다시 그린다.
         // now는 앱이 today 요청에 보낸 기기 시각을 서버가 그대로 돌려준 값이고, 마감 시각도 같은 기기 시계 기준이라
