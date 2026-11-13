@@ -105,10 +105,12 @@ struct HomeView: View {
     // MARK: - 차트
 
     /// 마감선 색·표시는 카드와 같은 시계로 정한다. 조회 시각 기준으로 고정하면 카드가 "지금은 패스"로 바뀐 뒤에도
-    /// 다음 조회까지 이전 색의 마감선이 남는다. 상태가 바뀌는 순간(카운트다운 시작·마감)에만 다시 그린다.
+    /// 다음 조회까지 이전 색의 마감선이 남는다.
+    /// 스케줄은 카드와 같은 CutoffRefreshSchedule(매 분 + 카운트다운 시작·마감 순간)을 쓴다. `.explicit(마감 시각들)`로는
+    /// 런타임에서 마감 순간에 다시 그려지지 않았다(검증 결함 d: +1·+25·+65초 모두 마감선 남음). 카드에서 동작이 확인된 스케줄로 통일한다.
     private func chart(hero: CutoffHeroCard?) -> some View {
         let deadlines = hero?.refreshDeadlines ?? []
-        return TimelineView(.explicit(deadlines)) { context in
+        return TimelineView(CutoffRefreshSchedule(deadlines: deadlines)) { context in
             let clock = max(store.currentTime, context.date)
             CaffeineChartView(
                 dataPoints: store.chartDataPoints,
