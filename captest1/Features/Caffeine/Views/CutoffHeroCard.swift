@@ -27,7 +27,11 @@ struct CutoffHeroCard: View {
         let headline: String
     }
 
-    var style: Style {
+    /// 서버 today 시각 기준 스타일(차트 마감선 색 등 바깥에서 읽는 값).
+    var style: Style { style(at: now) }
+
+    /// `at` 시각 기준 스타일. 카드 본문은 분마다 다시 계산해 남은 시간이 줄어든다.
+    func style(at now: Date) -> Style {
         switch cutoffResult {
         case .safeAnytime:
             return Style(
@@ -41,7 +45,7 @@ struct CutoffHeroCard: View {
             let timeText = Self.timeFormatter.string(from: time)
             if time.timeIntervalSince(now) <= 90 * 60 {
                 return Style(
-                    status: "곧 마감",
+                    status: Self.remainingText(until: time, from: now),
                     symbol: "exclamationmark",
                     color: Theme.Colors.signalWarn,
                     headline: "\(timeText) 마감\n지금이 마지막 \(referenceDoseMg) mg 한 잔이에요"
@@ -72,8 +76,29 @@ struct CutoffHeroCard: View {
         }
     }
 
+    /// 마감까지 남은 시간. "1시간 20분 남음" · "1시간 남음" · "40분 남음".
+    /// 분은 올림한다(30초 남았을 때 "0분 남음"이 되지 않도록).
+    static func remainingText(until deadline: Date, from now: Date) -> String {
+        let totalMinutes = max(1, Int((deadline.timeIntervalSince(now) / 60).rounded(.up)))
+        let hours = totalMinutes / 60
+        let minutes = totalMinutes % 60
+        if hours == 0 {
+            return String(localized: "\(minutes)분 남음")
+        }
+        if minutes == 0 {
+            return String(localized: "\(hours)시간 남음")
+        }
+        return String(localized: "\(hours)시간 \(minutes)분 남음")
+    }
+
     var body: some View {
-        let style = style
+        // 남은 시간이 다음 조회까지 멈춰 있지 않도록 분마다 다시 그린다. 기기 시계가 서버보다 늦으면 서버 시각을 쓴다.
+        TimelineView(.everyMinute) { context in
+            content(style: style(at: max(now, context.date)))
+        }
+    }
+
+    private func content(style: Style) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("오늘의 카페인")
                 .font(Theme.Fonts.sectionTitle)

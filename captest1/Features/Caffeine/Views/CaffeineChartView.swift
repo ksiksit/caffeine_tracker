@@ -177,14 +177,28 @@ struct CaffeineChartView: View {
             }
     }
 
+    /// 취침 이후 위험 영역의 위쪽 끝. 취침 이후 구간의 최대 잔류량이 안전선을 넘을 때만 값을 주고, 아니면 nil(영역을 그리지 않음).
+    /// 하루 전체 최대값으로 판정하면 낮에 많이 마시고 취침 땐 안전한 날에도 붉게 칠해진다.
+    static func dangerZoneTop(
+        dataPoints: [CaffeineKineticsCalculator.DataPoint],
+        bedtime: Date,
+        threshold: Double
+    ) -> Double? {
+        guard let maxAfterBedtime = dataPoints
+            .filter({ $0.time >= bedtime })
+            .map(\.concentrationMg)
+            .max(),
+              maxAfterBedtime > threshold else { return nil }
+        return maxAfterBedtime
+    }
+
     @ChartContentBuilder
     private var bedtimeDangerZone: some ChartContent {
         if let bedtime,
            let chartEnd = dataPoints.last?.time,
            bedtime < chartEnd {
             let threshold = AppConstants.Caffeine.bedtimeSafeThresholdMg
-            let maxConcentration = dataPoints.map(\.concentrationMg).max() ?? threshold
-            if maxConcentration > threshold {
+            if let maxConcentration = Self.dangerZoneTop(dataPoints: dataPoints, bedtime: bedtime, threshold: threshold) {
                 RectangleMark(
                     xStart: .value("취침", bedtime),
                     xEnd: .value("끝", chartEnd),
