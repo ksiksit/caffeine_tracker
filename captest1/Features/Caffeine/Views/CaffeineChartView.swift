@@ -39,6 +39,7 @@ struct CaffeineChartView: View {
         Chart {
             bedtimeDangerZone
             safetyRule
+            bedtimeDangerEdge
             pastSeries
             futureSeries
             doseMarkers
@@ -195,23 +196,43 @@ struct CaffeineChartView: View {
         return maxAfterBedtime
     }
 
+    /// 위험 영역의 가로 범위(취침 ~ 차트 끝)와 위쪽 끝. 그리지 않으면 nil.
+    private var dangerZone: (start: Date, end: Date, top: Double)? {
+        guard let bedtime,
+              let chartEnd = dataPoints.last?.time,
+              bedtime < chartEnd,
+              let top = Self.dangerZoneTop(
+                dataPoints: dataPoints, bedtime: bedtime,
+                threshold: AppConstants.Caffeine.bedtimeSafeThresholdMg, predictedAtBedtime: predictedAtBedtime)
+        else { return nil }
+        return (bedtime, chartEnd, top)
+    }
+
     @ChartContentBuilder
     private var bedtimeDangerZone: some ChartContent {
-        if let bedtime,
-           let chartEnd = dataPoints.last?.time,
-           bedtime < chartEnd {
-            let threshold = AppConstants.Caffeine.bedtimeSafeThresholdMg
-            if let maxConcentration = Self.dangerZoneTop(
-                dataPoints: dataPoints, bedtime: bedtime, threshold: threshold, predictedAtBedtime: predictedAtBedtime
-            ) {
-                RectangleMark(
-                    xStart: .value("취침", bedtime),
-                    xEnd: .value("끝", chartEnd),
-                    yStart: .value("임계", threshold),
-                    yEnd: .value("최대", maxConcentration)
-                )
-                .foregroundStyle(Theme.Colors.signalStop.opacity(0.08))
-            }
+        if let zone = dangerZone {
+            RectangleMark(
+                xStart: .value("취침", zone.start),
+                xEnd: .value("끝", zone.end),
+                yStart: .value("임계", AppConstants.Caffeine.bedtimeSafeThresholdMg),
+                yEnd: .value("최대", zone.top)
+            )
+            .foregroundStyle(Theme.Colors.signalStop.opacity(0.08))
+        }
+    }
+
+    /// 위험 영역의 아래 경계(안전선 위 취침 이후 구간)를 신호색으로 긋는다.
+    /// 취침 잔량이 정확히 안전선(50 mg)이면 서버는 초과로 보지만 영역 높이가 0이라 면만으로는 보이지 않는다.
+    @ChartContentBuilder
+    private var bedtimeDangerEdge: some ChartContent {
+        if let zone = dangerZone {
+            RuleMark(
+                xStart: .value("취침", zone.start),
+                xEnd: .value("끝", zone.end),
+                y: .value("안전선", AppConstants.Caffeine.bedtimeSafeThresholdMg)
+            )
+            .foregroundStyle(Theme.Colors.signalStop.opacity(0.6))
+            .lineStyle(StrokeStyle(lineWidth: 2))
         }
     }
 }

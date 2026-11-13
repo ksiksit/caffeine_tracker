@@ -105,6 +105,35 @@ struct HomeCardRulesTests {
         #expect(CutoffHeroCard(cutoffResult: .safeAnytime, now: now, referenceDoseMg: 150).refreshDeadlines.isEmpty)
     }
 
+    // MARK: - 차트 마감선(카드와 같은 시계)
+
+    @Test func chartCutoff_followsClock_hiddenOnceCardSaysPass() {
+        let cutoff = now.addingTimeInterval(2 * 3600)
+        let card = CutoffHeroCard(cutoffResult: .cutoff(cutoff), now: now, referenceDoseMg: 150)
+        // 조회 시각: 마감선 표시, 신호색은 OK
+        #expect(card.upcomingCutoff(at: now) == cutoff)
+        #expect(card.style(at: now).color == Theme.Colors.signalOK)
+        // 카운트다운 구간: 마감선은 남고 색은 경고
+        let inCountdown = cutoff.addingTimeInterval(-30 * 60)
+        #expect(card.upcomingCutoff(at: inCountdown) == cutoff)
+        #expect(card.style(at: inCountdown).color == Theme.Colors.signalWarn)
+        // 마감 순간: 카드는 "지금은 패스", 마감선은 사라진다(다음 조회를 기다리지 않음)
+        #expect(card.style(at: cutoff).status == "지금은 패스")
+        #expect(card.upcomingCutoff(at: cutoff) == nil)
+    }
+
+    @Test func chartCutoff_noCutoffStatus_isNil() {
+        #expect(CutoffHeroCard(cutoffResult: .safeAnytime, now: now, referenceDoseMg: 150).upcomingCutoff(at: now) == nil)
+        #expect(CutoffHeroCard(cutoffResult: .alreadyExceeded(60), now: now, referenceDoseMg: 150).upcomingCutoff(at: now) == nil)
+    }
+
+    @Test func refreshDeadlines_changeWhenCutoffChanges() {
+        // 재조회로 마감이 바뀌면 identity(.id)가 바뀌어 스케줄을 새로 만든다
+        let before = CutoffHeroCard(cutoffResult: .cutoff(now.addingTimeInterval(3600)), now: now, referenceDoseMg: 150)
+        let after = CutoffHeroCard(cutoffResult: .cutoff(now.addingTimeInterval(2400)), now: now, referenceDoseMg: 150)
+        #expect(before.refreshDeadlines != after.refreshDeadlines)
+    }
+
     // MARK: - 차트 취침 이후 위험 영역
 
     private func points(_ values: [(minutes: Double, mg: Double)]) -> [CaffeineKineticsCalculator.DataPoint] {
