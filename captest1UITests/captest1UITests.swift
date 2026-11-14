@@ -27,6 +27,17 @@ final class captest1UITests: XCTestCase {
         let app = XCUIApplication()
         app.launch()
 
+        // 저장된 세션이 없으면 로그인 화면에서 시작한다 — 디버그 건너뛰기 버튼이 있을 때만 누른다
+        let homeBar = app.navigationBars["홈"]
+        let skipLogin = app.buttons["로그인 건너뛰기 (디버그)"]
+        let deadline = Date().addingTimeInterval(5)
+        while Date() < deadline && !homeBar.exists && !skipLogin.exists {
+            _ = homeBar.waitForExistence(timeout: 0.5)
+        }
+        if !homeBar.exists && skipLogin.exists {
+            skipLogin.tap()
+        }
+
         // 홈 탭이 기본으로 표시되는지 확인
         XCTAssertTrue(app.navigationBars["홈"].waitForExistence(timeout: 2))
         XCTAssertTrue(app.staticTexts["오늘의 카페인"].exists)
@@ -58,7 +69,13 @@ final class captest1UITests: XCTestCase {
             || app.staticTexts["HealthKit 접근 요청 완료"].exists
             || app.staticTexts["건강 데이터 사용 불가"].exists
         )
-        XCTAssertTrue(app.staticTexts["카페인 알림 설정"].waitForExistence(timeout: 2))
+        // 알림 섹션은 화면 아래쪽에 있다 — 보일 때까지 몇 번만 스크롤한다
+        let cutoffToggle = app.switches["섭취 마감 30분 전"]
+        for _ in 0..<4 where !cutoffToggle.exists {
+            app.swipeUp()
+        }
+        XCTAssertTrue(cutoffToggle.waitForExistence(timeout: 2))
+        XCTAssertTrue(app.staticTexts["알림"].exists)
 
         // 홈 탭으로 복귀
         app.tabBars.buttons["홈"].tap()

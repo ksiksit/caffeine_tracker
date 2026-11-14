@@ -131,7 +131,7 @@ struct HomeView: View {
     private func staleNotice(asOf: Date) -> some View {
         TimelineView(.everyMinute) { context in
             HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Label(Self.staleText(asOf: asOf, now: context.date), systemImage: "wifi.exclamationmark")
+                Label(StaleText.make(asOf: asOf, now: context.date), systemImage: "wifi.exclamationmark")
                     .font(.footnote.weight(.medium))
                     .foregroundStyle(Theme.Colors.signalWarn)
                 Spacer(minLength: 8)
@@ -150,20 +150,6 @@ struct HomeView: View {
         }
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier("caffeineStaleNotice")
-    }
-
-    /// "서버 연결 안 됨 · 12분 전 기준". `asOf`는 today.now — 앱이 보낸 기기 시각이라 기기 시계로 뺀다.
-    static func staleText(asOf: Date, now: Date) -> String {
-        let minutes = max(0, Int(now.timeIntervalSince(asOf) / 60))
-        let ago: String
-        if minutes < 1 {
-            ago = String(localized: "방금 전")
-        } else if minutes < 60 {
-            ago = String(localized: "\(minutes)분 전")
-        } else {
-            ago = String(localized: "\(minutes / 60)시간 전")
-        }
-        return String(localized: "서버 연결 안 됨 · \(ago) 기준")
     }
 
     // MARK: - 지표 줄

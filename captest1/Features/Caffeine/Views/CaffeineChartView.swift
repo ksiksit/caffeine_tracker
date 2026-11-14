@@ -23,6 +23,11 @@ struct CaffeineChartView: View {
 
     private let ink = Theme.Colors.ink
 
+    /// 선·영역 공통 보간. 서버 점은 섭취마다 "1초 전 점 + 섭취 점"으로 수직 상승을 표현하고,
+    /// 섭취가 틱 정각이면 같은 x에 점이 두 개 생긴다. monotone은 그 두 점 사이에서 영역이 옆으로 삐져나오므로 linear를 쓴다
+    /// (15분 간격 감소 구간은 직선으로 이어도 곡선과 구분되지 않는다). 선과 영역은 반드시 같은 보간을 쓴다.
+    static let interpolation: InterpolationMethod = .linear
+
     /// 지금까지의 점(실측 구간)
     private var pastPoints: [CaffeineKineticsCalculator.DataPoint] {
         dataPoints.filter { $0.time <= currentTime }
@@ -81,10 +86,12 @@ struct CaffeineChartView: View {
         ForEach(pastPoints) { point in
             AreaMark(
                 x: .value("시간", point.time),
-                y: .value("mg", point.concentrationMg)
+                y: .value("mg", point.concentrationMg),
+                // 기본값(standard)은 같은 x의 값을 쌓아, 틱 정각 섭취 지점에서 선 위로 가는 기둥이 솟는다
+                stacking: .unstacked
             )
             .foregroundStyle(ink.opacity(0.07))
-            .interpolationMethod(.monotone)
+            .interpolationMethod(Self.interpolation)
 
             LineMark(
                 x: .value("시간", point.time),
@@ -93,7 +100,7 @@ struct CaffeineChartView: View {
             )
             .foregroundStyle(ink)
             .lineStyle(StrokeStyle(lineWidth: 2))
-            .interpolationMethod(.monotone)
+            .interpolationMethod(Self.interpolation)
         }
     }
 
@@ -107,7 +114,7 @@ struct CaffeineChartView: View {
             )
             .foregroundStyle(ink.opacity(0.45))
             .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [3, 3]))
-            .interpolationMethod(.monotone)
+            .interpolationMethod(Self.interpolation)
         }
     }
 
