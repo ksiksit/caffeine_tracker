@@ -35,6 +35,9 @@ final class IntakeHistoryStore {
     @ObservationIgnored private var loadedRange: DateRange?
     /// 조회 중에 다시 받으라는 요청이 오면(당겨서 새로고침 등) 끝난 뒤 한 번 더 받는다.
     @ObservationIgnored private var rerunRequested = false
+    /// `reset()`마다 올라가는 세대 번호. 조회는 시작할 때의 세대를 잡아 두고, 응답이 왔을 때 세대가 바뀌어 있으면
+    /// (그 사이 로그아웃) 결과를 버린다 — 이전 계정의 통계가 다음 계정 화면에 되살아나지 않게 한다.
+    @ObservationIgnored private var generation = 0
 
     private let repository: any IntakeStatsRepository
     @ObservationIgnored private let clock: () -> Date
@@ -66,22 +69,27 @@ final class IntakeHistoryStore {
             rerunRequested = true
             return
         }
+        let generation = self.generation
         isLoading = true
         repeat {
             rerunRequested = false
-            await fetch()
-        } while rerunRequested
+            await fetch(generation: generation)
+        } while generation == self.generation && rerunRequested
+        // reset() 뒤에 남은 이전 루프다. isLoading·rerunRequested는 이제 새 세대의 조회 것이므로 건드리지 않는다.
+        guard generation == self.generation else { return }
         isLoading = false
     }
 
-    private func fetch() async {
+    private func fetch(generation: Int) async {
         let range = Self.range(endingOn: clock())
         // 날이 바뀌어 기간이 달라졌으면 이전 기간의 통계를 새 기간 것처럼 보여 주지 않는다.
         if loadedRange != range {
             clearStats()
         }
         do {
-            stats = try await repository.intakeStats(from: range.from, to: range.to, timeZone: .current)
+            let response = try await repository.intakeStats(from: range.from, to: range.to, timeZone: .current)
+            guard generation == self.generation else { return }
+            stats = response
             loadedRange = range
             errorMessage = nil
             isStale = false
@@ -89,14 +97,16 @@ final class IntakeHistoryStore {
         } catch is CancellationError {
             // 화면 전환으로 취소된 요청은 실패가 아니다
         } catch {
+            guard generation == self.generation else { return }
             errorMessage = "섭취 히스토리를 불러오지 못했어요. 서버 연결을 확인해주세요."
             // 같은 기간의 이전 통계는 "N분 전 기준"으로 남긴다(홈 today 캐시와 같은 방식).
             isStale = stats != nil
         }
     }
 
-    /// 로그아웃 시 이전 계정의 값을 지운다.
+    /// 로그아웃 시 이전 계정의 값을 지운다. 떠 있는 요청은 세대를 올려 무효로 만든다 — 뒤늦게 온 응답은 성공이든 실패든 버려진다.
     func reset() {
+        generation += 1
         clearStats()
         isLoading = false
         errorMessage = nil

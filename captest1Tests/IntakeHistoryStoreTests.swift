@@ -2,7 +2,8 @@
 //  IntakeHistoryStoreTests.swift
 //  captest1Tests
 //
-//  주간 섭취 히스토리: 요청 기간(섭취일 기준 오늘까지 7일), 서버 값 그대로 보관, 로딩·실패·기록 없음 구분, 실패 뒤 이전 값 유지.
+//  주간 섭취 히스토리: 요청 기간(섭취일 기준 오늘까지 7일), 서버 값 그대로 보관, 로딩·실패·기록 없음 구분, 실패 뒤 이전 값 유지,
+//  로그아웃(reset) 뒤에 도착한 이전 요청의 응답 무시.
 //  네트워크 대신 FakeIntakeStatsRepository.
 //
 
@@ -166,6 +167,99 @@ struct IntakeHistoryStoreTests {
         #expect(store.errorMessage == nil)
         #expect(store.isStale == false)
         #expect(store.loadedAt == nil)
+    }
+
+    // MARK: - 로그아웃과 떠 있는 요청
+
+    private func day15(total: Double) -> IntakeStatsResponse {
+        .fixture(days: [.fixture(date: "2027-01-15", total: total, count: 1)])
+    }
+
+    @Test func reset_whileRequestInFlight_dropsLateSuccess_andNextRefreshFetchesAgain() async {
+        let repo = FakeIntakeStatsRepository()
+        repo.holdsResponses = true
+        let store = IntakeHistoryStore(repository: repo, now: { noon })
+        let previous = Task { await store.refresh() }
+        #expect(await repo.waitForPending(1))
+
+        store.reset()
+        // 로그아웃 뒤에 이전 계정의 응답이 도착한다
+        repo.release(.success(day15(total: 150)))
+        await previous.value
+
+        #expect(store.stats == nil)
+        #expect(store.loadedAt == nil)
+        #expect(store.errorMessage == nil)
+        #expect(store.isStale == false)
+        #expect(store.isLoading == false)
+        #expect(store.daysNewestFirst.isEmpty)
+
+        // 다음 계정의 조회는 실제로 다시 나가고 그 값만 보인다
+        let next = Task { await store.refresh() }
+        #expect(await repo.waitForPending(1))
+        #expect(repo.requests.count == 2)
+        repo.release(.success(day15(total: 225)))
+        await next.value
+        #expect(store.stats?.days.first?.totalMg == 225)
+        #expect(store.isLoading == false)
+    }
+
+    @Test func reset_whileRequestInFlight_dropsLateFailure() async {
+        let repo = FakeIntakeStatsRepository()
+        repo.holdsResponses = true
+        let store = IntakeHistoryStore(repository: repo, now: { noon })
+        let previous = Task { await store.refresh() }
+        #expect(await repo.waitForPending(1))
+
+        store.reset()
+        repo.release(.failure(FakeError()))
+        await previous.value
+
+        #expect(store.errorMessage == nil)
+        #expect(store.stats == nil)
+        guard case .loading = store.phase else {
+            Issue.record("이전 계정의 실패가 반영됨")
+            return
+        }
+    }
+
+    @Test func reset_whileRequestInFlight_previousLoopDoesNotDisturbNextLoop() async {
+        let repo = FakeIntakeStatsRepository()
+        repo.holdsResponses = true
+        let store = IntakeHistoryStore(repository: repo, now: { noon })
+        let previous = Task { await store.refresh() }
+        #expect(await repo.waitForPending(1))
+
+        store.reset()
+        // 이전 요청이 아직 떠 있는 동안 다음 계정의 조회가 시작된다
+        let next = Task { await store.refresh() }
+        #expect(await repo.waitForPending(2))
+
+        // 이전 루프가 끝나도 다음 계정의 조회 중 상태는 그대로다
+        repo.release(.success(day15(total: 150)))
+        await previous.value
+        #expect(store.stats == nil)
+        guard store.isLoading else {
+            // 여기서 더 가면 아래 refresh()가 루프를 하나 더 만들어 응답을 기다리며 멈춘다 — 남은 요청을 풀고 끝낸다
+            Issue.record("이전 루프가 다음 계정의 조회 중 상태를 꺼 버림")
+            repo.release(.failure(FakeError()))
+            await next.value
+            return
+        }
+
+        // 조회 중에 온 요청은 새 루프를 하나 더 만들지 않고, 끝난 뒤 한 번 더 받게 한다
+        await store.refresh()
+        #expect(repo.requests.count == 2)
+        repo.release(.success(day15(total: 225)))
+        #expect(await repo.waitForPending(1))
+        #expect(repo.requests.count == 3)
+        #expect(store.isLoading == true)
+        repo.release(.success(day15(total: 300)))
+        await next.value
+
+        #expect(store.stats?.days.first?.totalMg == 300)
+        #expect(store.isLoading == false)
+        #expect(repo.requests.count == 3)
     }
 
     // MARK: - 날짜별 행 문구
