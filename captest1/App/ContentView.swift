@@ -19,6 +19,7 @@ struct ContentView: View {
     @Environment(NotificationStore.self) private var notifications
     @Environment(CafeNearbyStore.self) private var cafeNearby
     @Environment(LocationPermissionManager.self) private var location
+    @Environment(IntakeHistoryStore.self) private var intakeHistoryStore
     @Environment(\.scenePhase) private var scenePhase
     @State private var selectedTab: Int = 0
 
@@ -26,7 +27,9 @@ struct ContentView: View {
         TabView(selection: $selectedTab) {
             Tab(String(localized: "tab.home"), systemImage: "cup.and.saucer.fill", value: 0) {
                 NavigationStack {
-                    HomeView()
+                    HomeView {
+                        IntakeHistoryLink()
+                    }
                 }
             }
 
@@ -129,6 +132,7 @@ struct ContentView: View {
             insightStore.reset()
             insightReportStore.reset()
             settings.resetForSignOut()
+            intakeHistoryStore.reset()
             Task {
                 await notifications.clear()
                 await cafeNearby.clear()

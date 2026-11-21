@@ -68,6 +68,19 @@ struct APIClientEnvelopeTests {
     }, "error": null, "message": null }
     """
 
+    /// 서버 api.md 인사이트 절 intake-stats 예시 그대로.
+    private static let intakeStatsJSON = """
+    { "success": true, "data": {
+      "from": "2026-06-01", "to": "2026-06-07", "dayCount": 7, "recordedDayCount": 2,
+      "averageDailyMg": 210.0, "maxDailyMg": 420.0, "overLimitDayCount": 1, "averageLastIntakeMinuteOfDay": 1000,
+      "summarySentence": "최근 7일 하루 평균 210mg, 400mg을 넘긴 날은 1일이에요. 마지막 한 잔은 평균 16시 40분이에요.",
+      "days": [
+        { "date": "2026-06-01", "totalMg": 0.0, "recordCount": 0, "firstIntakeAt": null, "lastIntakeAt": null, "overLimit": false },
+        { "date": "2026-06-02", "totalMg": 420.0, "recordCount": 3, "firstIntakeAt": "2026-06-02T00:00:00Z", "lastIntakeAt": "2026-06-02T08:00:00Z", "overLimit": true }
+      ]
+    }, "error": null, "message": null }
+    """
+
     private static let unauthorizedJSON = #"{ "success": false, "data": null, "error": { "code": "UNAUTHORIZED" }, "message": "인증이 필요합니다." }"#
 
     @Test func successEnvelope_returnsPayload() async throws {
@@ -303,6 +316,38 @@ struct APIClientEnvelopeTests {
         let query = request?.query ?? ""
         #expect(query.contains("from=2026-06-01"))
         #expect(query.contains("to=2026-06-14"))
+        #expect(query.contains("tz=Asia/Seoul"))
+    }
+
+    @Test func intakeStats_decodesApiExample_andSendsPeriodQuery() async throws {
+        defer { StubURLProtocol.reset() }
+        StubURLProtocol.install { _ in .init(status: 200, json: Self.intakeStatsJSON) }
+        let stats = try await makeClient().intakeStats(
+            from: "2026-06-01", to: "2026-06-07", timeZone: TimeZone(identifier: "Asia/Seoul")!)
+
+        #expect(stats.dayCount == 7)
+        #expect(stats.recordedDayCount == 2)
+        #expect(stats.averageDailyMg == 210)
+        #expect(stats.maxDailyMg == 420)
+        #expect(stats.overLimitDayCount == 1)
+        #expect(stats.averageLastIntakeMinuteOfDay == 1000)
+        #expect(stats.summarySentence == "최근 7일 하루 평균 210mg, 400mg을 넘긴 날은 1일이에요. 마지막 한 잔은 평균 16시 40분이에요.")
+        #expect(stats.days.count == 2)
+        let empty = try #require(stats.days.first)
+        #expect(empty.totalMg == 0)
+        #expect(empty.recordCount == 0)
+        #expect(empty.lastIntakeAt == nil)
+        let day = try #require(stats.days.last)
+        #expect(day.date == "2026-06-02")
+        #expect(day.totalMg == 420)
+        #expect(day.recordCount == 3)
+        #expect(day.overLimit == true)
+        #expect(day.lastIntakeAt == Date(timeIntervalSince1970: 1_780_387_200))
+        let request = StubURLProtocol.requests.first?.url
+        #expect(request?.path == "/api/insight/intake-stats")
+        let query = request?.query ?? ""
+        #expect(query.contains("from=2026-06-01"))
+        #expect(query.contains("to=2026-06-07"))
         #expect(query.contains("tz=Asia/Seoul"))
     }
 }

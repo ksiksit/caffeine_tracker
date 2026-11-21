@@ -21,6 +21,7 @@ struct captest1App: App {
     @State private var insightReportStore: InsightReportStore
     @State private var sleepStore: SleepStore
     @State private var notificationStore: NotificationStore
+    @State private var intakeHistoryStore: IntakeHistoryStore
     @State private var locationPermission = LocationPermissionManager()
     private let tokenStore: TokenStore
     private let apiClient: APIClient
@@ -52,6 +53,7 @@ struct captest1App: App {
         _insightReportStore = State(wrappedValue: InsightReportStore(repository: client))
         _sleepStore = State(wrappedValue: SleepStore(samples: SleepFetchService(healthStore: healthStore), repository: client))
         _notificationStore = State(wrappedValue: NotificationStore(repository: client, scheduler: LocalNotificationScheduler()))
+        _intakeHistoryStore = State(wrappedValue: IntakeHistoryStore(repository: client))
     }
 
     var body: some Scene {
@@ -66,6 +68,7 @@ struct captest1App: App {
                 .environment(insightReportStore)
                 .environment(sleepStore)
                 .environment(notificationStore)
+                .environment(intakeHistoryStore)
                 .environment(appDelegate.cafeNearby)
                 .environment(locationPermission)
                 .task {

@@ -32,6 +32,7 @@
 - 오늘 섭취한 카페인의 총량과 현재 잔류량 계산
 - 취침 시 예상 카페인 잔류량과 추가 섭취 가능 여부 안내
 - 15분 간격의 카페인 잔류량 시계열 차트 제공 (50mg 안전선과 취침 후 위험 영역 시각화)
+- 주간 섭취 히스토리: 지난 7일의 섭취일별 총량·기록 수·마지막 섭취 시각과 서버가 만든 요약 문장 표시 (홈 탭 → 오늘 기록 → "지난 7일 섭취 보기")
 - HealthKit 수면 데이터 권한 요청 및 수면 기록 조회
 - Apple Watch와 iPhone에서 중복 기록된 수면 샘플 병합
 - 수면 단계별 시간, 총 수면 시간, 수면 효율, 수면 잠복기 분석
@@ -156,6 +157,7 @@ captest1/
 │   │   ├── Store/    # InsightStore(최근 7밤)·InsightReportStore(리포트 화면: 고른 기간의 비교·문장)
 │   │   ├── Data/     # InsightRepository·APIClient+Insight·InsightDTO·PreviewInsightRepository
 │   │   └── Model/    # InsightReportPeriod(7·14·30일)
+│   │                 # 섭취 히스토리(홈 "오늘 기록" → 화면): IntakeHistoryView·IntakeHistoryLink, IntakeHistoryStore, IntakeStatsRepository·APIClient+IntakeStats·IntakeStatsDTO
 │   ├── Learning/
 │   │   ├── Views/    # LearningDashboardView·CalibrationScatterChart·ConfidenceBar
 │   │   ├── Store/    # LearningStore
