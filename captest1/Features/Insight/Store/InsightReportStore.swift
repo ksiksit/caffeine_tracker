@@ -34,9 +34,14 @@ final class InsightReportStore {
 
     /// `report`를 받을 때 요청한 기간
     @ObservationIgnored private var loadedRange: ClosedRange<String>?
-    @ObservationIgnored private var isInvalidated = false
+    /// `invalidate()`가 불린 횟수. 조회가 **시작할 때** 본 값만 "반영됨"으로 적어, 조회 중에 들어온 무효화가 응답 처리로 지워지지 않게 한다.
+    @ObservationIgnored private var invalidationCount = 0
+    /// 지금 `report`가 반영하고 있는 무효화 횟수
+    @ObservationIgnored private var loadedInvalidationCount = 0
     /// 조회 중에 다시 받으라는 요청이 오면(기간 변경 등) 끝난 뒤 한 번 더 받는다.
     @ObservationIgnored private var rerunRequested = false
+    /// `reset()`마다 올라가는 세대 번호. 조회를 시작할 때의 값과 다르면 그 조회는 이전 계정 것이므로 결과를 버린다.
+    @ObservationIgnored private var generation = 0
 
     private let repository: any InsightRepository
     @ObservationIgnored private let clock: () -> Date
@@ -70,7 +75,7 @@ final class InsightReportStore {
     /// 처음이거나, 지난 조회가 실패했거나, 기록이 바뀌었거나, 날이 바뀌었거나, 오래됐으면 다시 받는다.
     func refreshIfNeeded() async {
         let now = clock()
-        if let loadedAt, !isInvalidated, !isStale, errorMessage == nil,
+        if let loadedAt, invalidationCount == loadedInvalidationCount, !isStale, errorMessage == nil,
            now.timeIntervalSince(loadedAt) < Self.maxLoadAge,
            Calendar.current.isDate(loadedAt, inSameDayAs: now) {
             return
@@ -80,7 +85,7 @@ final class InsightReportStore {
 
     /// 다음 진입 때 다시 받도록 표시한다(카페인 기록이나 수면 업로드가 바뀌면 비교가 바뀐다).
     func invalidate() {
-        isInvalidated = true
+        invalidationCount += 1
     }
 
     func refresh() async {
@@ -88,21 +93,28 @@ final class InsightReportStore {
             rerunRequested = true
             return
         }
+        let startedGeneration = generation
         isLoading = true
         repeat {
             rerunRequested = false
             await fetch()
+            // 기다리는 동안 reset()이 불렸다 — isLoading·rerunRequested는 이제 다음 계정의 조회 것이므로 건드리지 않고 끝낸다.
+            guard startedGeneration == generation else { return }
         } while rerunRequested
         isLoading = false
     }
 
     private func fetch() async {
         let requested = period
+        let startedGeneration = generation
+        let startedInvalidationCount = invalidationCount
         let keys = InsightStore.nightKeys(endingOn: clock(), count: requested.days)
         guard let from = keys.first, let to = keys.last else { return }
         let range = from...to
         do {
             let response = try await repository.caffeineSleepReport(from: from, to: to, timeZone: .current)
+            // 기다리는 동안 로그아웃됐으면 버린다 — 이전 계정의 리포트가 다음 계정에게 보이면 안 된다.
+            guard startedGeneration == generation else { return }
             // 기다리는 동안 기간이 바뀌었으면 버린다 — 바뀐 기간으로 다시 받는 중이다.
             guard requested == period else { return }
             report = response
@@ -110,11 +122,11 @@ final class InsightReportStore {
             errorMessage = nil
             isStale = false
             loadedAt = clock()
-            isInvalidated = false
+            loadedInvalidationCount = startedInvalidationCount
         } catch is CancellationError {
             // 화면 전환으로 취소된 요청은 실패가 아니다
         } catch {
-            guard requested == period else { return }
+            guard startedGeneration == generation, requested == period else { return }
             errorMessage = "리포트를 불러오려면 서버 연결이 필요해요."
             // 같은 기간의 이전 리포트는 "N분 전 기준"으로 남긴다. 날이 바뀌어 기간이 달라졌으면 버린다.
             if report != nil, loadedRange == range {
@@ -132,13 +144,15 @@ final class InsightReportStore {
         loadedAt = nil
     }
 
-    /// 로그아웃 시 이전 계정의 값을 지운다.
+    /// 로그아웃 시 이전 계정의 값을 지운다. 떠 있는 요청은 세대 번호가 달라져 응답이 와도 상태를 바꾸지 못한다.
     func reset() {
+        generation += 1
         period = .default
         clearReport()
         isLoading = false
         errorMessage = nil
-        isInvalidated = false
+        invalidationCount = 0
+        loadedInvalidationCount = 0
         rerunRequested = false
     }
 }

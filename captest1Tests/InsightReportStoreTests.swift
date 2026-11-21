@@ -10,6 +10,28 @@ import Foundation
 import Testing
 @testable import captest1
 
+/// `refresh()`를 따로 돌리고 끝났는지 알려 준다. `Task.value`를 그냥 기다리면 조회가 끝나지 않는 회귀에서 테스트가 실패 대신 멈춘다.
+@MainActor
+private final class RefreshRun {
+    private var isFinished = false
+
+    init(_ store: InsightReportStore) {
+        Task {
+            await store.refresh()
+            self.isFinished = true
+        }
+    }
+
+    /// 끝날 때까지 기다린다. 끝내 안 끝나면(약 2초) false.
+    func waitUntilFinished() async -> Bool {
+        for _ in 0..<2000 {
+            if isFinished { return true }
+            try? await Task.sleep(nanoseconds: 1_000_000)
+        }
+        return isFinished
+    }
+}
+
 @MainActor
 struct InsightReportStoreTests {
     /// 기기 타임존의 2027-01-15 정오(1시간 안팎을 더해도 날짜가 바뀌지 않는 시각)
@@ -192,6 +214,104 @@ struct InsightReportStoreTests {
         #expect(store.period == .default)
         #expect(store.errorMessage == nil)
         #expect(store.loadedAt == nil)
+        await store.refreshIfNeeded()
+        #expect(repo.requests.count == 2)
+    }
+
+    // MARK: - 조회 중 로그아웃·무효화
+
+    @Test func reset_whileRequestInFlight_dropsLateSuccess_andNextRefreshFetchesAgain() async {
+        let repo = FakeInsightRepository()
+        repo.holdsResponses = true
+        let store = InsightReportStore(repository: repo, now: { noon })
+        let previous = RefreshRun(store)
+        #expect(await repo.waitForHeldRequests(1))
+
+        store.reset()
+        repo.release(.success(.fixture(nights: fiveNights, headlines: ["이전 계정"])))
+        #expect(await previous.waitUntilFinished())
+
+        #expect(store.report == nil)
+        #expect(store.loadedAt == nil)
+        #expect(store.errorMessage == nil)
+        #expect(store.isStale == false)
+        #expect(store.isLoading == false)
+
+        repo.holdsResponses = false
+        repo.result = .success(.fixture(nights: fiveNights, headlines: ["다음 계정"]))
+        await store.refreshIfNeeded()
+        #expect(repo.requests.count == 2)
+        #expect(store.report?.headlines == ["다음 계정"])
+    }
+
+    @Test func reset_whileRequestInFlight_dropsLateFailure() async {
+        let repo = FakeInsightRepository()
+        repo.holdsResponses = true
+        let store = InsightReportStore(repository: repo, now: { noon })
+        let previous = RefreshRun(store)
+        #expect(await repo.waitForHeldRequests(1))
+
+        store.reset()
+        repo.release(.failure(FakeError()))
+        #expect(await previous.waitUntilFinished())
+
+        #expect(store.errorMessage == nil)
+        #expect(store.report == nil)
+        #expect(store.isLoading == false)
+        guard case .loading = store.phase else {
+            Issue.record("이전 계정의 실패가 다음 계정에게 보이면 안 된다: \(store.phase)")
+            return
+        }
+    }
+
+    @Test func reset_whileRequestInFlight_previousLoopLeavesNextAccountsLoadAlone() async {
+        let repo = FakeInsightRepository()
+        repo.holdsResponses = true
+        let store = InsightReportStore(repository: repo, now: { noon })
+        let previous = RefreshRun(store)
+        #expect(await repo.waitForHeldRequests(1))
+
+        store.reset()
+        // 다음 계정의 조회가 시작되고, 그 조회 중에 한 번 더 받으라는 요청이 들어온다
+        let next = RefreshRun(store)
+        #expect(await repo.waitForHeldRequests(2))
+        await store.refresh()
+
+        repo.release(.success(.fixture(nights: fiveNights, headlines: ["이전 계정"])))
+        #expect(await previous.waitUntilFinished())
+        // 이전 루프는 다음 계정의 로딩 표시를 끄지도, 재실행 요청을 가로채 직접 조회하지도 않는다
+        #expect(store.isLoading)
+        #expect(store.report == nil)
+        #expect(repo.requests.count == 2)
+
+        repo.release(.success(.fixture(nights: fiveNights, headlines: ["다음 계정 1"])))
+        #expect(await repo.waitForHeldRequests(1))
+        #expect(repo.requests.count == 3)
+        repo.release(.success(.fixture(nights: fiveNights, headlines: ["다음 계정 2"])))
+        #expect(await next.waitUntilFinished())
+
+        #expect(store.isLoading == false)
+        #expect(store.report?.headlines == ["다음 계정 2"])
+        #expect(repo.requests.count == 3)
+    }
+
+    @Test func invalidate_whileRequestInFlight_survivesSuccess_untilNextLoad() async {
+        let repo = FakeInsightRepository()
+        repo.holdsResponses = true
+        let store = InsightReportStore(repository: repo, now: { noon })
+        let first = RefreshRun(store)
+        #expect(await repo.waitForHeldRequests(1))
+
+        // 응답이 만들어진 뒤에 기록이 바뀌었을 수 있다 — 이 응답으로 무효화를 지우면 안 된다
+        store.invalidate()
+        repo.release(.success(.fixture(nights: fiveNights)))
+        #expect(await first.waitUntilFinished())
+        #expect(store.report != nil)
+
+        repo.holdsResponses = false
+        await store.refreshIfNeeded()
+        #expect(repo.requests.count == 2)
+        // 무효화 뒤에 시작한 조회가 성공했으면 더 받지 않는다
         await store.refreshIfNeeded()
         #expect(repo.requests.count == 2)
     }
