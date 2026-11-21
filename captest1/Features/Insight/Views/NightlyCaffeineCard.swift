@@ -4,6 +4,7 @@
 //
 //  최근 7밤의 카페인과 수면을 나란히(로드맵 §2 (6)). 막대는 취침 잔량, 가로선은 서버 기준(50mg).
 //  아래 표는 밤마다 그날 섭취·취침 잔량·잠들기까지·수면 효율. 모든 값은 서버 리포트 nights 그대로다.
+//  맨 아래 줄에서 비교 리포트 화면(CaffeineSleepReportView)으로 들어간다.
 //
 
 import SwiftUI
@@ -14,21 +15,29 @@ struct NightlyCaffeineCard: View {
 
     var body: some View {
         HealthCard("최근 7일 밤별 카페인", showsDivider: false) {
-            if let threshold = store.residualThresholdMg, !store.recentNights.isEmpty {
-                VStack(alignment: .leading, spacing: 12) {
-                    if store.isStale, let asOf = store.loadedAt {
-                        InsightStaleNotice(asOf: asOf)
-                    }
-                    chart(threshold: threshold)
-                    table(threshold: threshold)
-                }
-            } else {
-                InsightStatusText(isLoading: store.isLoading, errorMessage: store.errorMessage,
-                                  loaded: store.report != nil, emptyText: "최근 수면 기록이 없어요.")
+            VStack(alignment: .leading, spacing: 16) {
+                nights
+                InsightReportLink()
             }
         }
         .task { await store.refreshIfNeeded() }
         .accessibilityIdentifier("nightlyCaffeine")
+    }
+
+    @ViewBuilder
+    private var nights: some View {
+        if let threshold = store.residualThresholdMg, !store.recentNights.isEmpty {
+            VStack(alignment: .leading, spacing: 12) {
+                if store.isStale, let asOf = store.loadedAt {
+                    InsightStaleNotice(asOf: asOf)
+                }
+                chart(threshold: threshold)
+                table(threshold: threshold)
+            }
+        } else {
+            InsightStatusText(isLoading: store.isLoading, errorMessage: store.errorMessage,
+                              loaded: store.report != nil, emptyText: "최근 수면 기록이 없어요.")
+        }
     }
 
     private static func day(_ key: String) -> Date? { ServerDateCoding.localDate.date(from: key) }
@@ -128,9 +137,12 @@ struct NightlyCaffeineCard: View {
 }
 
 #Preview {
-    ScrollView {
-        NightlyCaffeineCard()
-            .padding(Theme.Spacing.screen)
+    NavigationStack {
+        ScrollView {
+            NightlyCaffeineCard()
+                .padding(Theme.Spacing.screen)
+        }
     }
     .environment(InsightStore(repository: PreviewInsightRepository()))
+    .environment(InsightReportStore(repository: PreviewInsightRepository()))
 }

@@ -15,6 +15,7 @@ struct ContentView: View {
     @Environment(CaffeineStore.self) private var caffeineStore
     @Environment(LearningStore.self) private var learningStore
     @Environment(InsightStore.self) private var insightStore
+    @Environment(InsightReportStore.self) private var insightReportStore
     @Environment(NotificationStore.self) private var notifications
     @Environment(CafeNearbyStore.self) private var cafeNearby
     @Environment(LocationPermissionManager.self) private var location
@@ -82,6 +83,7 @@ struct ContentView: View {
             notifications.scheduleRefresh()
             // 기록이 바뀌면 밤별 취침 잔량도 바뀐다 — 다음 수면 탭 진입 때 다시 받는다.
             insightStore.invalidate()
+            insightReportStore.invalidate()
         }
         // 설정이 서버에 반영되면 홈의 마감·잔량도 그 설정으로 다시 계산해야 한다.
         .onChange(of: settings.serverRevision) {
@@ -96,6 +98,8 @@ struct ContentView: View {
         // 서버가 업로드된 샘플로 계산하고, 서버가 꺼졌으면 리포트 쪽도 "연결 안 됨"을 보여야 한다.
         .onChange(of: sleepStore.loadAttemptRevision) {
             Task { await insightStore.refresh() }
+            // 리포트 화면은 열려 있을 때만 받으면 된다 — 다음 진입 때 다시 받도록 표시만 한다.
+            insightReportStore.invalidate()
         }
         .onChange(of: learningStore.learnedRevision) {
             Task { await settings.loadFromServer() }
@@ -126,6 +130,7 @@ struct ContentView: View {
             sleepStore.reset()
             learningStore.reset()
             insightStore.reset()
+            insightReportStore.reset()
             settings.resetForSignOut()
             intakeHistoryStore.reset()
             Task {

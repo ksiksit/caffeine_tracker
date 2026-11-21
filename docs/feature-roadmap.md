@@ -141,9 +141,9 @@
 
 | 기능 | 설명 | 수면의 질에 기여하는 이유 | 서버 | iOS |
 |---|---|---|---|---|
-| 카페인 × 수면 상관 리포트 | 밤별 취침 시 잔량과 SOL·수면 효율·깊은 수면 비율을 한 차트에. 서버가 문장형 결론 생성: "잔량 50mg 이상이던 밤은 잠드는 데 평균 11분 더 걸렸어요" | 앱 목적인 "인사이트"의 본체. 데이터는 `HalfLifeObservation`·수면 요약·카페인 기록에 이미 있음 | `domain/insight` 신설, `calc/InsightCalc` | `Features/Insight` (Views/Store/Data) |
+| 카페인 × 수면 상관 리포트 | 밤별 취침 시 잔량과 SOL·수면 효율·깊은 수면 비율을 한 차트에. 서버가 문장형 결론 생성: "잔량 50mg 이상이던 밤은 잠드는 데 평균 11분 더 걸렸어요" | 앱 목적인 "인사이트"의 본체. 데이터는 `HalfLifeObservation`·수면 요약·카페인 기록에 이미 있음 | `domain/insight` 신설, `calc/InsightCalc` | `Features/Insight` (Views/Store/Data) — **리포트 화면 추가 2026-11-21 (KAN-1)**: 수면 탭 밤별 카페인 카드 → `CaffeineSleepReportView`. 기간(7·14·30일) 선택, 서버 `headlines`, 비교 A(취침 잔량) 카드, 표본 부족 시 `moreNightsNeeded` 안내. 남은 것: 잔량×SOL 산점도. 섭취 추이(`/api/insight/intake-stats`)는 §2 (11) 주간 섭취 히스토리(KAN-2)로 연결됨 |
 | 개인 카페인 민감도 | 현재 학습은 반감기만 추정하고 잔량→SOL 기울기는 고정 선형화(`LearningStatsCalc.predictedSOL`). 관측값 회귀로 "100mg당 SOL +N분" 산출 | 반감기보다 직관적인 개인화 지표 | `LearningStatsCalc` 확장, 대시보드 DTO 필드 추가 | 학습 탭 카드 1개 |
-| 마지막 섭취 시각 그룹 비교 | "15시 이전에 끊은 밤" vs "이후에도 마신 밤"의 SOL·효율 평균 비교 | 통계가 단순해 설명·발표가 쉽고 행동 지침이 명확 | insight 도메인 안에 포함 | 리포트 화면 안 카드 |
+| 마지막 섭취 시각 그룹 비교 | "15시 이전에 끊은 밤" vs "이후에도 마신 밤"의 SOL·효율 평균 비교 | 통계가 단순해 설명·발표가 쉽고 행동 지침이 명확 | insight 도메인 안에 포함 | 리포트 화면 안 카드 — **완료 2026-11-21 (KAN-1)**: 서버 비교 B(마감 넘김/지킴)를 리포트 화면 두 번째 카드로 표시 |
 | 동적 취침 시각 | 기상 시각 + 목표 수면시간, 또는 캘린더(EventKit) 첫 일정으로 매일 취침 시각을 역산. 최근 7일 수면 부채와 연동 | 취침 시각이 앞당겨지면 마감 시각도 자동으로 앞당겨짐: "오늘은 30분 일찍, 그래서 마감은 14시" | settings에 기상 시각·목표 수면 추가, today 계산 입력 변경 | 설정 + 홈 카드 |
 
 ### 3.2 개입과 기록 — 인사이트를 행동으로
@@ -178,7 +178,7 @@
 | 4 | §2 (20) 차트 취침 후 위험 영역 판정 수정 | 3과 같은 화면·같은 파일. 미연결 처리와 함께 손대면 홈이 "틀린 답을 주는" 경우가 한 번에 정리됨 | 앱 | 소 |
 | 5 | §3.2 마감 알림 (= §2 (5)) | 설정에 자리 있음, 서버 변경 없음, 데모 임팩트 큼 | 앱 | 중 |
 | 6 | §2 (19) `.safeAnytime` 도달 조건 재검토 | 신호등 4단계 중 하나가 기본 설정에서 절대 뜨지 않음. 작은 변경이지만 서버 `calc`와 클라 미러를 같이 고쳐야 해 앱 단독 범위에서는 빠짐 | 서버 `calc` + 앱 | 소 |
-| 7 | §3.1 상관 리포트 + 그룹 비교 | 앱 목적의 본체. 서버 `domain/insight` 신설이 아키텍처 이야기와도 맞음 | 서버 + 앱 | 대 |
+| 7 | §3.1 상관 리포트 + 그룹 비교 — **앱 리포트 화면 추가 2026-11-21 (KAN-1)**, 섭취 추이는 §2 (11)(KAN-2)로 추가, 산점도는 남음 | 앱 목적의 본체. 서버 `domain/insight` 신설이 아키텍처 이야기와도 맞음 | 서버 + 앱 | 대 |
 | 8 | §3.2 위젯 | 3의 캐시 재사용. 발표 시연에서 가장 눈에 띔 | 앱 | 중 |
 | 9 | §2 (4) 신규 기록 섭취 시각 선택 | 데이터 정확도. 작은 변경 | 앱 | 소 |
 | 10 | §3.3 아침 체크인 | Watch 없는 심사 환경에서도 학습 시연 가능 | 서버 + 앱 | 중 |
@@ -196,7 +196,7 @@
 
 | 항목 | iOS 배치 | 서버 배치 | 비고 |
 |---|---|---|---|
-| 상관 리포트 | `Features/Insight/{Views,Store,Data}` — `InsightStore`, `InsightRepository`, `APIClient+Insight`, `InsightDTO` | `domain/insight/{controller,service,dto}`, 순수 계산은 `calc/InsightCalc` | Feature ↔ domain 1:1 유지 |
+| 상관 리포트 | `Features/Insight/{Views,Store,Data,Model}` — `InsightStore`(수면 탭 7밤), `InsightReportStore`(리포트 화면), `InsightRepository`, `APIClient+Insight`, `InsightDTO`. 진입은 수면 탭 밤별 카페인 카드(탭 추가 없음) | `domain/insight/{controller,service,dto}`, 순수 계산은 `calc/InsightCalc` | Feature ↔ domain 1:1 유지 |
 | 마감 알림 | 시스템 래퍼 `Core/Notifications/LocalNotificationScheduler`(Features 모름) + 스케줄 결정은 `Features/Caffeine/Store/CaffeineStore` | 없음 | 알림 on/off·시각은 `SettingsManager`에 추가(서버 settings 필드 동반 시 PUT) |
 | 카페 근처 알림 | `Core/Location`(`GeofenceMonitor`·`LocationPermissionManager`) + `Features/Notification`(`CafeNearbyStore`·`CafeZoneCatalog`·`CafeNearbyGate`·`DongPickerView`), 감시 재개는 `App/AppDelegate` | `notification` 도메인의 `cafeNearbyWindows`(언제만) | 카페 좌표는 번들 `CafeZones.json`(`tools/cafe-zones`), 동·위치는 서버로 보내지 않음 |
 | today 캐시·위젯 | `Core/Networking`에 응답 캐시(App Group `UserDefaults` 또는 파일), 위젯 타겟은 캐시만 읽음 | 없음 | 위젯은 네트워크 호출 없이 캐시 표시 |

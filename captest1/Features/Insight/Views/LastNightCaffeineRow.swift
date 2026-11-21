@@ -98,6 +98,12 @@ enum InsightFormat {
     /// 서버 비교 A와 같은 경계(high = 잔량 ≥ residualThresholdMg). 기준값은 서버가 준 값을 받는다.
     static func isHigh(_ residual: Double, threshold: Double) -> Bool { residual >= threshold }
 
+    /// 분 단위 평균을 "6시간 42분"으로. 분으로 반올림한 뒤 나눈다.
+    static func duration(minutes value: Double) -> String {
+        let total = Int(value.rounded())
+        let hours = total / 60, minutes = total % 60
+        return hours > 0 ? "\(hours)시간 \(minutes)분" : "\(minutes)분"
+    }
 }
 
 #Preview {
