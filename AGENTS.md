@@ -56,7 +56,7 @@ captest1/
 │   │   ├── Store/    # AuthManager(세션 상태)·AuthState
 │   │   └── Data/     # AuthRepository(포트)·APIClient+Auth(어댑터)·AuthDTO·AuthAccountStore(마지막 확인 계정 Keychain 사본, 오프라인 진입용)·PreviewAuthRepository
 │   ├── Caffeine/
-│   │   ├── Views/    # HomeView·AddCaffeineView·CaffeineChartView·CutoffHeroCard·CutoffPreviewBanner
+│   │   ├── Views/    # HomeView("오늘 기록" 아래 슬롯으로 섭취 히스토리 진입 줄을 받음)·AddCaffeineView·CaffeineChartView·CutoffHeroCard·CutoffPreviewBanner
 │   │   ├── Store/    # CaffeineStore·AddCaffeineViewModel(폼 전용)
 │   │   ├── Data/     # CaffeineRepository·APIClient+Caffeine·CaffeineDTO·CaffeineTodayCache(마지막 today 기기 사본)·PreviewCaffeineRepository
 │   │   └── Model/    # CaffeineKineticsCalculator·CaffeineCutoff(즉시 미리보기용 로컬 미러)·DrinkPreset
@@ -69,6 +69,7 @@ captest1/
 │   │   ├── Views/    # LastNightCaffeineRow(지난밤 취침 잔량·그날 섭취)·NightlyCaffeineCard(7밤 막대·표) — 수면 탭 슬롯에 ContentView가 끼워 넣음
 │   │   ├── Store/    # InsightStore(최근 7밤 리포트, 수면 업로드 후·기록 변경 후 재조회)
 │   │   └── Data/     # InsightRepository·APIClient+Insight·InsightDTO·PreviewInsightRepository
+│   │                 # 섭취 히스토리(홈 "오늘 기록" 슬롯 → 화면, 탭 없음): Views/IntakeHistoryView·IntakeHistoryLink, Store/IntakeHistoryStore(최근 7일, 진입마다 재조회), Data/IntakeStatsRepository·APIClient+IntakeStats·IntakeStatsDTO·PreviewIntakeStatsRepository
 │   ├── Learning/
 │   │   ├── Views/    # LearningDashboardView·CalibrationScatterChart·ConfidenceBar
 │   │   ├── Store/    # LearningStore

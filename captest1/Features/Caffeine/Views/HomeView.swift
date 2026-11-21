@@ -10,7 +10,8 @@
 import SwiftUI
 import Charts
 
-struct HomeView: View {
+/// 지난 기록으로 들어가는 줄(섭취 히스토리)은 다른 기능(Insight)이라 슬롯으로 받는다. 조립은 ContentView.
+struct HomeView<History: View>: View {
     @Environment(SettingsManager.self) private var settings
     @Environment(CaffeineStore.self) private var store
 
@@ -18,12 +19,12 @@ struct HomeView: View {
     @State private var editingRecord: CaffeineRecordDTO?
     @State private var pendingDelete: CaffeineRecordDTO?
 
-    private static let timeFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "ko_KR")
-        formatter.dateFormat = "a h:mm"
-        return formatter
-    }()
+    /// "오늘 기록" 목록 아래
+    private let history: () -> History
+
+    init(@ViewBuilder history: @escaping () -> History) {
+        self.history = history
+    }
 
     var body: some View {
         // 서버 결과가 없으면 cutoffResult가 nil — 판단 근거 없이 "괜찮아요"로 안내하지 않는다.
@@ -209,22 +210,30 @@ struct HomeView: View {
 
     private var todayRecordsSection: some View {
         HealthCard("오늘 기록", showsDivider: false) {
-            if store.today == nil {
-                Text(store.errorMessage != nil ? "기록을 불러오지 못했어요." : "불러오는 중…")
-                    .font(.subheadline)
-                    .foregroundStyle(Theme.Colors.inkSecondary)
-            } else if store.todayRecords.isEmpty {
-                Text("아직 오늘 마신 기록이 없어요. 마시면 바로 기록해 두세요.")
-                    .font(.subheadline)
-                    .foregroundStyle(Theme.Colors.inkSecondary)
-            } else {
-                VStack(spacing: 0) {
-                    ForEach(Array(store.todayRecords.enumerated()), id: \.element.id) { index, record in
-                        if index > 0 {
-                            HairlineDivider()
-                        }
-                        recordRow(record)
+            VStack(alignment: .leading, spacing: 16) {
+                todayRecords
+                history()
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var todayRecords: some View {
+        if store.today == nil {
+            Text(store.errorMessage != nil ? "기록을 불러오지 못했어요." : "불러오는 중…")
+                .font(.subheadline)
+                .foregroundStyle(Theme.Colors.inkSecondary)
+        } else if store.todayRecords.isEmpty {
+            Text("아직 오늘 마신 기록이 없어요. 마시면 바로 기록해 두세요.")
+                .font(.subheadline)
+                .foregroundStyle(Theme.Colors.inkSecondary)
+        } else {
+            VStack(spacing: 0) {
+                ForEach(Array(store.todayRecords.enumerated()), id: \.element.id) { index, record in
+                    if index > 0 {
+                        HairlineDivider()
                     }
+                    recordRow(record)
                 }
             }
         }
@@ -287,7 +296,7 @@ struct HomeView: View {
                 Text(record.drinkName)
                     .font(.body.weight(.medium))
                     .foregroundStyle(Theme.Colors.ink)
-                Text(Self.timeFormatter.string(from: record.timestamp))
+                Text(homeRecordTimeFormatter.string(from: record.timestamp))
                     .font(.footnote)
                     .foregroundStyle(Theme.Colors.inkSecondary)
             }
@@ -308,3 +317,11 @@ struct HomeView: View {
         .accessibilityElement(children: .combine)
     }
 }
+
+/// 기록 행의 섭취 시각 표기. 제네릭 타입은 static 저장 프로퍼티를 가질 수 없어 파일 범위에 둔다.
+private let homeRecordTimeFormatter: DateFormatter = {
+    let formatter = DateFormatter()
+    formatter.locale = Locale(identifier: "ko_KR")
+    formatter.dateFormat = "a h:mm"
+    return formatter
+}()
