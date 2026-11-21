@@ -65,10 +65,12 @@ captest1/
 │   │   ├── Store/    # SleepStore(업로드·요약)
 │   │   ├── Data/     # SleepRepository·APIClient+Sleep·SleepDTO·PreviewSleepRepository
 │   │   └── Model/    # SleepModels(서버값 표시 모델)
-│   ├── Insight/      # 카페인·수면 리포트(서버 domain/insight). 지금은 수면 탭 슬롯만(전용 화면은 계획서 §4)
-│   │   ├── Views/    # LastNightCaffeineRow(지난밤 취침 잔량·그날 섭취)·NightlyCaffeineCard(7밤 막대·표) — 수면 탭 슬롯에 ContentView가 끼워 넣음
-│   │   ├── Store/    # InsightStore(최근 7밤 리포트, 수면 업로드 후·기록 변경 후 재조회)
-│   │   └── Data/     # InsightRepository·APIClient+Insight·InsightDTO·PreviewInsightRepository
+│   ├── Insight/      # 카페인·수면 리포트(서버 domain/insight). 수면 탭 슬롯 + 밤별 카드에서 들어가는 리포트 화면(탭 없음)
+│   │   ├── Views/    # LastNightCaffeineRow(지난밤 취침 잔량·그날 섭취)·NightlyCaffeineCard(7밤 막대·표, 리포트 진입 줄) — 수면 탭 슬롯에 ContentView가 끼워 넣음
+│   │   │             # CaffeineSleepReportView(기간 선택·요약 문장·비교 A/B)·InsightComparisonCard(두 그룹 평균·문장·필요한 밤 수)
+│   │   ├── Store/    # InsightStore(최근 7밤 리포트, 수면 업로드 후·기록 변경 후 재조회)·InsightReportStore(리포트 화면: 고른 기간의 비교·문장)
+│   │   ├── Data/     # InsightRepository·APIClient+Insight·InsightDTO·PreviewInsightRepository
+│   │   └── Model/    # InsightReportPeriod(7·14·30일, 기본 14일)
 │   ├── Learning/
 │   │   ├── Views/    # LearningDashboardView·CalibrationScatterChart·ConfidenceBar
 │   │   ├── Store/    # LearningStore

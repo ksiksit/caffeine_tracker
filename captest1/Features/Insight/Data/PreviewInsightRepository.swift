@@ -2,7 +2,8 @@
 //  PreviewInsightRepository.swift
 //  captest1
 //
-//  #Preview용 인사이트 페이크: 최근 7일 중 5밤이 있는 리포트를 흉내 낸다(값은 화면 확인용).
+//  #Preview용 인사이트 페이크: 요청 기간의 마지막 7일 중 5밤이 있는 리포트를 흉내 낸다(값은 화면 확인용).
+//  비교 A는 표본이 충분한 경우, 비교 B는 밤이 모자란 경우를 한 화면에서 볼 수 있게 고정값으로 둔다.
 //
 
 #if DEBUG
@@ -30,15 +31,26 @@ nonisolated struct PreviewInsightRepository: InsightRepository {
                 deepSleepRatio: 0.15
             )
         }
-        let group = InsightGroupDTO(nightCount: 0, solNightCount: 0, avgSolMinutes: nil,
-                                    avgSleepEfficiency: nil, avgTotalSleepMinutes: nil, avgDeepSleepRatio: nil)
-        let comparison = InsightComparisonDTO(high: group, low: group, sufficient: false, moreNightsNeeded: 1,
-                                              solDiffMinutes: nil, efficiencyDiff: nil, sentence: "")
+        let residualSentence = "취침 때 카페인이 50mg 이상 남아 있던 밤은 잠드는 데 평균 11분 더 걸렸고, 수면 효율은 4%p 낮았어요 (5밤 vs 7밤)"
+        let residual = InsightComparisonDTO(
+            high: InsightGroupDTO(nightCount: 5, solNightCount: 5, avgSolMinutes: 27, avgSleepEfficiency: 0.86,
+                                  avgTotalSleepMinutes: 402, avgDeepSleepRatio: 0.14),
+            low: InsightGroupDTO(nightCount: 7, solNightCount: 7, avgSolMinutes: 16, avgSleepEfficiency: 0.9,
+                                 avgTotalSleepMinutes: 431, avgDeepSleepRatio: 0.17),
+            sufficient: true, moreNightsNeeded: nil, solDiffMinutes: 11, efficiencyDiff: -0.04,
+            sentence: residualSentence)
+        let cutoff = InsightComparisonDTO(
+            high: InsightGroupDTO(nightCount: 2, solNightCount: 2, avgSolMinutes: 30, avgSleepEfficiency: 0.85,
+                                  avgTotalSleepMinutes: 395, avgDeepSleepRatio: 0.13),
+            low: InsightGroupDTO(nightCount: 8, solNightCount: 8, avgSolMinutes: 18, avgSleepEfficiency: 0.89,
+                                 avgTotalSleepMinutes: 425, avgDeepSleepRatio: 0.16),
+            sufficient: false, moreNightsNeeded: 1, solDiffMinutes: nil, efficiencyDiff: nil,
+            sentence: "지금 기준 용량(75mg)으로 따지면, 마감을 넘긴 밤이 1밤 더 있어야 비교할 수 있어요")
         return CaffeineSleepReportResponse(
             from: from, to: to, nightCount: nights.count, sufficient: true,
             residualThresholdMg: 50, halfLifeHoursUsed: 5,
-            residualComparison: comparison, cutoffComparison: comparison,
-            headlines: [], nights: nights
+            residualComparison: residual, cutoffComparison: cutoff,
+            headlines: [residualSentence], nights: nights
         )
     }
 }

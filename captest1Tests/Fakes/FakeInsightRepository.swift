@@ -18,17 +18,34 @@ final class FakeInsightRepository: InsightRepository, @unchecked Sendable {
 }
 
 extension CaffeineSleepReportResponse {
-    static func fixture(nights: [InsightNightDTO] = [], threshold: Double = 50) -> CaffeineSleepReportResponse {
-        let group = InsightGroupDTO(nightCount: 0, solNightCount: 0, avgSolMinutes: nil,
-                                    avgSleepEfficiency: nil, avgTotalSleepMinutes: nil, avgDeepSleepRatio: nil)
-        let comparison = InsightComparisonDTO(high: group, low: group, sufficient: false, moreNightsNeeded: 6,
-                                              solDiffMinutes: nil, efficiencyDiff: nil, sentence: "")
-        return CaffeineSleepReportResponse(
+    static func fixture(nights: [InsightNightDTO] = [], threshold: Double = 50,
+                        residualComparison: InsightComparisonDTO = .fixture(),
+                        cutoffComparison: InsightComparisonDTO = .fixture(),
+                        headlines: [String] = []) -> CaffeineSleepReportResponse {
+        CaffeineSleepReportResponse(
             from: nights.first?.date ?? "2027-01-09", to: nights.last?.date ?? "2027-01-15",
             nightCount: nights.count, sufficient: nights.count >= 5,
             residualThresholdMg: threshold, halfLifeHoursUsed: 5,
-            residualComparison: comparison, cutoffComparison: comparison,
-            headlines: [], nights: nights)
+            residualComparison: residualComparison, cutoffComparison: cutoffComparison,
+            headlines: headlines, nights: nights)
+    }
+}
+
+extension InsightComparisonDTO {
+    static func fixture(high: InsightGroupDTO = .fixture(), low: InsightGroupDTO = .fixture(),
+                        sufficient: Bool = false, moreNightsNeeded: Int? = 6,
+                        solDiffMinutes: Double? = nil, efficiencyDiff: Double? = nil,
+                        sentence: String = "") -> InsightComparisonDTO {
+        InsightComparisonDTO(high: high, low: low, sufficient: sufficient, moreNightsNeeded: moreNightsNeeded,
+                             solDiffMinutes: solDiffMinutes, efficiencyDiff: efficiencyDiff, sentence: sentence)
+    }
+}
+
+extension InsightGroupDTO {
+    static func fixture(nightCount: Int = 0, solNightCount: Int = 0, avgSol: Double? = nil, avgEfficiency: Double? = nil,
+                        avgTotalSleep: Double? = nil, avgDeep: Double? = nil) -> InsightGroupDTO {
+        InsightGroupDTO(nightCount: nightCount, solNightCount: solNightCount, avgSolMinutes: avgSol,
+                        avgSleepEfficiency: avgEfficiency, avgTotalSleepMinutes: avgTotalSleep, avgDeepSleepRatio: avgDeep)
     }
 }
 
