@@ -21,7 +21,7 @@
 | 탭 | 역할 |
 | --- | --- |
 | 홈 | 카페인 마감 시각을 hero로 강조, 잔류량 차트(50mg 안전선·취침 위험 영역 시각화), 취침 시 예상 잔류량, 오늘의 기록 |
-| 수면 분석 | HealthKit 수면 기록 조회, 지난밤 수면 요약, 단계별 수면 분석, 최근 기록 표시 |
+| 수면 분석 | HealthKit 수면 기록 조회, 지난밤 수면 요약, 단계별 수면 분석, 최근 기록 표시, 밤별 카페인(취침 잔량·그날 섭취), 카페인·수면 비교 리포트 화면 진입 |
 | 내 학습 데이터 | 베이지안 반감기 학습 결과, 신뢰도, 추세, 모델 정확도 시각화 |
 | 설정 | 반감기, 건강 상태 보정, 취침 시간, 기준 섭취량, HealthKit 연동 관리 |
 
@@ -35,6 +35,8 @@
 - HealthKit 수면 데이터 권한 요청 및 수면 기록 조회
 - Apple Watch와 iPhone에서 중복 기록된 수면 샘플 병합
 - 수면 단계별 시간, 총 수면 시간, 수면 효율, 수면 잠복기 분석
+- 최근 7밤의 취침 때 카페인 잔량과 수면 지표를 밤별로 나란히 표시
+- 카페인·수면 비교 리포트: 취침 잔량(50mg 이상/미만)과 마감 시각(넘김/지킴)으로 밤을 나눠 평균을 비교하고, 서버가 만든 요약 문장을 표시 (수면 분석 탭 → 밤별 카페인 카드 → "카페인과 수면 비교 보기")
 - HealthKit 수면 잠복기와 카페인 잔류량을 활용한 베이지안 반감기 자동 학습
 - 건강 상태별 카페인 반감기 보정 지원
 
@@ -149,6 +151,11 @@ captest1/
 │   │   ├── Store/    # SleepStore(업로드·요약)
 │   │   ├── Data/     # SleepRepository·APIClient+Sleep·SleepDTO·PreviewSleepRepository
 │   │   └── Model/    # SleepModels(서버값 표시 모델)
+│   ├── Insight/      # 카페인·수면 리포트(서버 domain/insight). 수면 탭 슬롯 + 밤별 카드에서 들어가는 리포트 화면(탭 없음)
+│   │   ├── Views/    # LastNightCaffeineRow·NightlyCaffeineCard(수면 탭 슬롯)·CaffeineSleepReportView(리포트 화면)·InsightComparisonCard
+│   │   ├── Store/    # InsightStore(최근 7밤)·InsightReportStore(리포트 화면: 고른 기간의 비교·문장)
+│   │   ├── Data/     # InsightRepository·APIClient+Insight·InsightDTO·PreviewInsightRepository
+│   │   └── Model/    # InsightReportPeriod(7·14·30일)
 │   ├── Learning/
 │   │   ├── Views/    # LearningDashboardView·CalibrationScatterChart·ConfidenceBar
 │   │   ├── Store/    # LearningStore

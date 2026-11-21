@@ -18,6 +18,7 @@ struct captest1App: App {
     @State private var caffeineStore: CaffeineStore
     @State private var learningStore: LearningStore
     @State private var insightStore: InsightStore
+    @State private var insightReportStore: InsightReportStore
     @State private var sleepStore: SleepStore
     @State private var notificationStore: NotificationStore
     @State private var locationPermission = LocationPermissionManager()
@@ -48,6 +49,7 @@ struct captest1App: App {
         _caffeineStore = State(wrappedValue: CaffeineStore(repository: client, cache: CaffeineTodayCache()))
         _learningStore = State(wrappedValue: LearningStore(repository: client))
         _insightStore = State(wrappedValue: InsightStore(repository: client))
+        _insightReportStore = State(wrappedValue: InsightReportStore(repository: client))
         _sleepStore = State(wrappedValue: SleepStore(samples: SleepFetchService(healthStore: healthStore), repository: client))
         _notificationStore = State(wrappedValue: NotificationStore(repository: client, scheduler: LocalNotificationScheduler()))
     }
@@ -61,6 +63,7 @@ struct captest1App: App {
                 .environment(caffeineStore)
                 .environment(learningStore)
                 .environment(insightStore)
+                .environment(insightReportStore)
                 .environment(sleepStore)
                 .environment(notificationStore)
                 .environment(appDelegate.cafeNearby)
