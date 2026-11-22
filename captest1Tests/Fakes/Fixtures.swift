@@ -37,11 +37,14 @@ extension CaffeineRecordDTO {
 }
 
 extension LearningDashboardResponse {
-    static func fixture(count: Int = 0) -> LearningDashboardResponse {
+    static func fixture(count: Int = 0, observationDates: [String] = []) -> LearningDashboardResponse {
         LearningDashboardResponse(
             count: count,
             latest: nil,
-            observations: [],
+            observations: observationDates.map {
+                ObservationItem(date: $0, predictedResidualAtBedtime: 100, observedSolMinutes: 25,
+                                priorMean: 5, posteriorMean: 5.1, posteriorVariance: 2, conditionMultiplier: 1)
+            },
             calibration: Calibration(points: [], rSquared: nil, rmse: 0, domainLower: 0, domainUpper: 60),
             residualHistogram: [],
             solHistogram: []

@@ -14,6 +14,8 @@ final class LearningStore {
     private(set) var isLoading = false
     /// 학습이 건너뛰어진 경우 사용자에게 보여줄 메시지(빈 상태 카드용).
     private(set) var skipMessage: String?
+    /// 어젯밤이 학습됐는지·건너뛰었는지(관측이 있을 때 Hero 아래 한 줄용). 판단할 근거가 없으면 nil.
+    private(set) var lastNight: LastNightLearning?
     /// 대시보드를 받지 못했을 때의 메시지. 빈 상태("아직 학습된 데이터가 없어요")와 구분해 보여준다.
     private(set) var errorMessage: String?
     /// refresh를 한 번이라도 끝냈는가. 첫 로드 전에 빈 상태 카드가 잠깐 보이지 않게 한다.
@@ -22,9 +24,11 @@ final class LearningStore {
     private(set) var learnedRevision = 0
 
     private let repository: any LearningRepository
+    private let now: () -> Date
 
-    init(repository: any LearningRepository) {
+    init(repository: any LearningRepository, now: @escaping () -> Date = Date.init) {
         self.repository = repository
+        self.now = now
     }
 
     /// 학습 1회 실행(멱등) 후 대시보드를 갱신한다.
@@ -34,12 +38,15 @@ final class LearningStore {
         guard !isLoading else { return }
         isLoading = true
         defer { isLoading = false }
+        // 학습 실행은 됐는데 대시보드만 실패한 경우에도 아래 재시도에서 실행 결과를 쓴다.
+        var run: LearningRunResponse?
         do {
-            let run = try await repository.run(timeZone: .current)
-            skipMessage = run.updatedCount == 0 ? run.skipMessage : nil
-            if run.updatedCount > 0 { learnedRevision += 1 }
-            dashboard = try await repository.dashboard()
-            errorMessage = nil
+            let result = try await repository.run(timeZone: .current)
+            run = result
+            skipMessage = result.updatedCount == 0 ? result.skipMessage : nil
+            if result.updatedCount > 0 { learnedRevision += 1 }
+            let loaded = try await repository.dashboard()
+            apply(loaded, run: result)
         } catch is CancellationError {
             return
         } catch APIError.network {
@@ -48,8 +55,8 @@ final class LearningStore {
         } catch {
             // 학습 실행만 실패했으면 대시보드만이라도 시도
             do {
-                dashboard = try await repository.dashboard()
-                errorMessage = nil
+                let loaded = try await repository.dashboard()
+                apply(loaded, run: run)
             } catch {
                 errorMessage = Self.loadFailedMessage
             }
@@ -57,11 +64,24 @@ final class LearningStore {
         hasLoaded = true
     }
 
+    /// 받은 대시보드를 반영하고, 어젯밤 학습 여부를 다시 정한다. run이 nil이면 학습 실행이 실패한 것이다.
+    private func apply(_ loaded: LearningDashboardResponse, run: LearningRunResponse?) {
+        dashboard = loaded
+        errorMessage = nil
+        lastNight = LastNightLearning.resolve(
+            latestObservationDate: loaded.observations.map(\.date).max(),
+            today: ServerDateCoding.localDate.string(from: now()),
+            updatedCount: run?.updatedCount,
+            skipMessage: run?.skipMessage
+        )
+    }
+
     /// 로그아웃 시 이전 계정의 값을 지운다.
     func reset() {
         dashboard = nil
         isLoading = false
         skipMessage = nil
+        lastNight = nil
         errorMessage = nil
         hasLoaded = false
     }
