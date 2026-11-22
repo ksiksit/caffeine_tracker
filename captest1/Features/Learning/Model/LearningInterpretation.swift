@@ -13,17 +13,24 @@ nonisolated enum LastNightLearning: Equatable, Sendable {
     case learned
     /// 사유는 서버 `skipMessage` 그대로. 서버가 사유를 주지 않은 실행이면 nil.
     case skipped(reason: String?)
+    /// 어젯밤 수면 기록이 서버에 아직 없다(건너뛴 것이 아니다).
+    case noSleepRecord
+
+    /// 서버 `skipReason` 값. 데이터가 있는 가장 최근 밤이 이미 학습됐다는 뜻이다.
+    static let alreadyLearnedReason = "ALREADY_LEARNED"
 
     /// - Parameters:
     ///   - latestObservationDate: 대시보드의 가장 최근 관측 날짜(서버 LocalDate). 관측 날짜는 그 밤이 끝난 아침의 날짜다.
     ///   - today: 오늘의 로컬 날짜(서버 LocalDate 형식).
     ///   - updatedCount: 이번 학습 실행에서 학습된 밤 수. 실행이 실패했으면 nil.
+    ///   - skipReason: 서버가 준 건너뜀 사유 코드.
     ///   - skipMessage: 서버가 준 건너뜀 사유 문장.
     /// - Returns: 판단할 근거가 없으면 nil(줄을 보이지 않는다).
     static func resolve(
         latestObservationDate: String?,
         today: String,
         updatedCount: Int?,
+        skipReason: String?,
         skipMessage: String?
     ) -> LastNightLearning? {
         // 오늘 날짜의 관측이 있으면 어젯밤은 학습된 것이다(이번 실행이든 앞선 실행이든).
@@ -31,7 +38,11 @@ nonisolated enum LastNightLearning: Equatable, Sendable {
         // 학습 실행 결과를 모르면 건너뛰었다고 단정하지 않는다.
         guard let updatedCount else { return nil }
         // 더 오래된 밤만 학습된 실행은 서버가 사유를 주지 않는다.
-        return .skipped(reason: updatedCount == 0 ? skipMessage : nil)
+        guard updatedCount == 0 else { return .skipped(reason: nil) }
+        // 서버는 데이터가 있는 가장 최근 밤의 사유를 준다. 그 밤이 이미 학습됐는데 오늘 관측이 없으면
+        // 어젯밤 데이터가 서버에 없는 것이다(워치 미착용, 기상 전, 수면 동기화 전).
+        if skipReason == alreadyLearnedReason { return .noSleepRecord }
+        return .skipped(reason: skipMessage)
     }
 
     var isLearned: Bool { self == .learned }
@@ -43,6 +54,8 @@ nonisolated enum LastNightLearning: Equatable, Sendable {
         case .skipped(let reason):
             guard let reason, !reason.isEmpty else { return "어젯밤: 건너뜀" }
             return "어젯밤: 건너뜀 · \(reason)"
+        case .noSleepRecord:
+            return "어젯밤: 아직 수면 기록 없음"
         }
     }
 }

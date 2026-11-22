@@ -130,6 +130,18 @@ struct LearningStoreTests {
         #expect(store.lastNight?.text == "어젯밤: 건너뜀 · 최근 수면 시간이 4시간보다 짧아 학습하지 않았어요.")
     }
 
+    /// 어젯밤 데이터가 서버에 없고 그 전 밤은 이미 학습된 경우. "건너뜀 · 이미 반영됐어요"로 보이면 안 된다.
+    @Test func lastNight_noSleepRecord_whenAlreadyLearnedButNotObservedToday() async {
+        let repo = FakeLearningRepository()
+        repo.runResult = .success(LearningRunResponse(
+            updatedCount: 0, skipReason: "ALREADY_LEARNED", skipMessage: "최근 수면 기록은 이미 학습에 반영됐어요."))
+        repo.dashboardResult = .success(.fixture(count: 2, observationDates: ["2026-05-31", "2026-06-01"]))
+        let store = LearningStore(repository: repo, now: Self.fixedNow)
+        await store.refresh()
+        #expect(store.lastNight == .noSleepRecord)
+        #expect(store.lastNight?.text == "어젯밤: 아직 수면 기록 없음")
+    }
+
     /// 더 오래된 밤만 학습된 실행은 서버가 사유를 주지 않는다. 어젯밤 관측이 없으니 사유 없는 건너뜀이다.
     @Test func lastNight_skippedWithoutReason_whenOnlyOlderNightLearned() async {
         let repo = FakeLearningRepository()

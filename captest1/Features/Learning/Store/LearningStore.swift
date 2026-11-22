@@ -72,6 +72,7 @@ final class LearningStore {
             latestObservationDate: loaded.observations.map(\.date).max(),
             today: ServerDateCoding.localDate.string(from: now()),
             updatedCount: run?.updatedCount,
+            skipReason: run?.skipReason,
             skipMessage: run?.skipMessage
         )
     }
