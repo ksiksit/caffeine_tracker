@@ -75,7 +75,8 @@ captest1/
 │   ├── Learning/
 │   │   ├── Views/    # LearningDashboardView·CalibrationScatterChart·ConfidenceBar
 │   │   ├── Store/    # LearningStore
-│   │   └── Data/     # LearningRepository·APIClient+Learning·LearningDTO
+│   │   ├── Data/     # LearningRepository·APIClient+Learning·LearningDTO
+│   │   └── Model/    # LearningInterpretation(어젯밤 학습됨/건너뜀 분류·R²/RMSE 해석 문장 — 순수 함수)
 │   ├── Notification/
 │   │   ├── Views/    # NotificationPermissionRow·CafeNearbyRows(설정 화면 슬롯에 ContentView가 끼워 넣음)·DongPickerView
 │   │   ├── Store/    # NotificationStore(서버 알림 계획 → 로컬 예약 교체)·CafeNearbyStore(동 선택 → 지오펜스, 진입 판정 → 즉시 알림)

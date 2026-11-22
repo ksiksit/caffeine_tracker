@@ -64,11 +64,17 @@ struct LearningDashboardView: View {
             if let latest = dashboard.latest {
                 HeroEstimateCard(latest: latest, count: dashboard.count, lastLearnedDate: settings.lastLearnedDate)
             }
+            if let lastNight = store.lastNight {
+                LastNightLearningRow(status: lastNight)
+            }
             EarlyStageHintCard(count: dashboard.count)
             ObservationListCard(observations: dashboard.observations)
         default:
             if let latest = dashboard.latest {
                 HeroEstimateCard(latest: latest, count: dashboard.count, lastLearnedDate: settings.lastLearnedDate)
+            }
+            if let lastNight = store.lastNight {
+                LastNightLearningRow(status: lastNight)
             }
             LearningDetailsDisclosure {
                 LearningTrendCard(observations: dashboard.observations)
@@ -170,6 +176,21 @@ private struct HeroEstimateCard: View {
     }
 }
 
+// MARK: - 어젯밤 학습 여부
+
+/// Hero 아래 한 줄. 건너뛴 사유는 서버가 준 문장 그대로다.
+private struct LastNightLearningRow: View {
+    let status: LastNightLearning
+
+    var body: some View {
+        Label(status.text, systemImage: status.isLearned ? "checkmark.circle.fill" : "moon.zzz.fill")
+            .font(.footnote.weight(.medium))
+            .foregroundStyle(status.isLearned ? Theme.Colors.ink : Theme.Colors.inkSecondary)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+}
+
 // MARK: - ② Trend
 
 private struct LearningTrendCard: View {
@@ -240,6 +261,14 @@ private struct CalibrationCard: View {
                     metricBlock(label: "평균 오차 (RMSE)", value: String(format: "%.1f", calibration.rmse), unit: "분")
                     Spacer()
                 }
+
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(CalibrationInterpretation.rSquared(calibration.rSquared))
+                    Text(CalibrationInterpretation.rmse(calibration.rmse))
+                }
+                .font(.caption)
+                .foregroundStyle(Theme.Colors.inkSecondary)
+                .fixedSize(horizontal: false, vertical: true)
             }
         }
     }
