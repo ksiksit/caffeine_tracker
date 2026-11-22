@@ -147,9 +147,10 @@ final class CaffeineStore {
     var bedtime: Date? { today?.bedtime }
     var todayRecords: [CaffeineRecordDTO] { today?.records ?? [] }
     var carryoverRecords: [CaffeineRecordDTO] { today?.carryoverRecords ?? [] }
-    /// 서버 잔량 계산과 같은 투약 목록(최근 24시간). 미리보기가 서버 마감과 어긋나지 않게 이 값을 쓴다.
+    /// 서버 잔량 계산에 들어간 기록(최근 24시간). 미리보기가 서버 마감과 어긋나지 않게 이 값을 쓴다.
+    var residualRecords: [CaffeineRecordDTO] { carryoverRecords + todayRecords }
     var residualDoses: [CaffeineKineticsCalculator.Dose] {
-        (carryoverRecords + todayRecords).map {
+        residualRecords.map {
             CaffeineKineticsCalculator.Dose(timestamp: $0.timestamp, amountMg: Double($0.amount))
         }
     }

@@ -53,7 +53,9 @@ struct AddCaffeineView: View {
                     CutoffPreviewBanner(
                         current: preview.current,
                         projected: preview.projected,
-                        predictedAtBedtime: preview.predictedAtBedtime
+                        predictedAtBedtime: preview.predictedAtBedtime,
+                        isEditing: isEditMode,
+                        overLimitTotalMg: preview.overLimitTotalMg
                     )
                     .animation(.easeInOut(duration: 0.2), value: viewModel.selectedPreset?.name)
                     .animation(.easeInOut(duration: 0.2), value: viewModel.customAmount)
@@ -97,13 +99,15 @@ struct AddCaffeineView: View {
         }
     }
 
-    private var cutoffPreview: (current: CaffeineCutoffResult, projected: CaffeineCutoffResult, predictedAtBedtime: Double)? {
-        // 즉시 미리보기만 로컬 공식 유지(키 입력 왕복 방지). 오늘 doses와 취침시각은 서버 today 결과에서.
-        // today가 아직 없으면(첫 로드 전) doses도 비어 있어 미리보기 의미가 없으므로 배너를 띄우지 않는다.
-        guard !isEditMode, let bedtime = store.bedtime else { return nil }
-        let todayDoses = store.residualDoses
+    private var cutoffPreview: (
+        current: CaffeineCutoffResult, projected: CaffeineCutoffResult,
+        predictedAtBedtime: Double, overLimitTotalMg: Int?
+    )? {
+        // 즉시 미리보기만 로컬 공식 유지(키 입력 왕복 방지). 오늘 기록·합계와 취침시각은 서버 today 결과에서.
+        // today가 아직 없으면(첫 로드 전) 기록도 비어 있어 미리보기 의미가 없으므로 배너를 띄우지 않는다.
+        guard let bedtime = store.bedtime else { return nil }
         guard let pair = viewModel.previewCutoff(
-            todayDoses: todayDoses,
+            records: store.residualRecords,
             halfLifeHours: settings.effectiveHalfLifeHours,
             bedtime: bedtime,
             referenceDoseMg: Double(settings.referenceDoseMg)
@@ -115,7 +119,12 @@ struct AddCaffeineView: View {
             default: return 0
             }
         }()
-        return (pair.current, pair.projected, projectedResidual)
+        let overLimitTotalMg = viewModel.previewDailyTotalOverLimit(
+            todayRecords: store.todayRecords,
+            todayTotal: store.todayTotal,
+            today: store.currentTime
+        )
+        return (pair.current, pair.projected, projectedResidual, overLimitTotalMg)
     }
 
     private func save() {

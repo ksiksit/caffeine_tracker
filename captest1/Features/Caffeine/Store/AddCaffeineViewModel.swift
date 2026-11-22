@@ -60,44 +60,79 @@ final class AddCaffeineViewModel {
 
     // MARK: - 마감시각 미리보기
 
-    /// 신규 추가 모드에서 "지금 이 음료를 추가하면 마감시각이 어떻게 바뀌는지" 계산.
-    /// 편집 모드는 base에서 자기 자신을 빼야 해 분기가 복잡하므로 nil 반환.
+    /// 지금 입력한 양(직접 입력이면 입력값, 아니면 고른 프리셋). 없으면 nil.
+    private var pendingAmount: Int? {
+        if isCustomMode { return parsedAmount }
+        return selectedPreset?.caffeineAmount
+    }
+
+    /// 미리보기에 쓸 양. 수정 모드에서 양·시각을 아직 안 바꿨으면 바뀔 것이 없으므로 nil.
+    private func previewAmount() -> Int? {
+        guard let amount = pendingAmount else { return nil }
+        if let editing = editingRecord, amount == editing.amount, selectedDate == editing.timestamp {
+            return nil
+        }
+        return amount
+    }
+
+    /// "이대로 저장하면 마감시각이 어떻게 바뀌는지" 계산.
+    /// 신규 추가는 기존 기록에 새 기록을 더하고, 수정은 고치는 기록을 빼고 고친 값을 넣는다.
+    /// - Parameter records: 서버 잔량 계산에 들어간 기록(최근 24시간). 수정 중인 기록도 들어 있다.
     func previewCutoff(
-        todayDoses: [CaffeineKineticsCalculator.Dose],
+        records: [CaffeineRecordDTO],
         halfLifeHours: Double,
         bedtime: Date,
         referenceDoseMg: Double
     ) -> (current: CaffeineCutoffResult, projected: CaffeineCutoffResult)? {
-        guard editingRecord == nil else { return nil }
+        guard let amount = previewAmount() else { return nil }
 
-        let pendingAmount: Double
-        if isCustomMode {
-            guard let amount = parsedAmount else { return nil }
-            pendingAmount = Double(amount)
-        } else if let preset = selectedPreset {
-            pendingAmount = Double(preset.caffeineAmount)
-        } else {
-            return nil
+        func doses(_ list: [CaffeineRecordDTO]) -> [CaffeineKineticsCalculator.Dose] {
+            list.map { CaffeineKineticsCalculator.Dose(timestamp: $0.timestamp, amountMg: Double($0.amount)) }
         }
 
         let current = caffeineCutoffTime(
-            currentDoses: todayDoses,
+            currentDoses: doses(records),
             bedtime: bedtime,
             referenceDoseMg: referenceDoseMg,
             halfLifeHours: halfLifeHours
         )
 
+        let others = records.filter { $0.id != editingRecord?.id }
         let pendingDose = CaffeineKineticsCalculator.Dose(
-            timestamp: intakeTime(), amountMg: pendingAmount
+            timestamp: intakeTime(), amountMg: Double(amount)
         )
         let projected = caffeineCutoffTime(
-            currentDoses: todayDoses + [pendingDose],
+            currentDoses: doses(others) + [pendingDose],
             bedtime: bedtime,
             referenceDoseMg: referenceDoseMg,
             halfLifeHours: halfLifeHours
         )
 
         return (current, projected)
+    }
+
+    /// 이대로 저장하면 오늘 총량이 하루 권장량을 넘는가. 넘으면 그 총량(mg), 아니면 nil.
+    /// 서버가 준 오늘 합계에 더하고 빼기만 한다. 섭취 시각이 오늘(새벽 5시 경계) 밖이면 오늘 합계에 들어가지 않으므로 경고하지 않는다.
+    /// - Parameters:
+    ///   - todayRecords: 서버가 오늘 합계에 넣은 기록.
+    ///   - todayTotal: 서버가 계산한 오늘 합계.
+    ///   - today: 서버 today의 기준 시각(`now`). 이 시각이 속한 날이 "오늘"이다.
+    func previewDailyTotalOverLimit(
+        todayRecords: [CaffeineRecordDTO],
+        todayTotal: Int,
+        today: Date,
+        calendar: Calendar = .current
+    ) -> Int? {
+        guard let amount = previewAmount() else { return nil }
+        let isToday = CaffeineTodayCache.dayStart(of: intakeTime(), calendar: calendar)
+            == CaffeineTodayCache.dayStart(of: today, calendar: calendar)
+        guard isToday else { return nil }
+
+        var total = todayTotal + amount
+        if let editing = editingRecord, let original = todayRecords.first(where: { $0.id == editing.id }) {
+            total -= original.amount
+        }
+        return total > AppConstants.Caffeine.dailyRecommendedLimitMg ? total : nil
     }
 
     var validationMessage: String? {
